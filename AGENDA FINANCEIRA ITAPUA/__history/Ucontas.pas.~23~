@@ -1,0 +1,84 @@
+unit Ucontas;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
+  FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, Data.DB,
+  FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.Grids, Vcl.DBGrids,
+  Vcl.Imaging.pngimage, Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.Mask, Vcl.DBCtrls,
+  Vcl.Buttons;
+
+type
+  TfrmContas = class(TForm)
+    FDtcContas: TFDTransaction;
+    FDqryContas: TFDQuery;
+    dsContas: TDataSource;
+    gridContas: TDBGrid;
+    FDqryContasCONTA_ID: TFDAutoIncField;
+    FDqryContasDESCRICAO: TStringField;
+    Panel1: TPanel;
+    btnNovo: TImage;
+    btnCancelar: TImage;
+    btnSalvar: TImage;
+    BtnAlterar: TImage;
+    btnExcluir: TImage;
+    DBEdit1: TDBEdit;
+    procedure FormCreate(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnSalvarClick(Sender: TObject);
+    procedure BitBtn1Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmContas: TfrmContas;
+
+implementation
+
+{$R *.dfm}
+
+uses UfrmPrincipal;
+
+procedure TfrmContas.BitBtn1Click(Sender: TObject);
+begin
+ FDqryContas.Insert;
+end;
+
+procedure TfrmContas.btnNovoClick(Sender: TObject);
+begin
+FDqryContas.Insert;
+
+end;
+
+procedure TfrmContas.btnSalvarClick(Sender: TObject);
+begin
+FDqryContas.Post;
+ try
+    FDtcContas.CommitRetaining;
+ except
+    FDtcContas.RollbackRetaining;
+ end;
+end;
+
+procedure TfrmContas.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+FDqryContas.Close;
+end;
+
+procedure TfrmContas.FormCreate(Sender: TObject);
+begin
+ if (Screen.Width = 800) and (Screen.Height = 600) then
+     frmContas.Position := poDefault
+    else
+     frmContas.Position := poScreenCenter;
+     FDqryContas.Open;
+end;
+
+end.

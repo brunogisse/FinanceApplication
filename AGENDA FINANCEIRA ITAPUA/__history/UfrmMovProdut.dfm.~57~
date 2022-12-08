@@ -1,0 +1,304 @@
+object frmMoviProduto: TfrmMoviProduto
+  Left = 0
+  Top = 0
+  Caption = 'Consulta - Movimenta'#231#227'o de produto'
+  ClientHeight = 520
+  ClientWidth = 982
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  OnClose = FormClose
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object PainelTopo: TPanel
+    Left = 0
+    Top = 0
+    Width = 982
+    Height = 97
+    Align = alTop
+    TabOrder = 0
+    ExplicitWidth = 749
+  end
+  object gridMovProdutos: TDBGrid
+    AlignWithMargins = True
+    Left = 3
+    Top = 100
+    Width = 976
+    Height = 345
+    Align = alClient
+    DataSource = dsMovimentacaoProduto
+    Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -11
+    TitleFont.Name = 'Tahoma'
+    TitleFont.Style = []
+    OnDrawColumnCell = gridMovProdutosDrawColumnCell
+    Columns = <
+      item
+        Expanded = False
+        FieldName = 'DATA'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'TIPO'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'QTDE'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'SALDO_ATUAL'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'VALOR_PRODUTO'
+        Width = 85
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'ADICIONAIS'
+        Width = 600
+        Visible = True
+      end>
+  end
+  object gbTopo: TGroupBox
+    Left = 8
+    Top = 8
+    Width = 721
+    Height = 81
+    TabOrder = 2
+    object labelCodigo: TLabel
+      Left = 10
+      Top = 8
+      Width = 37
+      Height = 13
+      Caption = 'C'#243'digo:'
+    end
+    object labelIntervalo: TLabel
+      Left = 10
+      Top = 58
+      Width = 48
+      Height = 13
+      Caption = 'Intervalo:'
+    end
+    object labelAte: TLabel
+      Left = 188
+      Top = 56
+      Width = 21
+      Height = 13
+      Caption = 'At'#233':'
+    end
+    object editCodigo: TEdit
+      Left = 10
+      Top = 22
+      Width = 87
+      Height = 21
+      TabOrder = 0
+      OnExit = editCodigoExit
+    end
+    object editProduto: TEdit
+      Left = 103
+      Top = 22
+      Width = 593
+      Height = 21
+      TabOrder = 1
+    end
+    object DataInicio: TDateTimePicker
+      Left = 64
+      Top = 52
+      Width = 114
+      Height = 21
+      Date = 44099.000000000000000000
+      Time = 0.928787511576956600
+      TabOrder = 2
+    end
+    object DataFim: TDateTimePicker
+      Left = 213
+      Top = 52
+      Width = 116
+      Height = 21
+      Date = 44099.000000000000000000
+      Time = 0.928963310187100400
+      TabOrder = 3
+    end
+    object btnBuscar: TBitBtn
+      Left = 347
+      Top = 49
+      Width = 75
+      Height = 21
+      Caption = 'Buscar'
+      TabOrder = 4
+      OnClick = btnBuscarClick
+    end
+  end
+  object DBMemo1: TDBMemo
+    Left = 0
+    Top = 448
+    Width = 982
+    Height = 72
+    Align = alBottom
+    DataField = 'OBS'
+    DataSource = dsMovimentacaoProduto
+    TabOrder = 3
+    ExplicitTop = 451
+  end
+  object FDtcMovimentacaoProduto: TFDTransaction
+    Options.AutoStop = False
+    Connection = frmPrincipal.FDconexao
+    Left = 304
+    Top = 264
+  end
+  object FDqryMovimentacaoProduto: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcMovimentacaoProduto
+    UpdateOptions.AssignedValues = [uvEDelete, uvEInsert, uvEUpdate]
+    UpdateOptions.EnableDelete = False
+    UpdateOptions.EnableInsert = False
+    UpdateOptions.EnableUpdate = False
+    SQL.Strings = (
+      'select * from MOVIMENTACAO_PRODUTO'
+      ''
+      'where'
+      ''
+      '(PRODUTO_ID = :CODIGOPRODUTO) and'
+      '(DATA between :INICIO and :FIM)'
+      ''
+      'order by MOVIMENTACAO_ID desc')
+    Left = 456
+    Top = 264
+    ParamData = <
+      item
+        Name = 'CODIGOPRODUTO'
+        DataType = ftString
+        ParamType = ptInput
+        Value = '16'
+      end
+      item
+        Name = 'INICIO'
+        DataType = ftDate
+        ParamType = ptInput
+      end
+      item
+        Name = 'FIM'
+        DataType = ftDate
+        ParamType = ptInput
+      end>
+    object FDqryMovimentacaoProdutoMOVIMENTACAO_ID: TIntegerField
+      FieldName = 'MOVIMENTACAO_ID'
+      Origin = 'MOVIMENTACAO_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object FDqryMovimentacaoProdutoDATA: TDateField
+      DisplayLabel = 'Data:'
+      FieldName = 'DATA'
+      Origin = '"DATA"'
+    end
+    object FDqryMovimentacaoProdutoPRODUTO_ID: TIntegerField
+      FieldName = 'PRODUTO_ID'
+      Origin = 'PRODUTO_ID'
+      Required = True
+    end
+    object FDqryMovimentacaoProdutoTIPO: TStringField
+      DisplayLabel = 'Tipo:'
+      FieldName = 'TIPO'
+      Origin = 'TIPO'
+      FixedChar = True
+      Size = 1
+    end
+    object FDqryMovimentacaoProdutoQTDE: TIntegerField
+      DisplayLabel = 'Qtde:'
+      FieldName = 'QTDE'
+      Origin = 'QTDE'
+    end
+    object FDqryMovimentacaoProdutoSALDO_ATUAL: TIntegerField
+      DisplayLabel = 'Saldo:'
+      FieldName = 'SALDO_ATUAL'
+      Origin = 'SALDO_ATUAL'
+    end
+    object FDqryMovimentacaoProdutoOBS: TStringField
+      FieldName = 'OBS'
+      Origin = 'OBS'
+      Size = 200
+    end
+    object FDqryMovimentacaoProdutoVALOR_PRODUTO: TFMTBCDField
+      DisplayLabel = 'Valor:'
+      FieldName = 'VALOR_PRODUTO'
+      Origin = 'VALOR_PRODUTO'
+      currency = True
+      Precision = 18
+      Size = 2
+    end
+    object FDqryMovimentacaoProdutoADICIONAIS: TStringField
+      DisplayLabel = 'Informa'#231#245'es Adicionais:'
+      FieldName = 'ADICIONAIS'
+      Origin = 'ADICIONAIS'
+      Size = 200
+    end
+  end
+  object dsMovimentacaoProduto: TDataSource
+    DataSet = FDqryMovimentacaoProduto
+    Left = 576
+    Top = 264
+  end
+  object FDqryProdutos: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcMovimentacaoProduto
+    UpdateOptions.AssignedValues = [uvEDelete, uvEInsert, uvEUpdate]
+    UpdateOptions.EnableDelete = False
+    UpdateOptions.EnableInsert = False
+    UpdateOptions.EnableUpdate = False
+    SQL.Strings = (
+      'select * from PRODUTO')
+    Left = 456
+    Top = 336
+    object FDqryProdutosPRODUTO_ID: TIntegerField
+      FieldName = 'PRODUTO_ID'
+      Origin = 'PRODUTO_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object FDqryProdutosDESCRICAO: TStringField
+      FieldName = 'DESCRICAO'
+      Origin = 'DESCRICAO'
+      Size = 40
+    end
+    object FDqryProdutosVALOR: TFMTBCDField
+      FieldName = 'VALOR'
+      Origin = 'VALOR'
+      currency = True
+      Precision = 18
+      Size = 2
+    end
+    object FDqryProdutosESTOQUE_MINIMO: TIntegerField
+      FieldName = 'ESTOQUE_MINIMO'
+      Origin = 'ESTOQUE_MINIMO'
+    end
+    object FDqryProdutosTIPO: TIntegerField
+      FieldName = 'TIPO'
+      Origin = 'TIPO'
+    end
+    object FDqryProdutosESTOQUE: TIntegerField
+      FieldName = 'ESTOQUE'
+      Origin = 'ESTOQUE'
+    end
+  end
+  object dsProdutos: TDataSource
+    DataSet = FDqryProdutos
+    Left = 584
+    Top = 336
+  end
+end

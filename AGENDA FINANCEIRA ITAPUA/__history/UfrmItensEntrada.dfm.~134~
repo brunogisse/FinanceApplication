@@ -1,0 +1,504 @@
+object frmEntradaItens: TfrmEntradaItens
+  Left = 0
+  Top = 0
+  Caption = 'Entrada de Itens'
+  ClientHeight = 601
+  ClientWidth = 690
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poDesktopCenter
+  OnClose = FormClose
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object painelTopo: TPanel
+    Left = 0
+    Top = 0
+    Width = 690
+    Height = 147
+    Align = alTop
+    TabOrder = 0
+    object Lentrada: TLabel
+      Left = 6
+      Top = 7
+      Width = 42
+      Height = 13
+      Caption = 'Entrada:'
+    end
+    object labelEntrada: TLabel
+      Left = 52
+      Top = 7
+      Width = 60
+      Height = 13
+      Caption = 'labelEntrada'
+    end
+    object LNF: TLabel
+      Left = 6
+      Top = 22
+      Width = 35
+      Height = 13
+      Caption = 'N'#186'  NF:'
+    end
+    object labelNF: TLabel
+      Left = 52
+      Top = 22
+      Width = 35
+      Height = 13
+      Caption = 'labelNF'
+    end
+    object gbProdutos: TGroupBox
+      Left = 6
+      Top = 38
+      Width = 611
+      Height = 103
+      TabOrder = 0
+      object Label1: TLabel
+        Left = 15
+        Top = 8
+        Width = 42
+        Height = 13
+        Caption = 'Produto:'
+      end
+      object Label2: TLabel
+        Left = 15
+        Top = 49
+        Width = 28
+        Height = 13
+        Caption = 'Valor:'
+      end
+      object Label3: TLabel
+        Left = 124
+        Top = 49
+        Width = 28
+        Height = 13
+        Caption = 'Qtde:'
+      end
+      object Label4: TLabel
+        Left = 183
+        Top = 49
+        Width = 55
+        Height = 13
+        Caption = 'Valor Total:'
+      end
+      object editProdutoInserido: TEdit
+        Left = 15
+        Top = 23
+        Width = 579
+        Height = 21
+        CharCase = ecUpperCase
+        TabOrder = 0
+        OnDblClick = editProdutoInseridoDblClick
+        OnKeyPress = editProdutoInseridoKeyPress
+      end
+      object editValorItem: TEdit
+        Left = 15
+        Top = 63
+        Width = 101
+        Height = 21
+        TabOrder = 1
+        Text = '0'
+        OnChange = editValorItemChange
+      end
+      object editQtdeItem: TEdit
+        Left = 122
+        Top = 63
+        Width = 55
+        Height = 21
+        TabOrder = 2
+        OnExit = editQtdeItemExit
+      end
+      object btnInserirItem: TBitBtn
+        Left = 288
+        Top = 63
+        Width = 35
+        Height = 21
+        Caption = 'OK'
+        TabOrder = 3
+        OnClick = btnInserirItemClick
+      end
+      object btnExcluirItem: TBitBtn
+        Left = 328
+        Top = 63
+        Width = 34
+        Height = 21
+        Caption = 'X'
+        TabOrder = 4
+        OnClick = btnExcluirItemClick
+      end
+      object gbTotal: TGroupBox
+        Left = 448
+        Top = 49
+        Width = 146
+        Height = 48
+        Caption = 'Total Produtos '
+        Enabled = False
+        TabOrder = 5
+        object editTotalProdutos: TDBEdit
+          Left = 10
+          Top = 16
+          Width = 121
+          Height = 24
+          DataField = 'ITENS_SOMADOS_PARA_NF'
+          DataSource = dsSomaItens
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+        end
+      end
+      object editValorTotalItem: TEdit
+        Left = 183
+        Top = 63
+        Width = 98
+        Height = 21
+        TabOrder = 6
+        Text = '0'
+      end
+    end
+  end
+  object gridEntradaDEitens: TDBGrid
+    Left = 0
+    Top = 147
+    Width = 690
+    Height = 413
+    Align = alClient
+    DataSource = dsEntradaItens
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -11
+    TitleFont.Name = 'Tahoma'
+    TitleFont.Style = []
+    OnDrawColumnCell = gridEntradaDEitensDrawColumnCell
+    Columns = <
+      item
+        Expanded = False
+        FieldName = 'VALOR_ITEM'
+        Width = 77
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'QTDE_ITEM'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'PRODUTO'
+        Width = 376
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'VALOR_TOTAL_ITEM'
+        Width = 84
+        Visible = True
+      end>
+  end
+  object painelBottom: TPanel
+    Left = 0
+    Top = 560
+    Width = 690
+    Height = 41
+    Align = alBottom
+    TabOrder = 2
+  end
+  object FDqryEntradaItens: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcItensEntrada
+    UpdateOptions.AssignedValues = [uvFetchGeneratorsPoint, uvGeneratorName]
+    UpdateOptions.GeneratorName = 'GEN_ITEM_NF_ID'
+    UpdateOptions.UpdateTableName = 'ITEM_NF'
+    UpdateOptions.KeyFields = 'ITEM_NF_ID'
+    UpdateOptions.AutoIncFields = 'ITEM_NF_ID'
+    SQL.Strings = (
+      'select'
+      ''
+      ' I.ITEM_NF_ID,'
+      ' I.NF_ID,'
+      ' I.PRODUTO_ID,'
+      ' I.VALOR_ITEM,'
+      ' I.VALOR_TOTAL_ITEM,'
+      ' I.QTDE_ITEM,'
+      ' CAD.CADASTRO_NF_ID,'
+      ' P.PRODUTO_ID as ID_DO_PRODUTO,'
+      ' P.DESCRICAO as PRODUTO'
+      ''
+      'from'
+      ''
+      ' ITEM_NF I, CADASTRO_NF CAD, PRODUTO P'
+      ''
+      'where'
+      '  '
+      ' (I.NF_ID = CAD.CADASTRO_NF_ID) and'
+      ' (I.NF_ID = :ENTRADA) and'
+      ' (I.PRODUTO_ID = P.PRODUTO_ID)')
+    Left = 336
+    Top = 312
+    ParamData = <
+      item
+        Name = 'ENTRADA'
+        DataType = ftInteger
+        ParamType = ptInput
+        Value = Null
+      end>
+    object FDqryEntradaItensITEM_NF_ID: TIntegerField
+      DisplayLabel = 'Item ID:'
+      FieldName = 'ITEM_NF_ID'
+      Origin = 'ITEM_NF_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object FDqryEntradaItensNF_ID: TIntegerField
+      DisplayLabel = 'NF ID:'
+      FieldName = 'NF_ID'
+      Origin = 'NF_ID'
+    end
+    object FDqryEntradaItensPRODUTO_ID: TIntegerField
+      DisplayLabel = 'C'#243'd. Produto'
+      FieldName = 'PRODUTO_ID'
+      Origin = 'PRODUTO_ID'
+    end
+    object FDqryEntradaItensVALOR_ITEM: TFMTBCDField
+      DisplayLabel = 'Valor:'
+      FieldName = 'VALOR_ITEM'
+      Origin = 'VALOR_ITEM'
+      currency = True
+      Precision = 18
+      Size = 2
+    end
+    object FDqryEntradaItensQTDE_ITEM: TIntegerField
+      DisplayLabel = 'Qtde:'
+      FieldName = 'QTDE_ITEM'
+      Origin = 'QTDE_ITEM'
+    end
+    object FDqryEntradaItensCADASTRO_NF_ID: TIntegerField
+      AutoGenerateValue = arDefault
+      DisplayLabel = 'C'#243'd. NF'
+      FieldName = 'CADASTRO_NF_ID'
+      Origin = 'CADASTRO_NF_ID'
+      ProviderFlags = []
+      ReadOnly = True
+    end
+    object FDqryEntradaItensID_DO_PRODUTO: TIntegerField
+      AutoGenerateValue = arDefault
+      DisplayLabel = 'C'#243'd. table prod.'
+      FieldName = 'ID_DO_PRODUTO'
+      Origin = 'PRODUTO_ID'
+      ProviderFlags = []
+      ReadOnly = True
+    end
+    object FDqryEntradaItensPRODUTO: TStringField
+      AutoGenerateValue = arDefault
+      DisplayLabel = 'Produto:'
+      FieldName = 'PRODUTO'
+      Origin = 'DESCRICAO'
+      ProviderFlags = []
+      ReadOnly = True
+      Size = 40
+    end
+    object FDqryEntradaItensVALOR_TOTAL_ITEM: TFMTBCDField
+      DisplayLabel = 'Valor Total:'
+      FieldName = 'VALOR_TOTAL_ITEM'
+      Origin = 'VALOR_TOTAL_ITEM'
+      currency = True
+      Precision = 18
+      Size = 2
+    end
+  end
+  object dsEntradaItens: TDataSource
+    DataSet = FDqryEntradaItens
+    Left = 432
+    Top = 312
+  end
+  object dsProduto: TDataSource
+    DataSet = FDqryProduto
+    Left = 440
+    Top = 368
+  end
+  object FDqryProduto: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcItensEntrada
+    UpdateOptions.UpdateTableName = 'PRODUTO'
+    UpdateOptions.KeyFields = 'PRODUTO_ID'
+    SQL.Strings = (
+      'select'
+      ''
+      ' P.PRODUTO_ID,'
+      ' P.DESCRICAO,'
+      ' P.VALOR,'
+      ' P.ESTOQUE_MINIMO,'
+      ' P.TIPO,'
+      ' P.ESTOQUE,'
+      ' T.TIPO_PRODUTO_ID,'
+      ' T.DESCRICAO as TIPO_DESCRICAO'
+      ''
+      'from'
+      ''
+      ' PRODUTO P, TIPO_PRODUTO T'
+      ''
+      'where'
+      ''
+      ' (P.TIPO = T.TIPO_PRODUTO_ID)')
+    Left = 336
+    Top = 368
+    object FDqryProdutoPRODUTO_ID: TIntegerField
+      FieldName = 'PRODUTO_ID'
+      Origin = 'PRODUTO_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object FDqryProdutoDESCRICAO: TStringField
+      FieldName = 'DESCRICAO'
+      Origin = 'DESCRICAO'
+      Size = 40
+    end
+    object FDqryProdutoVALOR: TFMTBCDField
+      FieldName = 'VALOR'
+      Origin = 'VALOR'
+      Precision = 18
+      Size = 2
+    end
+    object FDqryProdutoESTOQUE_MINIMO: TIntegerField
+      FieldName = 'ESTOQUE_MINIMO'
+      Origin = 'ESTOQUE_MINIMO'
+    end
+    object FDqryProdutoTIPO: TIntegerField
+      FieldName = 'TIPO'
+      Origin = 'TIPO'
+    end
+    object FDqryProdutoESTOQUE: TIntegerField
+      FieldName = 'ESTOQUE'
+      Origin = 'ESTOQUE'
+    end
+    object FDqryProdutoTIPO_PRODUTO_ID: TIntegerField
+      AutoGenerateValue = arDefault
+      FieldName = 'TIPO_PRODUTO_ID'
+      Origin = 'TIPO_PRODUTO_ID'
+      ProviderFlags = []
+      ReadOnly = True
+    end
+    object FDqryProdutoTIPO_DESCRICAO: TStringField
+      AutoGenerateValue = arDefault
+      FieldName = 'TIPO_DESCRICAO'
+      Origin = 'DESCRICAO'
+      ProviderFlags = []
+      ReadOnly = True
+      Size = 40
+    end
+  end
+  object dsEntradaNF: TDataSource
+    DataSet = FDqryEntradaNF
+    Left = 440
+    Top = 432
+  end
+  object FDqryEntradaNF: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcItensEntrada
+    UpdateOptions.UpdateTableName = 'CADASTRO_NF'
+    UpdateOptions.KeyFields = 'CADASTRO_NF_ID'
+    SQL.Strings = (
+      'select * from CADASTRO_NF')
+    Left = 336
+    Top = 432
+    object FDqryEntradaNFCADASTRO_NF_ID: TIntegerField
+      FieldName = 'CADASTRO_NF_ID'
+      Origin = 'CADASTRO_NF_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object FDqryEntradaNFFORNECEDOR_ID: TIntegerField
+      FieldName = 'FORNECEDOR_ID'
+      Origin = 'FORNECEDOR_ID'
+    end
+    object FDqryEntradaNFDATA: TDateField
+      FieldName = 'DATA'
+      Origin = '"DATA"'
+    end
+    object FDqryEntradaNFVALOR_NF: TFMTBCDField
+      FieldName = 'VALOR_NF'
+      Origin = 'VALOR_NF'
+      Precision = 18
+      Size = 2
+    end
+    object FDqryEntradaNFNF: TIntegerField
+      FieldName = 'NF'
+      Origin = 'NF'
+    end
+    object FDqryEntradaNFOBS: TStringField
+      FieldName = 'OBS'
+      Origin = 'OBS'
+      Size = 200
+    end
+    object FDqryEntradaNFDATA_EMISSAO_NF: TDateField
+      FieldName = 'DATA_EMISSAO_NF'
+      Origin = 'DATA_EMISSAO_NF'
+    end
+  end
+  object FdqrySomaItens: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcItensEntrada
+    SQL.Strings = (
+      
+        'select SUM(VALOR_TOTAL_ITEM) as ITENS_SOMADOS_PARA_NF from (sele' +
+        'ct'
+      ''
+      ' I.ITEM_NF_ID,'
+      ' I.NF_ID,'
+      ' I.PRODUTO_ID,'
+      ' I.VALOR_ITEM,'
+      ' I.VALOR_TOTAL_ITEM,'
+      ' I.QTDE_ITEM,'
+      ' CAD.CADASTRO_NF_ID,'
+      ' P.PRODUTO_ID as ID_DO_PRODUTO,'
+      ' P.DESCRICAO as PRODUTO'
+      ''
+      'from'
+      ''
+      ' ITEM_NF I, CADASTRO_NF CAD, PRODUTO P'
+      ''
+      'where'
+      '  '
+      ' (I.NF_ID = CAD.CADASTRO_NF_ID) and'
+      ' (I.NF_ID = :ENTRADA) and'
+      ' (I.PRODUTO_ID = P.PRODUTO_ID))')
+    Left = 336
+    Top = 496
+    ParamData = <
+      item
+        Name = 'ENTRADA'
+        DataType = ftInteger
+        ParamType = ptInput
+        Value = Null
+      end>
+    object FdqrySomaItensITENS_SOMADOS_PARA_NF: TFMTBCDField
+      AutoGenerateValue = arDefault
+      FieldName = 'ITENS_SOMADOS_PARA_NF'
+      Origin = 'ITENS_SOMADOS_PARA_NF'
+      ProviderFlags = []
+      ReadOnly = True
+      currency = True
+      Precision = 18
+      Size = 2
+    end
+  end
+  object dsSomaItens: TDataSource
+    DataSet = FdqrySomaItens
+    Left = 440
+    Top = 496
+  end
+  object FDtcItensEntrada: TFDTransaction
+    Options.AutoStop = False
+    Connection = frmPrincipal.FDconexao
+    Left = 224
+    Top = 320
+  end
+end

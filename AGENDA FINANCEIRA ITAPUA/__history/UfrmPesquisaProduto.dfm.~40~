@@ -1,0 +1,181 @@
+object frmPesquisarProdutos: TfrmPesquisarProdutos
+  Left = 0
+  Top = 0
+  Caption = 'Pesquisar Produtos'
+  ClientHeight = 574
+  ClientWidth = 940
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poDesktopCenter
+  OnClose = FormClose
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object painelTopo: TPanel
+    Left = 0
+    Top = 0
+    Width = 940
+    Height = 39
+    Align = alTop
+    TabOrder = 0
+    object editPesquisarProdutos: TEdit
+      Left = 3
+      Top = 15
+      Width = 482
+      Height = 21
+      CharCase = ecUpperCase
+      TabOrder = 0
+      OnChange = editPesquisarProdutosChange
+      OnKeyPress = editPesquisarProdutosKeyPress
+    end
+    object btnNovoProduto: TBitBtn
+      Left = 824
+      Top = 7
+      Width = 105
+      Height = 25
+      Caption = 'Novo Produto'
+      TabOrder = 1
+      OnClick = btnNovoProdutoClick
+    end
+  end
+  object gridPesquisaProdutos: TDBGrid
+    AlignWithMargins = True
+    Left = 3
+    Top = 42
+    Width = 934
+    Height = 529
+    Align = alClient
+    DataSource = dsProdutos
+    ReadOnly = True
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -11
+    TitleFont.Name = 'Tahoma'
+    TitleFont.Style = []
+    OnDrawColumnCell = gridPesquisaProdutosDrawColumnCell
+    OnDblClick = gridPesquisaProdutosDblClick
+    Columns = <
+      item
+        Expanded = False
+        FieldName = 'PRODUTO_ID'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'DESCRICAO'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'VALOR'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'ESTOQUE'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'ESTOQUE_MINIMO'
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'TIPO'
+        Visible = True
+      end>
+  end
+  object FDqryProdutos: TFDQuery
+    IndexFieldNames = 'TIPO_ID'
+    MasterFields = 'TIPO_PRODUTO_ID'
+    DetailFields = 'TIPO'
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcPesquisarProdutos
+    UpdateOptions.AssignedValues = [uvEDelete, uvEInsert, uvEUpdate, uvGeneratorName, uvAutoCommitUpdates]
+    UpdateOptions.EnableDelete = False
+    UpdateOptions.EnableInsert = False
+    UpdateOptions.EnableUpdate = False
+    UpdateOptions.GeneratorName = 'GEN_PRODUTO_ID'
+    UpdateOptions.UpdateTableName = 'PRODUTO'
+    UpdateOptions.KeyFields = 'PRODUTO_ID'
+    UpdateOptions.AutoIncFields = 'PRODUTO_ID'
+    SQL.Strings = (
+      'select'
+      '  P.PRODUTO_ID,'
+      '  P.DESCRICAO,'
+      '  P.VALOR,'
+      '  P.ESTOQUE_MINIMO,'
+      '  P.TIPO as TIPO_ID,'
+      '  P.ESTOQUE,'
+      '  '
+      '  T.TIPO_PRODUTO_ID,'
+      '  T.DESCRICAO as TIPO'
+      ''
+      'from PRODUTO P, TIPO_PRODUTO T'
+      ''
+      'where'
+      ''
+      '  (P.TIPO = T.TIPO_PRODUTO_ID)'
+      ''
+      'order by P.DESCRICAO ASC')
+    Left = 608
+    Top = 320
+    object FDqryProdutosPRODUTO_ID: TIntegerField
+      AutoGenerateValue = arAutoInc
+      DisplayLabel = 'ID:'
+      FieldName = 'PRODUTO_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+    end
+    object FDqryProdutosDESCRICAO: TStringField
+      DisplayLabel = 'Descri'#231#227'o:'
+      FieldName = 'DESCRICAO'
+      Size = 40
+    end
+    object FDqryProdutosVALOR: TFMTBCDField
+      DisplayLabel = 'Valor:'
+      FieldName = 'VALOR'
+      currency = True
+      Precision = 18
+      Size = 2
+    end
+    object FDqryProdutosESTOQUE_MINIMO: TIntegerField
+      DisplayLabel = 'Estoque Min.'
+      FieldName = 'ESTOQUE_MINIMO'
+    end
+    object FDqryProdutosTIPO_ID: TIntegerField
+      FieldName = 'TIPO_ID'
+    end
+    object FDqryProdutosTIPO_PRODUTO_ID: TIntegerField
+      FieldName = 'TIPO_PRODUTO_ID'
+      ReadOnly = True
+    end
+    object FDqryProdutosTIPO: TStringField
+      DisplayLabel = 'Tipo:'
+      FieldName = 'TIPO'
+      ReadOnly = True
+      Size = 40
+    end
+    object FDqryProdutosESTOQUE: TIntegerField
+      DisplayLabel = 'Estoque:'
+      FieldName = 'ESTOQUE'
+      Origin = 'ESTOQUE'
+    end
+  end
+  object dsProdutos: TDataSource
+    DataSet = FDqryProdutos
+    Left = 688
+    Top = 320
+  end
+  object FDtcPesquisarProdutos: TFDTransaction
+    Connection = frmPrincipal.FDconexao
+    Left = 480
+    Top = 312
+  end
+end

@@ -1,0 +1,10 @@
+﻿[FDconexao]
+Coordinates=0,0,80,36
+
+[(TMenuItem)]
+Coordinates=192,1,88,36
+
+[]
+Coordinates=10,10,55,58
+Visible=True
+

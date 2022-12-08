@@ -1,0 +1,89 @@
+unit UbackUp;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Buttons,
+  FireDAC.Phys.FBDef, FireDAC.Stan.Intf, FireDAC.Phys, FireDAC.Phys.IBBase,
+  FireDAC.Phys.FB, FireDAC.Stan.Def, FireDAC.VCLUI.Wait, FireDAC.Phys.IBWrapper,
+  FireDAC.UI.Intf, FireDAC.Comp.UI;
+
+type
+  TfrmBackUp = class(TForm)
+    memoBackUp: TMemo;
+    btnBackUp: TSpeedButton;
+    FDPhysFBDriverLink1: TFDPhysFBDriverLink;
+    FDIBBackup1: TFDIBBackup;
+    OpenDialog1: TOpenDialog;
+    btnBanco: TSpeedButton;
+    editBanco: TEdit;
+    editBackup: TEdit;
+    SpeedButton1: TSpeedButton;
+    editHost: TEdit;
+    labelHost: TLabel;
+    labelBanco: TLabel;
+    labelBackupRestore: TLabel;
+    OpenDialog2: TOpenDialog;
+    FDGUIxWaitCursor1: TFDGUIxWaitCursor;
+    procedure btnBackUpClick(Sender: TObject);
+    procedure FDIBBackup1Progress(ASender: TFDPhysDriverService;
+      const AMessage: string);
+    procedure btnBancoClick(Sender: TObject);
+    procedure SpeedButton1Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmBackUp: TfrmBackUp;
+
+implementation
+
+{$R *.dfm}
+
+uses UfrmPrincipal;
+
+procedure TfrmBackUp.btnBackUpClick(Sender: TObject);
+begin
+  try
+    FDIBBackup1.DriverLink := FDPhysFBDriverLink1;
+    FDIBBackup1.UserName := 'sysdba';
+    FDIBBackup1.Password := 'masterkey';
+    FDIBBackup1.Host := 'localhost';
+    FDIBBackup1.Protocol := iplocal;
+    FDIBBackup1.Database := editBanco.Text + '\DADOS_14032022_ZERADO.FDB';
+    FDIBBackup1.BackupFiles.Clear;
+    FDIBBackup1.BackupFiles.Add(editBackup.Text);
+    FDIBBackup1.Backup;
+    ShowMessage('Backup efetuado com sucesso!!');
+  except
+    showmessage('Erro ao efetuar o backup!');
+  end;
+
+
+end;
+
+procedure TfrmBackUp.FDIBBackup1Progress(ASender: TFDPhysDriverService;
+  const AMessage: string);
+begin
+ memoBackUp.Lines.Add(Amessage);
+end;
+
+procedure TfrmBackUp.SpeedButton1Click(Sender: TObject);
+begin
+    OpenDialog2.Execute();
+    editBackup.Text := OpenDialog2.FileName;
+end;
+
+procedure TfrmBackUp.btnBancoClick(Sender: TObject);
+begin
+   if OpenDialog1.Execute() then;
+    editBanco.Text :=  OpenDialog1.FileName;
+end;
+
+
+
+end.

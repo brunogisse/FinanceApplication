@@ -1,0 +1,22 @@
+
+select
+
+S.SUBCATEGORIA_ID, S.DESCRICAO,
+S.CATEGORIA_ID as CATEGORIA_FK, C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, reg.subcategoria_id,
+sum(reg.valor_pago) as Valor_pago
+
+from
+
+SUBCATEGORIA S, CATEGORIA C, registro_de_gastos reg
+
+where
+
+(S.CATEGORIA_ID = C.CATEGORIA_ID) and
+(C.categoria_id = :catid) and
+(reg.data_pagamento between :d1 and :d2) and
+(reg.subcategoria_id = s.subcategoria_id)
+
+group by S.SUBCATEGORIA_ID, S.DESCRICAO,
+CATEGORIA_FK, C.CATEGORIA_ID, CATEGORIA, reg.subcategoria_id
+
+order by s.descricao

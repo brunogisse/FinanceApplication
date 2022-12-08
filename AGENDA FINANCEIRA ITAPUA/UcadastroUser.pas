@@ -1,0 +1,76 @@
+unit UcadastroUser;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
+  FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, Data.DB,
+  FireDAC.Comp.Client, FireDAC.Comp.DataSet, Vcl.StdCtrls, Vcl.Mask, Vcl.DBCtrls,
+  Vcl.Buttons, Vcl.ExtCtrls;
+
+type
+  TfrmCadUser = class(TForm)
+    FDqryUser: TFDQuery;
+    FDtcUser: TFDTransaction;
+    dsUser: TDataSource;
+    FDqryUserLOGIN_ID: TIntegerField;
+    FDqryUserNOME: TStringField;
+    FDqryUserSENHA: TStringField;
+    FDqryUserNIVEL: TIntegerField;
+    Label1: TLabel;
+    DBEdit1: TDBEdit;
+    Label2: TLabel;
+    DBEdit2: TDBEdit;
+    Label3: TLabel;
+    DBEdit3: TDBEdit;
+    navigatorUser: TDBNavigator;
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnSalvarClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormShow(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmCadUser: TfrmCadUser;
+
+implementation
+
+{$R *.dfm}
+
+uses UfrmPrincipal;
+
+procedure TfrmCadUser.btnNovoClick(Sender: TObject);
+begin
+FDqryUser.Insert;
+end;
+
+procedure TfrmCadUser.btnSalvarClick(Sender: TObject);
+begin
+
+FDqryUser.Post;
+try
+  FDtcUser.CommitRetaining;
+except
+  FDtcUser.RollbackRetaining;
+end;
+
+
+end;
+
+procedure TfrmCadUser.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+FDqryUser.Close;
+end;
+
+procedure TfrmCadUser.FormShow(Sender: TObject);
+begin
+ FDqryUser.Open;
+end;
+
+end.

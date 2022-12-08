@@ -1,0 +1,62 @@
+unit UfrmConfirmarParcelamento;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.Buttons;
+
+type
+  TfrmConfirmarParcelamentos = class(TForm)
+    MemoInform: TMemo;
+    Panel1: TPanel;
+    btnConfirmar: TBitBtn;
+    btnCancelar: TBitBtn;
+    procedure btnConfirmarClick(Sender: TObject);
+    procedure btnCancelarClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+  private
+    { Private declarations }
+
+  function ConfirmarParcelamento(confirmar : string) : boolean;
+
+  public
+    { Public declarations }
+  end;
+
+var
+  frmConfirmarParcelamentos: TfrmConfirmarParcelamentos;
+
+implementation
+
+{$R *.dfm}
+
+uses UfrmLancamentos;
+
+function TfrmConfirmarParcelamentos.ConfirmarParcelamento(confirmar : string): Boolean;
+  begin
+
+    if confirmar = 'SIM' then
+       Result := True
+      else
+       Result := False;
+  end;
+
+procedure TfrmConfirmarParcelamentos.FormClose(Sender: TObject;
+  var Action: TCloseAction);
+begin
+  if ConfirmarParcelamento('') = False then
+     Abort;
+end;
+
+procedure TfrmConfirmarParcelamentos.btnCancelarClick(Sender: TObject);
+begin
+ ConfirmarParcelamento('SIM');
+end;
+
+procedure TfrmConfirmarParcelamentos.btnConfirmarClick(Sender: TObject);
+begin
+ ConfirmarParcelamento('');
+end;
+
+end.

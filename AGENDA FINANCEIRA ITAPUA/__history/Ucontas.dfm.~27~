@@ -1,0 +1,187 @@
+object frmContas: TfrmContas
+  Left = 0
+  Top = 0
+  Caption = 'Cadastro de Contas'
+  ClientHeight = 390
+  ClientWidth = 586
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  OnClose = FormClose
+  OnCreate = FormCreate
+  PixelsPerInch = 96
+  TextHeight = 13
+  object gridContas: TDBGrid
+    Left = 0
+    Top = 105
+    Width = 586
+    Height = 285
+    Align = alClient
+    DataSource = dsContas
+    TabOrder = 0
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -11
+    TitleFont.Name = 'Tahoma'
+    TitleFont.Style = []
+    Columns = <
+      item
+        Expanded = False
+        FieldName = 'CONTA_ID'
+        Width = 31
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'DESCRICAO'
+        Width = 509
+        Visible = True
+      end>
+  end
+  object painelTopo: TPanel
+    Left = 0
+    Top = 0
+    Width = 586
+    Height = 105
+    Align = alTop
+    Color = 15790320
+    ParentBackground = False
+    TabOrder = 1
+    object brnSair: TImage
+      Left = 446
+      Top = 11
+      Width = 36
+      Height = 34
+      Cursor = crHandPoint
+      Hint = 'Sair'
+      ParentCustomHint = False
+      ParentShowHint = False
+      Picture.Data = {
+        0954506E67496D61676589504E470D0A1A0A0000000D49484452000000200000
+        0020080300000044A48AC60000000467414D410000B18F0BFC61050000019250
+        4C54450000000000000000000000000000000000000000000000000000000000
+        00514F4F000000000000000000000000F2ECEC00000000000000000000000000
+        00003D3C3C000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000A19D9D0000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000202024E4C4C605E5E1C1C1C120A
+        0B010101141313999595F0EAEAF1EBEB5755555E363BC2707A2B191B3B3939CA
+        C5C5FE929FF88F9B834C520805050807077B7878EBE5E5636161DA7D8944272A
+        272626B7B3B3D7D1D1A35E66160D0E050505CBC6C6EC8894553135A6A2A2AD64
+        6CD5CFCF5F5C5C504E4EABA7A7101010E986922E1A1DEFE9E9AE646DB367707C
+        79792F1B1D706D6DA19D9D373535251517CD7680040202724147F38C981F1213
+        B1666F4C2C2FE1818D0B0607874E55AA626B140B0CE43ADEC30000004474524E
+        530095FDED990C97EAFCEEDC48034114AC7ADE12B201E3AA9C1F07CD73982BFE
+        E64BA74FE092FA38C1131B4CD3A5E8FBF6BEE12C19AC89550ADF80F930C90266
+        F14DD7D11122448E3800000001624B47440088051D4800000009704859730000
+        0EE900000EE9010E33421C0000000774494D4507E4080401120F179A28D70000
+        01784944415478DA7DD2694B02411807F0FF5FA9C4CA8CCA4ECD4C848C083A08
+        BAE8FAB27E81DE855DBE08BA29952C538AEE0C0BAD34A21D9D755BD7F57931EC
+        ECFC66E6796686E40A0C11268BF293961AE34A6C1754B0566A49DD307F76BE35
+        D0C0029AF484B9DD2F0DB490EF401B0BA6A04199FE822EF243058E87C8E77F00
+        D87807F43323FF768498437969098056A6E1E5A3145B59A5714E1D30530168E7
+        15FC777A80236A009D89121810F584284A67103123703CC855E2B76E06124630
+        C868A91BE94E71155746A0E5E0F3E1FAAD1EF07BD3BCA0272040DF8D276FD5C0
+        F03AE3C048B1310A09DCA718CF6B20707C7FAE3FC92A507D17628BE1ACB50A34
+        0F3DC1F55B3BC91218EB16C5D6017EBB0B4FF13A4097431D502E538209F9EEB8
+        FF7CA281692654A0C5CBB10A467B3143716E3AF0CA43154CD209CC8A1B544056
+        6E110BEE55DE2FE0ED6901E679A6806412D521A6CC5868C722B969068039DA80
+        E5B039C002298A3507CAE5372BC95EA6CC01B0A43CE30D03F80308D997DB4DD2
+        7E000000002574455874646174653A63726561746500323032302D30382D3034
+        5430313A31383A31352B30303A303040515E780000002574455874646174653A
+        6D6F6469667900323032302D30382D30345430313A31383A31352B30303A3030
+        310CE6C40000001974455874536F667477617265007777772E696E6B73636170
+        652E6F72679BEE3C1A0000000049454E44AE426082}
+      ShowHint = True
+    end
+    object Label1: TLabel
+      Left = 11
+      Top = 61
+      Width = 46
+      Height = 13
+      Caption = 'Descri'#231#227'o'
+    end
+    object btnNovo: TImage
+      Left = 39
+      Top = 16
+      Width = 40
+      Height = 30
+    end
+    object btnCancelar: TImage
+      Left = 85
+      Top = 16
+      Width = 40
+      Height = 30
+    end
+    object btnSalvar: TImage
+      Left = 131
+      Top = 16
+      Width = 40
+      Height = 30
+    end
+    object BtnAlterar: TImage
+      Left = 177
+      Top = 16
+      Width = 40
+      Height = 30
+    end
+    object btnExcluir: TImage
+      Left = 223
+      Top = 16
+      Width = 40
+      Height = 30
+    end
+    object DBEdit1: TDBEdit
+      Left = 11
+      Top = 76
+      Width = 542
+      Height = 21
+      DataField = 'DESCRICAO'
+      DataSource = dsContas
+      TabOrder = 0
+    end
+  end
+  object FDtcContas: TFDTransaction
+    Connection = frmPrincipal.FDconexao
+    Left = 360
+    Top = 240
+  end
+  object FDqryContas: TFDQuery
+    Active = True
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcContas
+    UpdateTransaction = FDtcContas
+    UpdateOptions.AssignedValues = [uvGeneratorName]
+    UpdateOptions.GeneratorName = 'GEN_CONTAS_ID'
+    UpdateOptions.UpdateTableName = 'CONTAS'
+    UpdateOptions.KeyFields = 'CONTA_ID'
+    UpdateOptions.AutoIncFields = 'CONTA_ID'
+    SQL.Strings = (
+      'select * from CONTAS')
+    Left = 424
+    Top = 240
+    object FDqryContasCONTA_ID: TFDAutoIncField
+      DisplayLabel = 'ID'
+      FieldName = 'CONTA_ID'
+      Origin = 'CONTA_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      IdentityInsert = True
+    end
+    object FDqryContasDESCRICAO: TStringField
+      DisplayLabel = 'Descri'#231#227'o'
+      FieldName = 'DESCRICAO'
+      Origin = 'DESCRICAO'
+      Size = 50
+    end
+  end
+  object dsContas: TDataSource
+    DataSet = FDqryContas
+    Left = 416
+    Top = 304
+  end
+end

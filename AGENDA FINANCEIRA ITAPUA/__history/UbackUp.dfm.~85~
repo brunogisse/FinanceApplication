@@ -1,0 +1,119 @@
+object frmBackUp: TfrmBackUp
+  Left = 0
+  Top = 0
+  Caption = 'frmBackUp'
+  ClientHeight = 190
+  ClientWidth = 528
+  Color = clBtnFace
+  Font.Charset = ANSI_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Segoe UI Semibold'
+  Font.Style = [fsBold]
+  OldCreateOrder = False
+  Position = poDesktopCenter
+  PixelsPerInch = 96
+  TextHeight = 13
+  object btnBackUp: TSpeedButton
+    Left = 16
+    Top = 113
+    Width = 161
+    Height = 34
+    Caption = 'Fazer backup'
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Segoe UI Semibold'
+    Font.Style = [fsBold]
+    ParentFont = False
+    OnClick = btnBackUpClick
+  end
+  object btnBanco: TSpeedButton
+    Left = 472
+    Top = 34
+    Width = 35
+    Height = 21
+    Caption = '...'
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Segoe UI Semibold'
+    Font.Style = [fsBold]
+    ParentFont = False
+    OnClick = btnBancoClick
+  end
+  object SpeedButton1: TSpeedButton
+    Left = 472
+    Top = 74
+    Width = 35
+    Height = 21
+    Caption = '...'
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Segoe UI Semibold'
+    Font.Style = [fsBold]
+    ParentFont = False
+    OnClick = SpeedButton1Click
+  end
+  object labelBanco: TLabel
+    Left = 16
+    Top = 18
+    Width = 31
+    Height = 13
+    Caption = 'Banco'
+  end
+  object labelBackupRestore: TLabel
+    Left = 16
+    Top = 59
+    Width = 87
+    Height = 13
+    Caption = 'Backup / Restore'
+  end
+  object editBanco: TEdit
+    Left = 16
+    Top = 34
+    Width = 450
+    Height = 21
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Segoe UI Semibold'
+    Font.Style = [fsBold]
+    ParentFont = False
+    TabOrder = 0
+  end
+  object editBackup: TEdit
+    Left = 16
+    Top = 74
+    Width = 450
+    Height = 21
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Segoe UI Semibold'
+    Font.Style = [fsBold]
+    ParentFont = False
+    TabOrder = 1
+  end
+  object FDPhysFBDriverLink1: TFDPhysFBDriverLink
+    VendorLib = 'C:\Program Files\Firebird\Firebird_2_5\bin\fbclient.dll'
+    Left = 296
+    Top = 120
+  end
+  object FDIBBackup1: TFDIBBackup
+    DriverLink = FDPhysFBDriverLink1
+    Verbose = True
+    Left = 240
+    Top = 128
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 424
+    Top = 128
+  end
+  object FDGUIxWaitCursor1: TFDGUIxWaitCursor
+    Provider = 'Forms'
+    Left = 368
+    Top = 120
+  end
+end
