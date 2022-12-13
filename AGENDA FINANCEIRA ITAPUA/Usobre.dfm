@@ -19,7 +19,7 @@ object frmSobre: TfrmSobre
     Top = 24
     Width = 160
     Height = 13
-    Caption = 'Agenda Financeira JB - v1.0'
+    Caption = 'Agenda Financeira JB - v1.1'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11

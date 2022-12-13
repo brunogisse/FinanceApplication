@@ -1096,6 +1096,7 @@
               Height = 21
               TabOrder = 8
               Text = '(TODOS)'
+              OnClick = cbPagoClick
               Items.Strings = (
                 '(TODOS)'
                 'Pago'
@@ -1169,6 +1170,7 @@
               Height = 21
               CharCase = ecUpperCase
               TabOrder = 3
+              OnExit = editPesqLancamentoExit
               OnKeyPress = editPesqLancamentoKeyPress
             end
             object rbStatus: TRadioButton
@@ -1494,7 +1496,6 @@
     Top = 328
   end
   object FDqryLcto: TFDQuery
-    Active = True
     Connection = frmPrincipal.FDconexao
     Transaction = FDtcLcto
     UpdateOptions.AssignedValues = [uvGeneratorName, uvCheckReadOnly, uvAutoCommitUpdates]

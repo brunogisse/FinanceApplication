@@ -230,6 +230,8 @@ type
     procedure btnBuscarCategoriaClick(Sender: TObject);
     procedure rbChequeCompensado1Click(Sender: TObject);
     procedure rbChequeCompensadoClick(Sender: TObject);
+    procedure editPesqLancamentoExit(Sender: TObject);
+    procedure cbPagoClick(Sender: TObject);
   private
 
     procedure refreshBanco;
@@ -246,6 +248,7 @@ type
     procedure salvarRegistrosEMLOTE;
     procedure AlterarNFlancada(tipo : string);
     procedure CalcularValorNFentrada;
+    procedure allowPrint(status : String);
   //  function FormatarMoeda(valor : string) : string;
 
 
@@ -270,6 +273,14 @@ implementation
 uses UfrmPrincipal, UfrmPesqDespesas, UConta, UfrmConfirmarParcelamento,
   UpesquisaCategoria;
 
+
+procedure TfrmLancamento.allowPrint(status : String);
+begin
+   if status = 'print' then
+       btnRelatorio.Enabled := True;
+   if status = 'notPrint' then
+       btnRelatorio.Enabled := False;
+end;
 
 procedure tfrmLancamento.CalcularValorNFentrada;
 begin
@@ -639,6 +650,11 @@ begin
     btnPagarEmLote.Visible := False;
 end;
 
+procedure TfrmLancamento.cbPagoClick(Sender: TObject);
+begin
+   allowPrint('notPrint');
+end;
+
 procedure TfrmLancamento.novoRegistro;
 begin
   PageControlLancamentos.TabIndex := 0;
@@ -810,7 +826,18 @@ begin
 end;
 
 procedure TfrmLancamento.btnPesqLancamentoClick(Sender: TObject);
+var paymentCondition : String;
 begin
+    allowPrint('print');
+    if cbPago.Text = 'Pago' then
+       paymentCondition := ' and (REG.PAGO = ''1'') ';
+    if cbPago.Text = 'Não Pago' then
+       paymentCondition := ' and (REG.PAGO = ''0'') ';
+    if cbPago.Text = '(TODOS)' then
+       paymentCondition := '';
+
+
+
   if rbDescricao.Checked = true then
    begin
    with FDqryLcto do
@@ -826,7 +853,14 @@ begin
              +' from '
              +' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
              +' where '
-             +'(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and (REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and (DATA_VENCIMENTO between :INICIO and :FIM) and REG.DESCRICAO like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
+             +'(REG.CATEGORIA_ID = C.CATEGORIA_ID) and '
+             +'(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and '
+             +'(REG.CONTA_ID = CT.CONTA_ID) '
+             + paymentCondition + 'and '
+             +'(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) '
+             +' and (DATA_VENCIMENTO between :INICIO and :FIM) and '
+             +' REG.DESCRICAO like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
+       // ParamByName('PAYMENTCONDITION').AsInteger := paymentCondition;
         ParamByName('INICIO').AsDate := dataChequeInicio.Date;
         ParamByName('FIM').AsDate := dataChequeFim.Date;
         Open;
@@ -932,6 +966,8 @@ end;
 
 procedure TfrmLancamento.btnPesquisaPrevistoClick(Sender: TObject);
 begin
+
+     allowPrint('print');
 
     if cboxIntervaloData.Checked = True then
       begin
@@ -1200,6 +1236,14 @@ if cbCadastroNF.Text <> '' then
      ShowMessage('NF já cadastrada para a empresa: ' + FDqryValidarNF['DESCRICAO']);
      FDqryValidarNF.Close;
    end;
+end;
+
+procedure TfrmLancamento.editPesqLancamentoExit(Sender: TObject);
+begin
+  if editPesqLancamento.Text <> '' then
+        btnPesquisaPrevisto.Enabled := False;
+  if editPesqLancamento.Text = '' then
+        btnPesquisaPrevisto.Enabled := True;
 end;
 
 procedure TfrmLancamento.editPesqLancamentoKeyPress(Sender: TObject;

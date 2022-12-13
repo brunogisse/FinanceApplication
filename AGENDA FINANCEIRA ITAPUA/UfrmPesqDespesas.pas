@@ -113,6 +113,7 @@ begin
    frmLancamento.editRELATORIOpesqDS.Text := FDqrySubdespesa['DESCRICAO'];
    frmLancamento.CategoriaPesquisa := FDqrySubdespesa['CATEGORIA'];
    frmLancamento.editRELATORIOpesqDS.Enabled := False;
+   if FDqrySubdespesa['VALOR_MAXIMO'] <> null then
    frmLancamento.valorMAXIMOsubdespesa := FDqrySubdespesa['VALOR_MAXIMO'];
    end
   else  if setarEditFoco = 'cadastro' then
