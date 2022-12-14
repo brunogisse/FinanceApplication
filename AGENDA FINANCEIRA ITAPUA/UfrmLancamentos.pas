@@ -160,7 +160,6 @@ type
     frxPDFExport1: TfrxPDFExport;
     FDqryCadastroNF: TFDQuery;
     dsCadastroNF: TDataSource;
-    cbCadastroNF: TDBLookupComboBox;
     FDqryCadastroNFCADASTRO_NF_ID: TIntegerField;
     FDqryCadastroNFFORNECEDOR_ID: TIntegerField;
     FDqryCadastroNFDATA: TDateField;
@@ -187,6 +186,7 @@ type
     dataChequeInicio: TDateTimePicker;
     dataChequeFim: TDateTimePicker;
     btnPesqLancamento: TBitBtn;
+    editNF: TDBEdit;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -284,10 +284,10 @@ end;
 
 procedure tfrmLancamento.CalcularValorNFentrada;
 begin
-    if cbCadastroNF.Text <> '' then
-     editValorPrev.Text := FloatToStr(FDqryCadastroNF['VALOR_NF']);
-      if (FDqryLcto['VALOR_PREVISTO'] > 0) and (cbCadastroNF.Text = '') then
-         editValorPrev.Text := FloatToStr(FDqryLcto['VALOR_PREVISTO']);
+ //   if cbCadastroNF.Text <> '' then
+ //    editValorPrev.Text := FloatToStr(FDqryCadastroNF['VALOR_NF']);
+  //    if (FDqryLcto['VALOR_PREVISTO'] > 0) and (cbCadastroNF.Text = '') then
+ //        editValorPrev.Text := FloatToStr(FDqryLcto['VALOR_PREVISTO']);
 end;
 
 
@@ -549,8 +549,9 @@ begin
   cmbContas.KeyValue:= FDqryContas['CONTA_ID'];
   FDqryFormaPgto.Locate('FORMA_DE_PAGAMENTO_ID',FDqryLcto['FORMA_DE_PAGAMENTO_FK'],[]);
   cmbFormaPgto.KeyValue := FDqryFormaPgto['FORMA_DE_PAGAMENTO_ID'];
-  if FDqryCadastroNF.Locate('CADASTRO_NF_ID',FDqryLcto['ENTRADA_ID'],[]) then
-  cbCadastroNF.KeyValue := FDqryCadastroNF['CADASTRO_NF_ID'];
+  //if FDqryCadastroNF.Locate('CADASTRO_NF_ID',FDqryLcto['ENTRADA_ID'],[]) then
+  //cbCadastroNF.KeyValue := FDqryCadastroNF['CADASTRO_NF_ID'];
+
   configurarEnables(1);
 end;
 
@@ -590,13 +591,14 @@ end;
 
 procedure TfrmLancamento.cbCadastroNFExit(Sender: TObject);
 begin
-if cbCadastroNF.Text <> '' then
+{if cbCadastroNF.Text <> '' then
    Begin
      FDqryValidarNF.Open;
      if FDqryValidarNF.Locate('NOTA_FISCAL',cbCadastroNF.Text,[]) then
      ShowMessage('NF já cadastrada para a empresa: ' + FDqryValidarNF['DESCRICAO']);
      FDqryValidarNF.Close;
    end;
+   }
 end;
 
 procedure TfrmLancamento.cboxConfirmarPgtoClick(Sender: TObject);
@@ -683,14 +685,14 @@ if   situacaoCampo <> 'vazio' then
        // FDqryLcto['CHEQUE'] := 0;
         if editChCompensado.Text = '' then
          FDqryLcto['CHEQUE_COMPENSADO'] := 'N';
-      if cbCadastroNF.Text <> '' then
-       begin
-        FDqryLcto['NOTA_FISCAL'] := FDqryCadastroNF['NF'];
-        FDqryLcto['ENTRADA_ID'] := FDqryCadastroNF['CADASTRO_NF_ID'];
-        FDqryCadastroNF.Edit;
-        FDqryCadastroNF['NF_LANCADA'] := 'SIM';
-        FDqryCadastroNF.Post;
-       end;
+    //  if cbCadastroNF.Text <> '' then
+      // begin
+       // FDqryLcto['NOTA_FISCAL'] := FDqryCadastroNF['NF'];
+       // FDqryLcto['ENTRADA_ID'] := FDqryCadastroNF['CADASTRO_NF_ID'];
+       // FDqryCadastroNF.Edit;
+      //  FDqryCadastroNF['NF_LANCADA'] := 'SIM';
+      //  FDqryCadastroNF.Post;
+      // end;
      if cboxConfirmarPgto.Checked = true then
       begin
         FDqryLcto['DATA_PAGAMENTO'] := dataPago.Date;
@@ -868,6 +870,8 @@ begin
 
   if rbNF.Checked = true then
    begin
+         dataInicio := DateToStr(dataChequeInicio.Date);
+         dataChequeInicio.Date := StrToDate('01/01/2018');
       with FDqryLcto do
       begin
         Close;
@@ -881,10 +885,19 @@ begin
              +' from '
              +' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
              +' where '
-             +'(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and (REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and (DATA_CADASTRO between :INICIO and :FIM) and REG.NOTA_FISCAL like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
+             +'(REG.CATEGORIA_ID = C.CATEGORIA_ID) and '
+             +'(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and '
+             +'(REG.CONTA_ID = CT.CONTA_ID) and '
+             +'(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and '
+             //+'(DATA_CADASTRO between :INICIO and :FIM) and REG.NOTA_FISCAL like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
+             +'(DATA_CADASTRO between :INICIO and :FIM) and '
+             +'REG.NOTA_FISCAL = :NF order by REG.DATA_VENCIMENTO');
+        ParamByName('NF').AsInteger := StrToInt(editPesqLancamento.Text);
         ParamByName('INICIO').AsDate := dataChequeInicio.Date;
         ParamByName('FIM').AsDate := dataChequeFim.Date;
         Open;
+
+        dataChequeInicio.Date := StrToDate(dataInicio);
       end;
    end;
 
@@ -1061,8 +1074,8 @@ end;
 
 procedure TfrmLancamento.btnAnularNFClick(Sender: TObject);
 begin
-cbCadastroNF.KeyValue := -1;
-CalcularValorNFentrada;
+//cbCadastroNF.KeyValue := -1;
+//CalcularValorNFentrada;
 end;
 
 procedure TfrmLancamento.btnBuscarCategoriaClick(Sender: TObject);
@@ -1237,13 +1250,13 @@ end;
 
 procedure TfrmLancamento.editNFExit(Sender: TObject);
 begin
-if cbCadastroNF.Text <> '' then
+{if cbCadastroNF.Text <> '' then
    Begin
      FDqryValidarNF.Open;
      if FDqryValidarNF.Locate('NOTA_FISCAL',cbCadastroNF.ListField,[]) then
      ShowMessage('NF já cadastrada para a empresa: ' + FDqryValidarNF['DESCRICAO']);
      FDqryValidarNF.Close;
-   end;
+   end;  }
 end;
 
 procedure TfrmLancamento.editPesqLancamentoExit(Sender: TObject);

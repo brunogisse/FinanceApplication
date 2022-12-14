@@ -363,9 +363,9 @@
         object labelNotaFiscal: TLabel
           Left = 669
           Top = 9
-          Width = 240
+          Width = 19
           Height = 13
-          Caption = 'NF/C'#243'd. Entrada [Ctrl+D anula a escolha]'
+          Caption = 'NF:'
         end
         object cmbContas: TDBLookupComboBox
           AlignWithMargins = True
@@ -534,27 +534,13 @@
             OnClick = cboxConfirmarPgtoClick
           end
         end
-        object cbCadastroNF: TDBLookupComboBox
-          Left = 669
-          Top = 24
-          Width = 242
-          Height = 21
-          Color = 15395562
-          KeyField = 'CADASTRO_NF_ID'
-          ListField = 'NF;CADASTRO_NF_ID'
-          ListSource = dsCadastroNF
-          NullValueKey = 16452
-          TabOrder = 5
-          OnClick = cbCadastroNFClick
-          OnExit = cbCadastroNFExit
-        end
         object editValorPrev: TEdit
           Left = 5
           Top = 66
           Width = 105
           Height = 21
           Color = 15395562
-          TabOrder = 6
+          TabOrder = 5
           Text = '0'
           OnChange = Edit1Change
         end
@@ -570,8 +556,19 @@
           Font.Name = 'Verdana'
           Font.Style = []
           ParentFont = False
-          TabOrder = 7
+          TabOrder = 6
+          Visible = False
           OnClick = btnAnularNFClick
+        end
+        object editNF: TDBEdit
+          Left = 669
+          Top = 24
+          Width = 242
+          Height = 21
+          Color = 15395562
+          DataField = 'NOTA_FISCAL'
+          DataSource = dsLcto
+          TabOrder = 7
         end
       end
     end
