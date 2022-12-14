@@ -494,6 +494,7 @@
               Top = 31
               Width = 66
               Height = 21
+              CharCase = ecUpperCase
               Color = 15395562
               DataField = 'CHEQUE_COMPENSADO'
               DataSource = dsLcto

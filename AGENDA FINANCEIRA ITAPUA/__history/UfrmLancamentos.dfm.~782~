@@ -1096,6 +1096,7 @@
               Height = 21
               TabOrder = 8
               Text = '(TODOS)'
+              OnClick = cbPagoClick
               Items.Strings = (
                 '(TODOS)'
                 'Pago'
@@ -1169,6 +1170,7 @@
               Height = 21
               CharCase = ecUpperCase
               TabOrder = 3
+              OnExit = editPesqLancamentoExit
               OnKeyPress = editPesqLancamentoKeyPress
             end
             object rbStatus: TRadioButton
@@ -1551,7 +1553,6 @@
         Name = 'FIM'
         DataType = ftDate
         ParamType = ptInput
-        Value = Null
       end>
     object FDqryLctoGASTOS_ID: TFDAutoIncField
       FieldName = 'GASTOS_ID'
@@ -1930,7 +1931,7 @@
     PrintOptions.Printer = 'Default'
     PrintOptions.PrintOnSheet = 0
     ReportOptions.CreateDate = 44051.776201782400000000
-    ReportOptions.LastChange = 44124.415848888900000000
+    ReportOptions.LastChange = 44838.375609212960000000
     ScriptLanguage = 'PascalScript'
     ScriptText.Strings = (
       ''
@@ -1956,11 +1957,11 @@
       end
       item
         Name = 'dtInicio'
-        Value = ''
+        Value = Null
       end
       item
         Name = 'dtFim'
-        Value = ''
+        Value = Null
       end
       item
         Name = ' Valores SubDesp'
@@ -1968,7 +1969,7 @@
       end
       item
         Name = 'New Variable1'
-        Value = ''
+        Value = Null
       end>
     Style = <>
     object Data: TfrxDataPage
@@ -1976,8 +1977,9 @@
       Width = 1000.000000000000000000
     end
     object Page1: TfrxReportPage
-      PaperWidth = 210.000000000000000000
-      PaperHeight = 290.000000000000000000
+      Orientation = poLandscape
+      PaperWidth = 290.000000000000000000
+      PaperHeight = 210.000000000000000000
       PaperSize = 256
       LeftMargin = 10.000000000000000000
       RightMargin = 10.000000000000000000
@@ -1988,14 +1990,14 @@
       object ReportTitle1: TfrxReportTitle
         FillType = ftBrush
         Frame.Typ = []
-        Height = 188.000000000000000000
+        Height = 127.763760000000000000
         Top = 18.897650000000000000
-        Width = 718.110700000000000000
+        Width = 1020.473100000000000000
         object Memo5: TfrxMemoView
           AllowVectorExport = True
           Left = 5.000000000000000000
-          Top = 159.897650000000000000
-          Width = 324.488250000000000000
+          Top = 89.897650000000000000
+          Width = 320.708720000000000000
           Height = 26.338590000000000000
           Font.Charset = ANSI_CHARSET
           Font.Color = clBlack
@@ -2011,7 +2013,7 @@
           IndexTag = 1
           AllowVectorExport = True
           Left = 663.000000000000000000
-          Top = 168.897650000000000000
+          Top = 98.897650000000000000
           Width = 79.370130000000000000
           Height = 18.897650000000000000
           Frame.Typ = []
@@ -2020,7 +2022,7 @@
         end
         object Picture1: TfrxPictureView
           AllowVectorExport = True
-          Width = 718.472480000000000000
+          Width = 404.771490000000000000
           Height = 154.220470000000000000
           Frame.Typ = []
           Picture.Data = {
@@ -4182,7 +4184,7 @@
         object Memo17: TfrxMemoView
           AllowVectorExport = True
           Left = 533.000000000000000000
-          Top = 168.102350000000000000
+          Top = 98.102350000000000000
           Width = 128.504020000000000000
           Height = 18.897650000000000000
           Frame.Typ = []
@@ -4193,9 +4195,9 @@
       object MasterData1: TfrxMasterData
         FillType = ftBrush
         Frame.Typ = []
-        Height = 87.559060000000000000
-        Top = 374.173470000000000000
-        Width = 718.110700000000000000
+        Height = 14.789829230000000000
+        Top = 298.582870000000000000
+        Width = 1020.473100000000000000
         OnBeforePrint = 'MasterData1OnBeforePrint'
         DataSet = dtsReportLancamento
         DataSetName = 'frxLan'#231'amentos'
@@ -4203,9 +4205,9 @@
         object frxLanamentosLANCAMENTO: TfrxMemoView
           IndexTag = 1
           AllowVectorExport = True
-          Left = 0.769230770000000000
-          Top = 1.856120770000000000
-          Width = 488.066933850000000000
+          Left = 304.391370770000000000
+          Top = 1.056634620000000000
+          Width = 404.917273850000000000
           Height = 11.338590000000000000
           DataField = 'LANCAMENTO'
           DataSet = dtsReportLancamento
@@ -4214,39 +4216,19 @@
           Font.Color = clBlack
           Font.Height = -9
           Font.Name = 'Verdana'
-          Font.Style = [fsBold]
+          Font.Style = []
           Frame.Typ = []
           Memo.UTF8W = (
             '[frxLan'#231'amentos."LANCAMENTO"]')
           ParentFont = False
         end
-        object frxLanamentosSUBCATEGORIA: TfrxMemoView
-          IndexTag = 1
-          AllowVectorExport = True
-          Left = 0.230769230000000000
-          Top = 66.455735380000000000
-          Width = 295.882190000000000000
-          Height = 17.677180000000000000
-          DataField = 'SUBCATEGORIA'
-          DataSet = dtsReportLancamento
-          DataSetName = 'frxLan'#231'amentos'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = [fsBold]
-          Frame.Typ = []
-          Memo.UTF8W = (
-            '[frxLan'#231'amentos."SUBCATEGORIA"]')
-          ParentFont = False
-        end
         object frxLanamentosVALOR_PREVISTO: TfrxMemoView
           IndexTag = 1
           AllowVectorExport = True
-          Left = 493.307692310000000000
-          Top = 65.224966150000000000
-          Width = 112.252010000000000000
-          Height = 16.456710000000000000
+          Left = 62.338922310000000000
+          Top = 0.039580000000000000
+          Width = 82.015770000000000000
+          Height = 12.677180000000000000
           DataField = 'VALOR_PREVISTO'
           DataSet = dtsReportLancamento
           DataSetName = 'frxLan'#231'amentos'
@@ -4254,7 +4236,7 @@
           Font.Color = clBlack
           Font.Height = -9
           Font.Name = 'Verdana'
-          Font.Style = [fsBold]
+          Font.Style = []
           Frame.Typ = []
           Memo.UTF8W = (
             '[frxLan'#231'amentos."VALOR_PREVISTO"]')
@@ -4263,10 +4245,10 @@
         object frxLanamentosVALOR_PAGO: TfrxMemoView
           IndexTag = 1
           AllowVectorExport = True
-          Left = 606.076923080000000000
-          Top = 64.177656150000000000
-          Width = 113.913420000000000000
-          Height = 18.897650000000000000
+          Left = 220.344393080000000000
+          Top = 1.346630000000000000
+          Width = 83.677180000000000000
+          Height = 11.338590000000000000
           DataField = 'VALOR_PAGO'
           DataSet = dtsReportLancamento
           DataSetName = 'frxLan'#231'amentos'
@@ -4274,86 +4256,18 @@
           Font.Color = clBlack
           Font.Height = -9
           Font.Name = 'Verdana'
-          Font.Style = [fsBold]
+          Font.Style = []
           Frame.Typ = []
           Memo.UTF8W = (
             '[frxLan'#231'amentos."VALOR_PAGO"]')
           ParentFont = False
         end
-        object frxLanamentosCATEGORIA: TfrxMemoView
-          IndexTag = 1
-          AllowVectorExport = True
-          Left = 296.538461540000000000
-          Top = 65.615384620000000000
-          Width = 195.764070000000000000
-          Height = 18.677180000000000000
-          DataField = 'CATEGORIA'
-          DataSet = dtsReportLancamento
-          DataSetName = 'frxLan'#231'amentos'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = [fsBold]
-          Frame.Typ = []
-          Memo.UTF8W = (
-            '[frxLan'#231'amentos."CATEGORIA"]')
-          ParentFont = False
-        end
-        object Memo11: TfrxMemoView
-          AllowVectorExport = True
-          Left = 297.538461540000000000
-          Top = 53.615384620000000000
-          Width = 63.000000000000000000
-          Height = 14.000000000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = []
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'Despesa:')
-          ParentFont = False
-        end
-        object Memo12: TfrxMemoView
-          AllowVectorExport = True
-          Left = 0.230769230000000000
-          Top = 53.384615380000000000
-          Width = 62.488250000000000000
-          Height = 12.897650000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = []
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'SubDespesa')
-          ParentFont = False
-        end
-        object Memo13: TfrxMemoView
-          AllowVectorExport = True
-          Left = 492.769230770000000000
-          Top = 30.769230770000000000
-          Width = 46.488250000000000000
-          Height = 11.897650000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = []
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'Previsto:')
-          ParentFont = False
-        end
         object frxLanamentosDATA_VENCIMENTO: TfrxMemoView
           IndexTag = 1
           AllowVectorExport = True
-          Left = 492.307692310000000000
-          Top = 49.153846150000000000
-          Width = 79.370130000000000000
+          Left = -0.251677690000000000
+          Top = 0.307050000000000000
+          Width = 68.031540000000000000
           Height = 12.897650000000000000
           DataField = 'DATA_VENCIMENTO'
           DataSet = dtsReportLancamento
@@ -4368,28 +4282,11 @@
             '[frxLan'#231'amentos."DATA_VENCIMENTO"]')
           ParentFont = False
         end
-        object Memo14: TfrxMemoView
-          AllowVectorExport = True
-          Left = 605.307692310000000000
-          Top = 30.846153850000000000
-          Width = 50.488250000000000000
-          Height = 12.897650000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = []
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'Pago em:')
-          ParentFont = False
-        end
         object frxLanamentosDATA_PAGAMENTO: TfrxMemoView
           IndexTag = 1
           AllowVectorExport = True
-          Left = 605.076923080000000000
-          Top = 47.153846150000000000
-          Width = 85.370130000000000000
+          Left = 146.753793080000000000
+          Width = 70.252010000000000000
           Height = 13.897650000000000000
           DataField = 'DATA_PAGAMENTO'
           DataSet = dtsReportLancamento
@@ -4404,11 +4301,31 @@
             '[frxLan'#231'amentos."DATA_PAGAMENTO"]')
           ParentFont = False
         end
+        object frxLanamentosCHEQUE: TfrxMemoView
+          IndexTag = 1
+          AllowVectorExport = True
+          Left = 778.251677690000000000
+          Top = 2.077897690000000000
+          Width = 93.579658460000000000
+          Height = 11.338590000000000000
+          DataField = 'CHEQUE'
+          DataSet = dtsReportLancamento
+          DataSetName = 'frxLan'#231'amentos'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -9
+          Font.Name = 'Verdana'
+          Font.Style = []
+          Frame.Typ = []
+          Memo.UTF8W = (
+            '[frxLan'#231'amentos."CHEQUE"]')
+          ParentFont = False
+        end
         object frxLanamentosNOTA_FISCAL: TfrxMemoView
           IndexTag = 1
           AllowVectorExport = True
-          Left = 21.800000000000000000
-          Top = 20.050340000000000000
+          Left = 712.630180000000000000
+          Top = 2.039580000000000000
           Width = 59.929190000000000000
           Height = 11.338590000000000000
           DataField = 'NOTA_FISCAL'
@@ -4424,28 +4341,12 @@
             '[frxLan'#231'amentos."NOTA_FISCAL"]')
           ParentFont = False
         end
-        object Memo18: TfrxMemoView
-          AllowVectorExport = True
-          Left = 1.230769230000000000
-          Top = 20.619570770000000000
-          Width = 21.708720000000000000
-          Height = 11.338590000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = []
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'NF:')
-          ParentFont = False
-        end
         object frxLanamentosCONTA: TfrxMemoView
           IndexTag = 1
           AllowVectorExport = True
-          Left = 529.769230770000000000
-          Top = 1.108795380000000000
-          Width = 185.330217690000000000
+          Left = 874.583180000000000000
+          Top = 0.039580000000000000
+          Width = 139.975857690000000000
           Height = 15.118120000000000000
           DataField = 'CONTA'
           DataSet = dtsReportLancamento
@@ -4454,78 +4355,19 @@
           Font.Color = clBlack
           Font.Height = -9
           Font.Name = 'Verdana'
-          Font.Style = [fsBold]
+          Font.Style = []
           Frame.Typ = []
           Memo.UTF8W = (
             '[frxLan'#231'amentos."CONTA"]')
           ParentFont = False
-        end
-        object Memo19: TfrxMemoView
-          AllowVectorExport = True
-          Left = 490.769230770000000000
-          Top = 1.288068460000000000
-          Width = 35.390728460000000000
-          Height = 15.118120000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = []
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'Conta:')
-          ParentFont = False
-        end
-        object frxLanamentosCHEQUE: TfrxMemoView
-          IndexTag = 1
-          AllowVectorExport = True
-          Left = 129.692307690000000000
-          Top = 35.672683840000000000
-          Width = 157.831668460000000000
-          Height = 11.338590000000000000
-          DataField = 'CHEQUE'
-          DataSet = dtsReportLancamento
-          DataSetName = 'frxLan'#231'amentos'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = [fsBold]
-          Frame.Typ = []
-          Memo.UTF8W = (
-            '[frxLan'#231'amentos."CHEQUE"]')
-          ParentFont = False
-        end
-        object Memo20: TfrxMemoView
-          AllowVectorExport = True
-          Top = 36.211145380000000000
-          Width = 132.283550000000000000
-          Height = 11.338590000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -9
-          Font.Name = 'Verdana'
-          Font.Style = []
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'Cheque | Documento - N'#186':')
-          ParentFont = False
-        end
-        object Line1: TfrxLineView
-          AllowVectorExport = True
-          Left = 0.779530000000000000
-          Top = 86.267780000000000000
-          Width = 718.110700000000000000
-          Color = clBlack
-          Frame.Typ = [ftTop]
         end
       end
       object PageFooter1: TfrxPageFooter
         FillType = ftBrush
         Frame.Typ = []
         Height = 25.897650000000000000
-        Top = 680.315400000000000000
-        Width = 718.110700000000000000
+        Top = 517.795610000000000000
+        Width = 1020.473100000000000000
         object Memo1: TfrxMemoView
           AllowVectorExport = True
           Left = 622.520100000000000000
@@ -4541,61 +4383,14 @@
       object Header1: TfrxHeader
         FillType = ftBrush
         Frame.Typ = []
-        Height = 82.677180000000000000
-        Top = 268.346630000000000000
-        Width = 718.110700000000000000
-        object Memo2: TfrxMemoView
-          AllowVectorExport = True
-          Top = 46.936920000000000000
-          Width = 489.370130000000000000
-          Height = 18.897650000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -13
-          Font.Name = 'Verdana'
-          Font.Style = [fsBold]
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'Lan'#231'amentos:')
-          ParentFont = False
-        end
-        object Memo3: TfrxMemoView
-          AllowVectorExport = True
-          Left = 488.000000000000000000
-          Top = 46.936920000000000000
-          Width = 118.031540000000000000
-          Height = 18.897650000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -13
-          Font.Name = 'Verdana'
-          Font.Style = [fsBold]
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'Previsto:')
-          ParentFont = False
-        end
-        object Memo4: TfrxMemoView
-          AllowVectorExport = True
-          Left = 606.000000000000000000
-          Top = 46.936920000000000000
-          Width = 108.252010000000000000
-          Height = 18.897650000000000000
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clBlack
-          Font.Height = -13
-          Font.Name = 'Verdana'
-          Font.Style = [fsBold]
-          Frame.Typ = []
-          Memo.UTF8W = (
-            'Pago:')
-          ParentFont = False
-        end
+        Height = 67.559060000000000000
+        Top = 207.874150000000000000
+        Width = 1020.473100000000000000
         object dtInicio: TfrxMemoView
           IndexTag = 1
           AllowVectorExport = True
           Left = 157.000000000000000000
-          Top = 5.653369999999996000
+          Top = 5.653370000000000000
           Width = 86.929190000000000000
           Height = 15.118120000000000000
           Font.Charset = ANSI_CHARSET
@@ -4659,29 +4454,125 @@
         end
         object Line2: TfrxLineView
           AllowVectorExport = True
-          Top = 71.811070000000000000
-          Width = 721.890230000000000000
+          Top = 64.811070000000000000
+          Width = 1020.473100000000000000
           Color = clBlack
           Frame.Typ = [ftTop]
+        end
+        object Memo13: TfrxMemoView
+          AllowVectorExport = True
+          Left = 4.133890000000000000
+          Top = 47.692950000000000000
+          Width = 46.488250000000000000
+          Height = 11.897650000000000000
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -9
+          Font.Name = 'Verdana'
+          Font.Style = [fsBold]
+          Frame.Typ = []
+          Memo.UTF8W = (
+            'Previsto:')
+          ParentFont = False
+        end
+        object Memo23: TfrxMemoView
+          AllowVectorExport = True
+          Left = 302.401670000000000000
+          Top = 47.692950000000000000
+          Width = 61.606370000000000000
+          Height = 11.897650000000000000
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -9
+          Font.Name = 'Verdana'
+          Font.Style = [fsBold]
+          Frame.Typ = []
+          Memo.UTF8W = (
+            'Despesa:')
+          ParentFont = False
+        end
+        object Memo18: TfrxMemoView
+          AllowVectorExport = True
+          Left = 708.409710000000000000
+          Top = 47.692950000000000000
+          Width = 21.708720000000000000
+          Height = 11.338590000000000000
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -9
+          Font.Name = 'Verdana'
+          Font.Style = [fsBold]
+          Frame.Typ = []
+          Memo.UTF8W = (
+            'NF:')
+          ParentFont = False
+        end
+        object Memo14: TfrxMemoView
+          AllowVectorExport = True
+          Left = 151.756030000000000000
+          Top = 47.692950000000000000
+          Width = 50.488250000000000000
+          Height = 12.897650000000000000
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -9
+          Font.Name = 'Verdana'
+          Font.Style = [fsBold]
+          Frame.Typ = []
+          Memo.UTF8W = (
+            'Pago em:')
+          ParentFont = False
+        end
+        object Memo20: TfrxMemoView
+          AllowVectorExport = True
+          Left = 769.842920000000000000
+          Top = 47.692950000000000000
+          Width = 90.708720000000000000
+          Height = 15.118120000000000000
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -9
+          Font.Name = 'Verdana'
+          Font.Style = [fsBold]
+          Frame.Typ = []
+          Memo.UTF8W = (
+            'Cheq | Doc - N'#186':')
+          ParentFont = False
+        end
+        object Memo19: TfrxMemoView
+          AllowVectorExport = True
+          Left = 873.362710000000000000
+          Top = 47.692950000000000000
+          Width = 35.390728460000000000
+          Height = 15.118120000000000000
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -9
+          Font.Name = 'Verdana'
+          Font.Style = [fsBold]
+          Frame.Typ = []
+          Memo.UTF8W = (
+            'Conta:')
+          ParentFont = False
         end
       end
       object ReportSummary1: TfrxReportSummary
         FillType = ftBrush
         Frame.Typ = []
-        Height = 136.133890000000000000
-        Top = 521.575140000000000000
-        Width = 718.110700000000000000
+        Height = 120.574830000000000000
+        Top = 374.173470000000000000
+        Width = 1020.473100000000000000
         object Memo7: TfrxMemoView
           AllowVectorExport = True
           Left = 154.000000000000000000
           Top = 58.000000000000000000
           Width = 255.488250000000000000
-          Height = 73.913420000000000000
+          Height = 62.574830000000000000
           DisplayFormat.FormatStr = 'R$ %2.2n'
           DisplayFormat.Kind = fkNumeric
           Font.Charset = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -19
+          Font.Height = -16
           Font.Name = 'Verdana'
           Font.Style = [fsBold]
           Frame.Typ = []
@@ -4726,12 +4617,12 @@
           Left = 443.000000000000000000
           Top = 58.000000000000000000
           Width = 258.488250000000000000
-          Height = 73.913420000000000000
+          Height = 62.574830000000000000
           DisplayFormat.FormatStr = 'R$ %2.2n'
           DisplayFormat.Kind = fkNumeric
           Font.Charset = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -19
+          Font.Height = -16
           Font.Name = 'Verdana'
           Font.Style = [fsBold]
           Frame.Typ = []

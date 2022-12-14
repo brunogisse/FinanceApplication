@@ -826,7 +826,8 @@ begin
 end;
 
 procedure TfrmLancamento.btnPesqLancamentoClick(Sender: TObject);
-var paymentCondition : String;
+var paymentCondition, dataInicio : String;
+
 begin
     allowPrint('print');
     if cbPago.Text = 'Pago' then
@@ -835,8 +836,6 @@ begin
        paymentCondition := ' and (REG.PAGO = ''0'') ';
     if cbPago.Text = '(TODOS)' then
        paymentCondition := '';
-
-
 
   if rbDescricao.Checked = true then
    begin
@@ -860,7 +859,6 @@ begin
              +'(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) '
              +' and (DATA_VENCIMENTO between :INICIO and :FIM) and '
              +' REG.DESCRICAO like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
-       // ParamByName('PAYMENTCONDITION').AsInteger := paymentCondition;
         ParamByName('INICIO').AsDate := dataChequeInicio.Date;
         ParamByName('FIM').AsDate := dataChequeFim.Date;
         Open;
@@ -894,6 +892,8 @@ begin
    if rbChequeDocumento.Checked = True then
 
      begin
+         dataInicio := DateToStr(dataChequeInicio.Date);
+         dataChequeInicio.Date := StrToDate('01/01/2018');
       with FDqryLcto do
       begin
         Close;
@@ -907,10 +907,18 @@ begin
              +' from '
              +' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
              +' where '
-             +'(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and (REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and REG.CHEQUE like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
-        //ParamByName('INICIO').AsDate := dataChequeInicio.Date;
-      //  ParamByName('FIM').AsDate := dataChequeFim.Date;
+             +'(REG.CATEGORIA_ID = C.CATEGORIA_ID) and '
+             +'(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and '
+             +'(REG.CONTA_ID = CT.CONTA_ID) and '
+             +'(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and '
+             +'(DATA_VENCIMENTO between :INICIO and :FIM) and '
+             +'REG.CHEQUE like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
+        ParamByName('INICIO').AsDate := dataChequeInicio.Date;
+        ParamByName('FIM').AsDate := dataChequeFim.Date;
         Open;
+
+        dataChequeInicio.Date := StrToDate(dataInicio);
+
       end;
      end;
 
@@ -1303,7 +1311,7 @@ begin
      dataPesquisaPrevistoFim.Date := Now;
      refreshBanco;
      PageControlLancamentos.TabIndex := 1;
-     cbPago.Text := 'Não Pago';
+     cbPago.Text := '(TODOS)';
      btnPesquisaPrevisto.Click;
      cboxIntervaloData.Checked := True;
    end;

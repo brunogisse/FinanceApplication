@@ -139,7 +139,7 @@
       'Server=localhost'
       
         'Database=C:\PROGRAMAS\V OFICIAL\AGENDA FINANCEIRA ITAPUA\Win32\D' +
-        'ebug\Dados\DADOS.FDB'
+        'ebug\Dados\DADOS_14032022_ZERADO.FDB'
       'DriverID=FB')
     UpdateOptions.AssignedValues = [uvGeneratorName]
     LoginPrompt = False
@@ -208,8 +208,8 @@
   end
   object dsVencimentos: TDataSource
     DataSet = FDqryVencimentos
-    Left = 120
-    Top = 160
+    Left = 136
+    Top = 168
   end
   object MainMenu1: TMainMenu
     Left = 568
@@ -238,6 +238,10 @@
       object rel: TMenuItem
         Caption = 'Relat'#243'rios'
         OnClick = relClick
+      end
+      object menuBackup: TMenuItem
+        Caption = 'BackUp'
+        OnClick = menuBackupClick
       end
     end
     object Sobre: TMenuItem
