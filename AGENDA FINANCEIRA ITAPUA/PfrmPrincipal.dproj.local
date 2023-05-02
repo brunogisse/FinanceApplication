@@ -89,5 +89,57 @@
   </Transactions>
 	<ActiveMobileDevice>
 		<NoProfile iOSSimulator="iPhone5"/>
-	</ActiveMobileDevice>
+	</ActiveMobileDevice>  <ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="ModelSupport_PfrmPrincipal"/>
+    <File Path="ModelSupport_PfrmPrincipal\default.txaPackage"/>
+    <File Path="ModelSupport_PfrmPrincipal\default.txvpck"/>
+    <File Path="UbackUp.pas"/>
+    <File Path="UbackUp.dfm"/>
+    <File Path="UcadastroUser.pas"/>
+    <File Path="UcadastroUser.dfm"/>
+    <File Path="UcategoriaGeral.pas"/>
+    <File Path="UcategoriaGeral.dfm"/>
+    <File Path="UConta.pas"/>
+    <File Path="UConta.dfm"/>
+    <File Path="uFonteParaRealCategoria.pas"/>
+    <File Path="uFonteParaRealCategoria.dfm"/>
+    <File Path="UformaPgto.pas"/>
+    <File Path="UformaPgto.dfm"/>
+    <File Path="UfrmConfirmarParcelamento.pas"/>
+    <File Path="UfrmConfirmarParcelamento.dfm"/>
+    <File Path="UfrmDestino.pas"/>
+    <File Path="UfrmDestino.dfm"/>
+    <File Path="UfrmEntradaNF.pas"/>
+    <File Path="UfrmEntradaNF.dfm"/>
+    <File Path="UfrmFornecedores.pas"/>
+    <File Path="UfrmFornecedores.dfm"/>
+    <File Path="UfrmItensEntrada.pas"/>
+    <File Path="UfrmItensEntrada.dfm"/>
+    <File Path="UfrmItensEstoque.pas"/>
+    <File Path="UfrmItensEstoque.dfm"/>
+    <File Path="UfrmLancamentos.pas"/>
+    <File Path="UfrmLancamentos.dfm"/>
+    <File Path="UfrmMovProdut.pas"/>
+    <File Path="UfrmMovProdut.dfm"/>
+    <File Path="UfrmPesqDespesas.pas"/>
+    <File Path="UfrmPesqDespesas.dfm"/>
+    <File Path="UfrmPesquisaProduto.pas"/>
+    <File Path="UfrmPesquisaProduto.dfm"/>
+    <File Path="UfrmPrincipal.pas"/>
+    <File Path="UfrmPrincipal.dfm"/>
+    <File Path="UfrmProduto.pas"/>
+    <File Path="UfrmProduto.dfm"/>
+    <File Path="UfrmRelatorioSaida.pas"/>
+    <File Path="UfrmRelatorioSaida.dfm"/>
+    <File Path="UfrmSaidaProdutos.pas"/>
+    <File Path="UfrmSaidaProdutos.dfm"/>
+    <File Path="Ulogin.pas"/>
+    <File Path="Ulogin.dfm"/>
+    <File Path="UpesquisaCategoria.pas"/>
+    <File Path="UpesquisaCategoria.dfm"/>
+    <File Path="Upropriedade.pas"/>
+    <File Path="Upropriedade.dfm"/>
+    <File Path="Usobre.pas"/>
+    <File Path="Usobre.dfm"/>
+  </ProjectSortOrder>
 </BorlandProject>

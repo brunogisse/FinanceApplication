@@ -191,7 +191,7 @@ begin
            + ' (REG.CONTA_ID = CT.CONTA_ID) and '
            + ' (REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and '
            + ' (reg.data_vencimento between :INICIO and :FIM) and '
-           + ' (reg.pago = 0) and '
+           + ' (reg.pago = 0) and '   //não pago
            + ' (reg.subcategoria_id = :subid) '
 
            + ' order by REG.DATA_VENCIMENTO');
@@ -228,6 +228,7 @@ begin
            + ' (REG.CONTA_ID = CT.CONTA_ID) and '
            + ' (REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and '
            + ' (reg.data_pagamento between :INICIO and :FIM) and '
+           + ' (reg.pago = 1) and '     // pago
            + ' (reg.subcategoria_id = :subid) '
 
            + ' order by REG.DATA_VENCIMENTO');

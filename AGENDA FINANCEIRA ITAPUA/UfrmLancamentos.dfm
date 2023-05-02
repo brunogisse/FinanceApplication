@@ -304,7 +304,7 @@
     Top = 65
     Width = 1281
     Height = 224
-    ActivePage = Aba2
+    ActivePage = Aba1
     Align = alTop
     TabOrder = 1
     object Aba1: TTabSheet
