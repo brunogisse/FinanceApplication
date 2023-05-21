@@ -1,0 +1,63 @@
+program PfrmPrincipal;
+
+uses
+  Vcl.Forms,
+  UfrmPrincipal in 'UfrmPrincipal.pas' {frmPrincipal},
+  UcategoriaGeral in 'UcategoriaGeral.pas' {frmCategoriaGeral},
+  Vcl.Themes,
+  Vcl.Styles,
+  Ulogin in 'Ulogin.pas' {frmLogin},
+  UConta in 'UConta.pas' {frmConta},
+  UformaPgto in 'UformaPgto.pas' {frmFormapgto},
+  UfrmLancamentos in 'UfrmLancamentos.pas' {frmLancamento},
+  UfrmPesqDespesas in 'UfrmPesqDespesas.pas' {frmPesqDespSub},
+  Usobre in 'Usobre.pas' {frmSobre},
+  UcadastroUser in 'UcadastroUser.pas' {frmCadUser},
+  Upropriedade in 'Upropriedade.pas' {frmPropriedade},
+  UfrmDestino in 'UfrmDestino.pas' {frmDestino},
+  UfrmFornecedores in 'UfrmFornecedores.pas' {frmFornecedor},
+  UfrmProduto in 'UfrmProduto.pas' {frmProdutosTipos},
+  UfrmEntradaNF in 'UfrmEntradaNF.pas' {frmEntradaNF},
+  UfrmItensEntrada in 'UfrmItensEntrada.pas' {frmEntradaItens},
+  UfrmPesquisaProduto in 'UfrmPesquisaProduto.pas' {frmPesquisarProdutos},
+  UfrmMovProdut in 'UfrmMovProdut.pas' {frmMoviProduto},
+  UfrmItensEstoque in 'UfrmItensEstoque.pas' {frmItensEstoque},
+  UfrmSaidaProdutos in 'UfrmSaidaProdutos.pas' {frmSaidaProdutos},
+  UfrmConfirmarParcelamento in 'UfrmConfirmarParcelamento.pas' {frmConfirmarParcelamentos},
+  UfrmRelatorioSaida in 'UfrmRelatorioSaida.pas' {frmRelatorioSaidas},
+  UpesquisaCategoria in 'UpesquisaCategoria.pas' {frmPesquisaCategoria},
+  uFonteParaRealCategoria in 'uFonteParaRealCategoria.pas' {frmFonteParaRelCategoria},
+  UbackUp in 'UbackUp.pas' {frmBackUp};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  TStyleManager.TrySetStyle('Luna');
+  Application.CreateForm(TfrmPrincipal, frmPrincipal);
+  Application.CreateForm(TfrmCategoriaGeral, frmCategoriaGeral);
+  Application.CreateForm(TfrmLogin, frmLogin);
+  Application.CreateForm(TfrmConta, frmConta);
+  Application.CreateForm(TfrmFormapgto, frmFormapgto);
+  Application.CreateForm(TfrmLancamento, frmLancamento);
+  Application.CreateForm(TfrmPesqDespSub, frmPesqDespSub);
+  Application.CreateForm(TfrmSobre, frmSobre);
+  Application.CreateForm(TfrmCadUser, frmCadUser);
+  Application.CreateForm(TfrmPropriedade, frmPropriedade);
+  Application.CreateForm(TfrmDestino, frmDestino);
+  Application.CreateForm(TfrmFornecedor, frmFornecedor);
+  Application.CreateForm(TfrmProdutosTipos, frmProdutosTipos);
+  Application.CreateForm(TfrmEntradaNF, frmEntradaNF);
+  Application.CreateForm(TfrmEntradaItens, frmEntradaItens);
+  Application.CreateForm(TfrmPesquisarProdutos, frmPesquisarProdutos);
+  Application.CreateForm(TfrmMoviProduto, frmMoviProduto);
+  Application.CreateForm(TfrmItensEstoque, frmItensEstoque);
+  Application.CreateForm(TfrmSaidaProdutos, frmSaidaProdutos);
+  Application.CreateForm(TfrmConfirmarParcelamentos, frmConfirmarParcelamentos);
+  Application.CreateForm(TfrmRelatorioSaidas, frmRelatorioSaidas);
+  Application.CreateForm(TfrmPesquisaCategoria, frmPesquisaCategoria);
+  Application.CreateForm(TfrmFonteParaRelCategoria, frmFonteParaRelCategoria);
+  Application.CreateForm(TfrmBackUp, frmBackUp);
+  Application.Run;
+end.

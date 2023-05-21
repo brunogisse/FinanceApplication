@@ -58,7 +58,7 @@
         <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
         <SanitizedProjectName>PfrmPrincipal</SanitizedProjectName>
-        <Custom_Styles>&quot;Cyan Dusk|VCLSTYLE|$(BDSCOMMONDIR)\Styles\CyanDusk.vsf&quot;</Custom_Styles>
+        <Custom_Styles>Carbon|VCLSTYLE|$(BDSCOMMONDIR)\Styles\Carbon.vsf</Custom_Styles>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_UsePackage>DBXSqliteDriver;RESTComponents;DataSnapServerMidas;DBXDb2Driver;DBXInterBaseDriver;vclactnband;vclFireDAC;emsclientfiredac;DataSnapFireDAC;svnui;tethering;FireDACADSDriver;DBXMSSQLDriver;DatasnapConnectorsFreePascal;FireDACMSSQLDriver;vcltouch;vcldb;bindcompfmx;svn;DBXOracleDriver;inetdb;FmxTeeUI;emsedge;FireDACIBDriver;fmx;fmxdae;vclib;FireDACDBXDriver;dbexpress;IndyCore;vclx;dsnap;DataSnapCommon;emsclient;FireDACCommon;RESTBackendComponents;DataSnapConnectors;VCLRESTComponents;soapserver;vclie;bindengine;DBXMySQLDriver;FireDACOracleDriver;CloudService;FireDACMySQLDriver;DBXFirebirdDriver;FireDACCommonODBC;FireDACCommonDriver;DataSnapClient;inet;bindcompdbx;IndyIPCommon;vcl;DBXSybaseASEDriver;IndyIPServer;IndySystem;FireDACDb2Driver;dsnapcon;FireDACMSAccDriver;fmxFireDAC;FireDACInfxDriver;vclimg;TeeDB;FireDAC;emshosting;FireDACSqliteDriver;FireDACPgDriver;ibmonitor;FireDACASADriver;DBXOdbcDriver;FireDACTDataDriver;FMXTee;soaprtl;DbxCommonDriver;ibxpress;Tee;DataSnapServer;xmlrtl;soapmidas;DataSnapNativeClient;fmxobj;vclwinx;ibxbindings;rtl;emsserverresource;DbxClientDriver;FireDACDSDriver;DBXSybaseASADriver;CustomIPTransport;vcldsnap;bindcomp;appanalytics;DBXInformixDriver;IndyIPClient;bindcompvcl;TeeUI;dbxcds;VclSmp;adortl;FireDACODBCDriver;DataSnapIndy10ServerTransport;dsnapxml;DataSnapProviderClient;dbrtl;inetdbxpress;FireDACMongoDBDriver;IndyProtocols;fmxase;$(DCC_UsePackage)</DCC_UsePackage>
@@ -221,13 +221,18 @@
                     <Source Name="MainSource">PfrmPrincipal.dpr</Source>
                 </Source>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k260.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp260.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclDataSnapNativeServer260.bpl">Embarcadero DBExpress DataSnap Native Server Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k260.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp260.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">
+                <DeployFile LocalName="ModelSupport_PfrmPrincipal\default.txaPackage" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="ModelSupport_PfrmPrincipal\default.txvpck" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Win32">
                         <RemoteDir>.\</RemoteDir>
@@ -237,12 +242,6 @@
                 <DeployFile LocalName="Win32\Debug\PfrmPrincipal.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>PfrmPrincipal.exe</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="ModelSupport_PfrmPrincipal\default.txaPackage" Configuration="Debug" Class="ProjectFile">
-                    <Platform Name="Win32">
-                        <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

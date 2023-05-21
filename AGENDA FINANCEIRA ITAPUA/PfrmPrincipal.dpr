@@ -34,7 +34,7 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  TStyleManager.TrySetStyle('Cyan Dusk');
+  TStyleManager.TrySetStyle('Carbon');
   Application.CreateForm(TfrmPrincipal, frmPrincipal);
   Application.CreateForm(TfrmCategoriaGeral, frmCategoriaGeral);
   Application.CreateForm(TfrmLogin, frmLogin);
