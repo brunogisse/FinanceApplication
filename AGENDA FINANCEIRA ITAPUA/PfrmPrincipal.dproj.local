@@ -89,7 +89,8 @@
   </Transactions>
 	<ActiveMobileDevice>
 		<NoProfile iOSSimulator="iPhone5"/>
-	</ActiveMobileDevice>  <ProjectSortOrder AutoSort="0" SortType="0">
+	</ActiveMobileDevice>
+	<ProjectSortOrder AutoSort="0" SortType="0">
     <File Path="ModelSupport_PfrmPrincipal"/>
     <File Path="ModelSupport_PfrmPrincipal\default.txaPackage"/>
     <File Path="ModelSupport_PfrmPrincipal\default.txvpck"/>

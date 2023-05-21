@@ -187,6 +187,15 @@ type
     dataChequeFim: TDateTimePicker;
     btnPesqLancamento: TBitBtn;
     editNF: TDBEdit;
+    rbValor: TRadioButton;
+    editValorInicial: TEdit;
+    editValorFinal: TEdit;
+    gbValores: TGroupBox;
+    rbValorPrevisto: TRadioButton;
+    rbValorPago: TRadioButton;
+    reportConsultaLancamento: TfrxReport;
+    dtsReportConsultaLancamento: TfrxDBDataset;
+    btnImprimirConsulta: TBitBtn;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -216,9 +225,6 @@ type
     procedure editPesqLancamentoKeyPress(Sender: TObject; var Key: Char);
     procedure btnPesqContaMaisClick(Sender: TObject);
     procedure btnPesqContaMenosClick(Sender: TObject);
-    procedure rbDescricaoClick(Sender: TObject);
-    procedure rbNFClick(Sender: TObject);
-    procedure rbChequeDocumentoClick(Sender: TObject);
     procedure cbCadastroNFClick(Sender: TObject);
     procedure Edit1Change(Sender: TObject);
     procedure cbCadastroNFExit(Sender: TObject);
@@ -228,10 +234,11 @@ type
     procedure editDesricaoKeyPress(Sender: TObject; var Key: Char);
     procedure btnAnularNFClick(Sender: TObject);
     procedure btnBuscarCategoriaClick(Sender: TObject);
-    procedure rbChequeCompensado1Click(Sender: TObject);
-    procedure rbChequeCompensadoClick(Sender: TObject);
     procedure editPesqLancamentoExit(Sender: TObject);
     procedure cbPagoClick(Sender: TObject);
+    procedure rbValorClick(Sender: TObject);
+    procedure rbValorPrevistoClick(Sender: TObject);
+    procedure btnImprimirConsultaClick(Sender: TObject);
   private
 
     procedure refreshBanco;
@@ -421,6 +428,7 @@ var totalPREVISTO, totalPAGO, saldoPREVISTO, saldoPAGO : Currency;
     saldoPREVISTO := 0;
     saldoPAGO :=0;
     FDqryLcto.DisableControls;
+
        try
          while not FDqryLcto.Eof do begin
            totalPREVISTO := totalPREVISTO + FDqryLcto.FieldByName('VALOR_PREVISTO').AsCurrency;
@@ -457,7 +465,8 @@ end;
 
 
 procedure TfrmLancamento.btnRelatorioClick(Sender: TObject);
-var caminhoRelatorio : string;
+var
+   caminhoRelatorio : string;
 begin
   caminhoRelatorio := ExtractFilePath(Application.ExeName);
   reportLancamento.LoadFromFile(caminhoRelatorio +'Lançamento.fr3');
@@ -743,40 +752,32 @@ begin
 end;
 
 
-procedure TfrmLancamento.rbChequeCompensado1Click(Sender: TObject);
-begin
- editPesqLancamento.Clear;
- editPesqLancamento.SetFocus;
-end;
-
-procedure TfrmLancamento.rbChequeCompensadoClick(Sender: TObject);
-begin
- editPesqLancamento.Clear;
- editPesqLancamento.SetFocus;
-end;
-
-procedure TfrmLancamento.rbChequeDocumentoClick(Sender: TObject);
-begin
- editPesqLancamento.Clear;
- editPesqLancamento.SetFocus;
-end;
-
-procedure TfrmLancamento.rbDescricaoClick(Sender: TObject);
-begin
- editPesqLancamento.Clear;
- editPesqLancamento.SetFocus;
-end;
-
-procedure TfrmLancamento.rbNFClick(Sender: TObject);
-begin
- editPesqLancamento.Clear;
- editPesqLancamento.SetFocus;
-end;
-
 procedure TfrmLancamento.rbStatusClick(Sender: TObject);
 begin
- editPesqLancamento.Clear;
- editPesqLancamento.SetFocus;
+
+   if gbValores.Visible = True then
+      gbValores.Visible := False;
+
+      editPesqLancamento.Clear;
+      editPesqLancamento.SetFocus;
+end;
+
+procedure TfrmLancamento.rbValorClick(Sender: TObject);
+begin
+
+   gbValores.Visible := True;
+   editValorInicial.Clear;
+   editValorFinal.Clear;
+   editValorInicial.SetFocus;
+   rbValorPrevisto.Checked := True;
+
+   editPesqLancamento.Clear;
+
+end;
+
+procedure TfrmLancamento.rbValorPrevistoClick(Sender: TObject);
+begin
+   editValorInicial.SetFocus;
 end;
 
 procedure TfrmLancamento.refreshBanco;
@@ -935,6 +936,68 @@ begin
       end;
      end;
 
+    if (rbValor.Checked = True) and (rbValorPrevisto.Checked = True) then
+
+        begin
+            with FDqryLcto do
+               begin
+                 Close;
+                 SQL.Clear;
+                 SQL.Add('select '
+                      +'REG.GASTOS_ID, REG.CATEGORIA_ID as CATEGORIA_FK, REG.SUBCATEGORIA_ID as SUBCATEGORIA_FK, REG.CONTA_ID as CONTA_FK, REG.FORMA_DE_PAGAMENTO_ID as FORMA_DE_PAGAMENTO_FK,'
+                      +'REG.DESCRICAO as LANCAMENTO, REG.VALOR_PAGO, REG.VALOR_PREVISTO, REG.NOTA_FISCAL, REG.CHEQUE,'
+                      +'REG.CHEQUE_COMPENSADO, REG.DATA_VENCIMENTO, REG.DATA_PAGAMENTO, REG.PAGO, REG.ENTRADA_ID, SITUACAO_STATUS,'
+                      +'C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, S.SUBCATEGORIA_ID, S.DESCRICAO as SUBCATEGORIA, CT.CONTA_ID, CT.DESCRICAO as CONTA, FP.FORMA_DE_PAGAMENTO_ID, FP.DESCRICAO as FORMA_DE_PAGAMENTO,'
+                      +'REG.OBS, REG.DATA_CADASTRO'
+                      +' from '
+                      +' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
+                      +' where '
+                      +'(REG.CATEGORIA_ID = C.CATEGORIA_ID) and '
+                      +'(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and '
+                      +'(REG.CONTA_ID = CT.CONTA_ID) and '
+                      +'(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and '
+                      +'(DATA_VENCIMENTO between :INICIO and :FIM) and '
+                      +'(REG.VALOR_PREVISTO between :VALORINICIO and :VALORFIM) '
+                      + 'order by REG.DATA_VENCIMENTO');
+                 ParamByName('INICIO').AsDate := dataChequeInicio.Date;
+                 ParamByName('FIM').AsDate := dataChequeFim.Date;
+                 ParamByName('VALORINICIO').AsFloat := StrToFloat(editValorInicial.Text);
+                 ParamByName('VALORFIM').AsFloat := StrToFloat(editValorFinal.Text);
+                 Open;
+               end;
+        end;
+
+   if (rbValor.Checked = True) and (rbValorPago.Checked = True) then
+
+        begin
+            with FDqryLcto do
+               begin
+                 Close;
+                 SQL.Clear;
+                 SQL.Add('select '
+                      +'REG.GASTOS_ID, REG.CATEGORIA_ID as CATEGORIA_FK, REG.SUBCATEGORIA_ID as SUBCATEGORIA_FK, REG.CONTA_ID as CONTA_FK, REG.FORMA_DE_PAGAMENTO_ID as FORMA_DE_PAGAMENTO_FK,'
+                      +'REG.DESCRICAO as LANCAMENTO, REG.VALOR_PAGO, REG.VALOR_PREVISTO, REG.NOTA_FISCAL, REG.CHEQUE,'
+                      +'REG.CHEQUE_COMPENSADO, REG.DATA_VENCIMENTO, REG.DATA_PAGAMENTO, REG.PAGO, REG.ENTRADA_ID, SITUACAO_STATUS,'
+                      +'C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, S.SUBCATEGORIA_ID, S.DESCRICAO as SUBCATEGORIA, CT.CONTA_ID, CT.DESCRICAO as CONTA, FP.FORMA_DE_PAGAMENTO_ID, FP.DESCRICAO as FORMA_DE_PAGAMENTO,'
+                      +'REG.OBS, REG.DATA_CADASTRO'
+                      +' from '
+                      +' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
+                      +' where '
+                      +'(REG.CATEGORIA_ID = C.CATEGORIA_ID) and '
+                      +'(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and '
+                      +'(REG.CONTA_ID = CT.CONTA_ID) and '
+                      +'(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and '
+                      +'(DATA_PAGAMENTO between :INICIO and :FIM) and '
+                      +'(REG.VALOR_PAGO between :VALORINICIO and :VALORFIM) '
+                      + 'order by REG.DATA_VENCIMENTO');
+                 ParamByName('INICIO').AsDate := dataChequeInicio.Date;
+                 ParamByName('FIM').AsDate := dataChequeFim.Date;
+                 ParamByName('VALORINICIO').AsFloat := StrToFloat(editValorInicial.Text);
+                 ParamByName('VALORFIM').AsFloat := StrToFloat(editValorFinal.Text);
+                 Open;
+               end;
+        end;
+
 
    if rbStatus.Checked = True then
 
@@ -982,6 +1045,8 @@ begin
         Open;
       end;
    end;
+
+   Totais;
 
 end;
 
@@ -1197,6 +1262,17 @@ var
                   refreshBanco;
           end;
   end;
+
+procedure TfrmLancamento.btnImprimirConsultaClick(Sender: TObject);
+var
+   caminhoRelatorio : string;
+begin
+  caminhoRelatorio := ExtractFilePath(Application.ExeName);
+  reportLancamento.LoadFromFile(caminhoRelatorio +'LancamentoConsulta.fr3');
+  reportLancamento.Variables['dtInicio'] := QuotedStr(DateToStr(dataChequeInicio.Date));
+  reportLancamento.Variables['dtFim'] := QuotedStr(DateToStr(dataChequeFim.Date));
+  reportLancamento.ShowReport();
+end;
 
 procedure TfrmLancamento.btnNovoClick(Sender: TObject);
 begin
