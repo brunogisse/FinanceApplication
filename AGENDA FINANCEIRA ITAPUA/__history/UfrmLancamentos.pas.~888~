@@ -195,6 +195,7 @@ type
     rbValorPago: TRadioButton;
     reportConsultaLancamento: TfrxReport;
     dtsReportConsultaLancamento: TfrxDBDataset;
+    btnImprimirConsulta: TBitBtn;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -237,6 +238,7 @@ type
     procedure cbPagoClick(Sender: TObject);
     procedure rbValorClick(Sender: TObject);
     procedure rbValorPrevistoClick(Sender: TObject);
+    procedure btnImprimirConsultaClick(Sender: TObject);
   private
 
     procedure refreshBanco;
@@ -463,7 +465,8 @@ end;
 
 
 procedure TfrmLancamento.btnRelatorioClick(Sender: TObject);
-var caminhoRelatorio : string;
+var
+   caminhoRelatorio : string;
 begin
   caminhoRelatorio := ExtractFilePath(Application.ExeName);
   reportLancamento.LoadFromFile(caminhoRelatorio +'Lançamento.fr3');
@@ -1260,6 +1263,17 @@ var
           end;
   end;
 
+procedure TfrmLancamento.btnImprimirConsultaClick(Sender: TObject);
+var
+   caminhoRelatorio : string;
+begin
+  caminhoRelatorio := ExtractFilePath(Application.ExeName);
+  reportLancamento.LoadFromFile(caminhoRelatorio +'LancamentoConsulta.fr3');
+  reportLancamento.Variables['dtInicio'] := QuotedStr(DateToStr(dataChequeInicio.Date));
+  reportLancamento.Variables['dtFim'] := QuotedStr(DateToStr(dataChequeFim.Date));
+  reportLancamento.ShowReport();
+end;
+
 procedure TfrmLancamento.btnNovoClick(Sender: TObject);
 begin
 novoRegistro;
@@ -1374,28 +1388,28 @@ procedure TfrmLancamento.FormShow(Sender: TObject);
 begin
    if frmPrincipal.FDqryVencimentos.RecordCount = 0 then
    begin
-     PageControlLancamentos.TabIndex := 0;
-     atribuirDataDoDia;
-     dataPesquisaPrevistoFim.Date := Now;
-     refreshBanco;
-     Totais;
+      PageControlLancamentos.TabIndex := 0;
+      atribuirDataDoDia;
+      dataPesquisaPrevistoFim.Date := Now;
+      refreshBanco;
+      Totais;
    end
-  else
+   else
    begin
-     atribuirDataDoDia;
-     dataPesquisaPrevistoFim.Date := Now;
-     refreshBanco;
-     PageControlLancamentos.TabIndex := 1;
-     cbPago.Text := '(TODOS)';
-     btnPesquisaPrevisto.Click;
-     cboxIntervaloData.Checked := True;
+      atribuirDataDoDia;
+      dataPesquisaPrevistoFim.Date := Now;
+      refreshBanco;
+      PageControlLancamentos.TabIndex := 1;
+      cbPago.Text := '(TODOS)';
+      btnPesquisaPrevisto.Click;
+      cboxIntervaloData.Checked := True;
    end;
-  FDqryLcto.First;
-  configurarEnables(0);
-  dataChequeInicio.Date:= Now;
-  dataChequeFim.Date:= Now;
-    // editValorPrev.Text := FormatarMoeda(editValorPrev.Text);
-   //  editValorPrev.SelStart := Length(editValorPrev.Text);
+   FDqryLcto.First;
+   configurarEnables(0);
+   dataChequeInicio.Date := Now;
+   dataChequeFim.Date := Now;
+   // editValorPrev.Text := FormatarMoeda(editValorPrev.Text);
+   // editValorPrev.SelStart := Length(editValorPrev.Text);
 end;
 
 procedure TfrmLancamento.gridLancamentoCellClick(Column: TColumn);
@@ -1409,8 +1423,8 @@ begin
 
 if FDqryLcto['PAGO'] = 1 then
   begin
-   gridLancamento.Canvas.Font.Color :=  clHighlight; // $00E8210B;  //$00FF0080; //;
-   gridLancamento.Canvas.Brush.Color := $00EAEAEA;
+   gridLancamento.Canvas.Font.Color :=  clWhite;//clHighlight; // $00E8210B;  //$00FF0080; //;
+   gridLancamento.Canvas.Brush.Color := clGray; //$00EAEAEA;
   end;
 
       if FDqryLcto['SITUACAO_STATUS'] = 'AGUARDANDO' then

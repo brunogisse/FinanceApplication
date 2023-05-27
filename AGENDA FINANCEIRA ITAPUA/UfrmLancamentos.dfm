@@ -717,6 +717,14 @@
             Width = 214
             Height = 13
             Caption = 'Valor M'#225'ximo desta Subdespesa:'
+            Color = clBtnFace
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Verdana'
+            Font.Style = [fsBold]
+            ParentColor = False
+            ParentFont = False
           end
           object labelGBlegendaPago: TLabel
             Left = 8

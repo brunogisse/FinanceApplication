@@ -1410,8 +1410,6 @@ begin
    dataChequeFim.Date := Now;
    // editValorPrev.Text := FormatarMoeda(editValorPrev.Text);
    // editValorPrev.SelStart := Length(editValorPrev.Text);
-
-   showmessage(FDqryLcto.RecordCount.ToString);
 end;
 
 procedure TfrmLancamento.gridLancamentoCellClick(Column: TColumn);
@@ -1423,10 +1421,10 @@ procedure TfrmLancamento.gridLancamentoDrawColumnCell(Sender: TObject;
   const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
 begin
 
-if FDqryLcto['PAGO'] = 1 then
+if FDqryLcto['PAGO'] = 1 then   //todo o fundo onde foi pago fica cinza com o texto em branco.
   begin
-   gridLancamento.Canvas.Font.Color :=  clHighlight; // $00E8210B;  //$00FF0080; //;
-   gridLancamento.Canvas.Brush.Color := $00EAEAEA;
+   gridLancamento.Canvas.Font.Color :=  clWhite;
+   gridLancamento.Canvas.Brush.Color := $00383836;
   end;
 
       if FDqryLcto['SITUACAO_STATUS'] = 'AGUARDANDO' then
@@ -1444,13 +1442,15 @@ if FDqryLcto['PAGO'] = 1 then
                  Canvas.FillRect(Rect);
               if FDqryLcto['PAGO'] = 0 then
                 begin
-                 Canvas.Brush.Color := clNavy;
-                 canvas.Font.Color := clwhite;
+                 Canvas.Brush.Color := $00FFCCCE;
+                 canvas.Font.Color := clgray;
                 end;
               if FDqryLcto['PAGO'] = 1 then
                 begin
-                 Canvas.Brush.Color := $00646060; //fundo cinza escuro
-                 canvas.Font.Color := clWindow;
+                 //Canvas.Brush.Color := $00646060; //fundo cinza escuro
+                 //canvas.Font.Color := clWindow;
+                 Canvas.Brush.Color := $00FFCCCE;
+                 canvas.Font.Color := clgray;
                  end;
               if FDqryLcto['SITUACAO_STATUS'] = 'AGUARDANDO' then
                 begin
