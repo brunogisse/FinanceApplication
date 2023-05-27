@@ -1388,28 +1388,28 @@ procedure TfrmLancamento.FormShow(Sender: TObject);
 begin
    if frmPrincipal.FDqryVencimentos.RecordCount = 0 then
    begin
-     PageControlLancamentos.TabIndex := 0;
-     atribuirDataDoDia;
-     dataPesquisaPrevistoFim.Date := Now;
-     refreshBanco;
-     Totais;
+      PageControlLancamentos.TabIndex := 0;
+      atribuirDataDoDia;
+      dataPesquisaPrevistoFim.Date := Now;
+      refreshBanco;
+      Totais;
    end
-  else
+   else
    begin
-     atribuirDataDoDia;
-     dataPesquisaPrevistoFim.Date := Now;
-     refreshBanco;
-     PageControlLancamentos.TabIndex := 1;
-     cbPago.Text := '(TODOS)';
-     btnPesquisaPrevisto.Click;
-     cboxIntervaloData.Checked := True;
+      atribuirDataDoDia;
+      dataPesquisaPrevistoFim.Date := Now;
+      refreshBanco;
+      PageControlLancamentos.TabIndex := 1;
+      cbPago.Text := '(TODOS)';
+      btnPesquisaPrevisto.Click;
+      cboxIntervaloData.Checked := True;
    end;
-  FDqryLcto.First;
-  configurarEnables(0);
-  dataChequeInicio.Date:= Now;
-  dataChequeFim.Date:= Now;
-    // editValorPrev.Text := FormatarMoeda(editValorPrev.Text);
-   //  editValorPrev.SelStart := Length(editValorPrev.Text);
+   FDqryLcto.First;
+   configurarEnables(0);
+   dataChequeInicio.Date := Now;
+   dataChequeFim.Date := Now;
+   // editValorPrev.Text := FormatarMoeda(editValorPrev.Text);
+   // editValorPrev.SelStart := Length(editValorPrev.Text);
 end;
 
 procedure TfrmLancamento.gridLancamentoCellClick(Column: TColumn);
