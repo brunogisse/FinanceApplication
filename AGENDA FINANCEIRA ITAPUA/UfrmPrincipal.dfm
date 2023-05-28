@@ -26735,8 +26735,6 @@
     Color = 7171382
     ParentBackground = False
     TabOrder = 0
-    ExplicitLeft = 1090
-    ExplicitHeight = 586
     object btnSair: TImage
       Left = 109
       Top = 17
@@ -26806,7 +26804,6 @@
       Height = 0
       Align = alBottom
       TabOrder = 0
-      ExplicitTop = 472
       object Label4: TLabel
         Left = 40
         Top = 48
@@ -26824,7 +26821,6 @@
       BevelOuter = bvNone
       TabOrder = 1
       Visible = False
-      ExplicitTop = 472
       object labelNotification: TLabel
         Left = 16
         Top = 83
@@ -26876,8 +26872,6 @@
         Text = 'Hora'
         Width = 100
       end>
-    ExplicitTop = 586
-    ExplicitWidth = 1299
   end
   object FDconexao: TFDConnection
     Params.Strings = (
@@ -26889,7 +26883,6 @@
         'ebug\Dados\DADOS_14032022_ZERADO.FDB'
       'DriverID=FB')
     UpdateOptions.AssignedValues = [uvGeneratorName]
-    Connected = True
     LoginPrompt = False
     Left = 33
     Top = 32
