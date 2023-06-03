@@ -58,6 +58,8 @@ type
       RelatorioSaidas: TMenuItem;
       menuBackup: TMenuItem;
     Image1: TImage;
+    Timer1: TTimer;
+    backupautomtico1: TMenuItem;
       procedure FormCreate(Sender: TObject);
       procedure TimerMenu(Sender: TObject);
       procedure FormShow(Sender: TObject);
@@ -80,6 +82,8 @@ type
       procedure saidaProdutoClick(Sender: TObject);
       procedure RelatorioSaidasClick(Sender: TObject);
       procedure menuBackupClick(Sender: TObject);
+    procedure backupautomtico1Click(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
    private
       { Private declarations }
 
@@ -256,6 +260,20 @@ begin
 
 end;
 
+procedure TfrmPrincipal.backupautomtico1Click(Sender: TObject);
+begin
+   if Timer1.Enabled = True then
+      begin
+         Timer1.Enabled := False;
+         TMenuItem(Sender).Caption := 'Iniciar Backup Automático';
+      end
+      else
+      begin
+         Timer1.Enabled := True;
+         TMenuItem(Sender).Caption := 'Pausar Backup Automático';
+      end;
+end;
+
 procedure TfrmPrincipal.btnAtualizarVencimentosClick(Sender: TObject);
 begin
    verificarVencimentosONSHOW;
@@ -367,6 +385,24 @@ begin
       FreeAndNil(frmSobre);
    end;
 
+end;
+
+procedure TfrmPrincipal.Timer1Timer(Sender: TObject);
+begin
+// Caminho em produção - mudar timer para 30000 (backup a cada 5 minutos)
+  if not CopyFile(PChar('Y:\Dados\DADOS_14032022_ZERADO.FDB'),
+      PChar('C:\Users\Usuario\Desktop\Novo sistema\DADOS_14032022_ZERADO.FDB'), false) then
+
+   // Descomentar para testar no desenvolvimento - colocar timer de 5000 (5 segundos para testes)
+
+  //  if not CopyFile(PChar('C:\PROGRAMAS\V OFICIAL\AGENDA FINANCEIRA ITAPUA\Win32\Debug\Dados\DADOS_14032022_ZERADO.FDB'),
+  //       PChar('C:\Users\bruno\OneDrive\Área de Trabalho\DADOS_14032022_ZERADO.FDB'), false) then
+
+
+      ShowMessage('Erro ao fazer backup');
+
+  //  else
+  //  ShowMessage('Arquivo copiado com sucesso!');
 end;
 
 procedure TfrmPrincipal.TimerMenu(Sender: TObject);

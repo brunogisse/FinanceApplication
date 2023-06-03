@@ -26822,7 +26822,7 @@
       TabOrder = 1
       Visible = False
       object labelNotification: TLabel
-        Left = 16
+        Left = 7
         Top = 83
         Width = 80
         Height = 13
@@ -26986,6 +26986,10 @@
         Caption = 'BackUp'
         OnClick = menuBackupClick
       end
+      object backupautomtico1: TMenuItem
+        Caption = 'backup autom'#225'tico'
+        OnClick = backupautomtico1Click
+      end
     end
     object Sobre: TMenuItem
       Caption = 'Sobre'
@@ -27041,5 +27045,12 @@
         OnClick = RelatorioSaidasClick
       end
     end
+  end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 30000
+    OnTimer = Timer1Timer
+    Left = 467
+    Top = 107
   end
 end

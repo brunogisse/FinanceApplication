@@ -86,7 +86,9 @@ begin
          validarNivel;
           frmPrincipal.StatusBarMenu.Panels[0].Text := 'Login atual: '+FDqryLogin['NOME'] + ' | Parâmetro de acesso [' + IntToStr(nivel) + ']';
            frmPrincipal.FDqryLogin.Locate('LOGIN_ID',FDqryLogin['LOGIN_ID'],[]);
-           frmLogin.Close;
+            frmPrincipal.Timer1.Enabled := True;
+             frmPrincipal.backupautomtico1.Caption := 'Pausar Backup Automático';
+             frmLogin.Close;
      end
     else
      begin
