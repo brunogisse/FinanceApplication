@@ -3,7 +3,7 @@
   Top = 0
   Caption = 'Registro de Lan'#231'amentos'
   ClientHeight = 666
-  ClientWidth = 1270
+  ClientWidth = 1308
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,10 +18,11 @@
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 1270
+    Width = 1308
     Height = 65
     Align = alTop
     TabOrder = 0
+    ExplicitWidth = 1270
     object btnSair: TImage
       Left = 1201
       Top = 9
@@ -416,11 +417,12 @@
   object PageControlLancamentos: TPageControl
     Left = 0
     Top = 65
-    Width = 1270
+    Width = 1308
     Height = 247
-    ActivePage = Aba2
+    ActivePage = Aba1
     Align = alTop
     TabOrder = 1
+    ExplicitWidth = 1270
     object Aba1: TTabSheet
       Caption = 
         'Cadastro                                                        ' +
@@ -431,6 +433,7 @@
       Font.Name = 'Verdana'
       Font.Style = []
       ParentFont = False
+      ExplicitWidth = 1262
       object gbCadastro: TGroupBox
         Left = -1
         Top = 4
@@ -691,6 +694,7 @@
         'Pesquisas e relat'#243'rios                                          ' +
         '                                    '
       ImageIndex = 1
+      ExplicitWidth = 1262
       object gbPesquisa: TGroupBox
         Left = 1
         Top = 6
@@ -2368,33 +2372,35 @@
   object painelBottom: TPanel
     Left = 0
     Top = 646
-    Width = 1270
+    Width = 1308
     Height = 20
     Align = alBottom
     TabOrder = 2
+    ExplicitWidth = 1270
   end
   object memoOBS: TDBMemo
     Left = 0
     Top = 601
-    Width = 1270
+    Width = 1308
     Height = 45
     Align = alBottom
     DataField = 'OBS'
     DataSource = dsLcto
     TabOrder = 3
+    ExplicitWidth = 1270
   end
   object gridLancamento: TDBGrid
     AlignWithMargins = True
     Left = 3
     Top = 315
-    Width = 1264
+    Width = 1302
     Height = 254
     Align = alClient
     DataSource = dsLcto
     DefaultDrawing = False
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
-    Font.Height = -11
+    Font.Height = -9
     Font.Name = 'Verdana'
     Font.Style = []
     Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -2412,7 +2418,7 @@
       item
         Expanded = False
         FieldName = 'LANCAMENTO'
-        Width = 346
+        Width = 344
         Visible = True
       end
       item
@@ -2428,57 +2434,55 @@
       item
         Expanded = False
         FieldName = 'DATA_PAGAMENTO'
+        Width = 70
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'DATA_VENCIMENTO'
-        Visible = True
-      end
-      item
-        Expanded = False
-        FieldName = 'NOTA_FISCAL'
-        Visible = True
-      end
-      item
-        Expanded = False
-        FieldName = 'ENTRADA_ID'
-        Width = 58
+        Width = 71
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CHEQUE'
+        Width = 57
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CHEQUE_COMPENSADO'
-        Width = 29
+        Title.Caption = 'Ch. cps'
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CATEGORIA'
-        Width = 230
+        Width = 131
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'SUBCATEGORIA'
-        Width = 259
+        Width = 179
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CONTA'
-        Width = 201
+        Width = 108
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'FORMA_DE_PAGAMENTO'
         Width = 174
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'NOTA_FISCAL'
+        Width = 68
         Visible = True
       end
       item
@@ -2491,10 +2495,11 @@
   object painelRodape: TPanel
     Left = 0
     Top = 572
-    Width = 1270
+    Width = 1308
     Height = 29
     Align = alBottom
     TabOrder = 5
+    ExplicitWidth = 1270
     object labelOBS: TLabel
       Left = 4
       Top = 11

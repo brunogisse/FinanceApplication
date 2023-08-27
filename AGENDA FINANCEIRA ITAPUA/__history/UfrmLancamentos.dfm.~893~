@@ -3,7 +3,7 @@
   Top = 0
   Caption = 'Registro de Lan'#231'amentos'
   ClientHeight = 666
-  ClientWidth = 1270
+  ClientWidth = 1308
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,7 +18,7 @@
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 1270
+    Width = 1308
     Height = 65
     Align = alTop
     TabOrder = 0
@@ -416,9 +416,9 @@
   object PageControlLancamentos: TPageControl
     Left = 0
     Top = 65
-    Width = 1270
+    Width = 1308
     Height = 247
-    ActivePage = Aba2
+    ActivePage = Aba1
     Align = alTop
     TabOrder = 1
     object Aba1: TTabSheet
@@ -2368,7 +2368,7 @@
   object painelBottom: TPanel
     Left = 0
     Top = 646
-    Width = 1270
+    Width = 1308
     Height = 20
     Align = alBottom
     TabOrder = 2
@@ -2376,7 +2376,7 @@
   object memoOBS: TDBMemo
     Left = 0
     Top = 601
-    Width = 1270
+    Width = 1308
     Height = 45
     Align = alBottom
     DataField = 'OBS'
@@ -2387,14 +2387,14 @@
     AlignWithMargins = True
     Left = 3
     Top = 315
-    Width = 1264
+    Width = 1302
     Height = 254
     Align = alClient
     DataSource = dsLcto
     DefaultDrawing = False
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
-    Font.Height = -11
+    Font.Height = -9
     Font.Name = 'Verdana'
     Font.Style = []
     Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -2412,7 +2412,7 @@
       item
         Expanded = False
         FieldName = 'LANCAMENTO'
-        Width = 346
+        Width = 344
         Visible = True
       end
       item
@@ -2428,57 +2428,55 @@
       item
         Expanded = False
         FieldName = 'DATA_PAGAMENTO'
+        Width = 70
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'DATA_VENCIMENTO'
-        Visible = True
-      end
-      item
-        Expanded = False
-        FieldName = 'NOTA_FISCAL'
-        Visible = True
-      end
-      item
-        Expanded = False
-        FieldName = 'ENTRADA_ID'
-        Width = 58
+        Width = 71
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CHEQUE'
+        Width = 57
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CHEQUE_COMPENSADO'
-        Width = 29
+        Title.Caption = 'Ch. cps'
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CATEGORIA'
-        Width = 230
+        Width = 131
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'SUBCATEGORIA'
-        Width = 259
+        Width = 179
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CONTA'
-        Width = 201
+        Width = 108
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'FORMA_DE_PAGAMENTO'
         Width = 174
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'NOTA_FISCAL'
+        Width = 68
         Visible = True
       end
       item
@@ -2491,7 +2489,7 @@
   object painelRodape: TPanel
     Left = 0
     Top = 572
-    Width = 1270
+    Width = 1308
     Height = 29
     Align = alBottom
     TabOrder = 5
@@ -2577,7 +2575,6 @@
     Top = 352
   end
   object FDqryLcto: TFDQuery
-    Active = True
     Connection = frmPrincipal.FDconexao
     Transaction = FDtcLcto
     UpdateOptions.AssignedValues = [uvGeneratorName, uvCheckReadOnly, uvAutoCommitUpdates]
@@ -2604,7 +2601,7 @@
         'C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, S.SUBCATEGORIA_ID, S.D' +
         'ESCRICAO as SUBCATEGORIA, CT.CONTA_ID, CT.DESCRICAO as CONTA, FP' +
         '.FORMA_DE_PAGAMENTO_ID, FP.DESCRICAO as FORMA_DE_PAGAMENTO,'
-      'REG.OBS, REG.DATA_CADASTRO'
+      'REG.OBS, REG.DATA_CADASTRO, REG.USERID'
       ''
       'from'
       ''
@@ -2785,6 +2782,11 @@
       FieldName = 'SITUACAO_STATUS'
       Origin = 'SITUACAO_STATUS'
       Size = 10
+    end
+    object FDqryLctoUSERID: TIntegerField
+      FieldName = 'USERID'
+      Origin = 'USERID'
+      Required = True
     end
   end
   object dsLcto: TDataSource
@@ -8729,5 +8731,46 @@
     BCDToCurrency = False
     Left = 80
     Top = 448
+  end
+  object qryLogin: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    SQL.Strings = (
+      'SELECT * FROM LOGIN'
+      'WHERE LOGIN_ID = :ID')
+    Left = 696
+    Top = 472
+    ParamData = <
+      item
+        Name = 'ID'
+        DataType = ftInteger
+        ParamType = ptInput
+        Value = Null
+      end>
+    object qryLoginLOGIN_ID: TIntegerField
+      FieldName = 'LOGIN_ID'
+      Origin = 'LOGIN_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object qryLoginNOME: TStringField
+      FieldName = 'NOME'
+      Origin = 'NOME'
+      Required = True
+    end
+    object qryLoginSENHA: TStringField
+      FieldName = 'SENHA'
+      Origin = 'SENHA'
+      Required = True
+    end
+    object qryLoginNIVEL: TIntegerField
+      FieldName = 'NIVEL'
+      Origin = 'NIVEL'
+      Required = True
+    end
+  end
+  object dsLogin: TDataSource
+    DataSet = qryLogin
+    Left = 760
+    Top = 472
   end
 end

@@ -22,7 +22,6 @@
     Height = 65
     Align = alTop
     TabOrder = 0
-    ExplicitWidth = 1270
     object btnSair: TImage
       Left = 1201
       Top = 9
@@ -422,7 +421,6 @@
     ActivePage = Aba1
     Align = alTop
     TabOrder = 1
-    ExplicitWidth = 1270
     object Aba1: TTabSheet
       Caption = 
         'Cadastro                                                        ' +
@@ -433,7 +431,6 @@
       Font.Name = 'Verdana'
       Font.Style = []
       ParentFont = False
-      ExplicitWidth = 1262
       object gbCadastro: TGroupBox
         Left = -1
         Top = 4
@@ -694,7 +691,6 @@
         'Pesquisas e relat'#243'rios                                          ' +
         '                                    '
       ImageIndex = 1
-      ExplicitWidth = 1262
       object gbPesquisa: TGroupBox
         Left = 1
         Top = 6
@@ -2376,7 +2372,6 @@
     Height = 20
     Align = alBottom
     TabOrder = 2
-    ExplicitWidth = 1270
   end
   object memoOBS: TDBMemo
     Left = 0
@@ -2387,7 +2382,6 @@
     DataField = 'OBS'
     DataSource = dsLcto
     TabOrder = 3
-    ExplicitWidth = 1270
   end
   object gridLancamento: TDBGrid
     AlignWithMargins = True
@@ -2499,7 +2493,6 @@
     Height = 29
     Align = alBottom
     TabOrder = 5
-    ExplicitWidth = 1270
     object labelOBS: TLabel
       Left = 4
       Top = 11
@@ -2582,7 +2575,6 @@
     Top = 352
   end
   object FDqryLcto: TFDQuery
-    Active = True
     Connection = frmPrincipal.FDconexao
     Transaction = FDtcLcto
     UpdateOptions.AssignedValues = [uvGeneratorName, uvCheckReadOnly, uvAutoCommitUpdates]
@@ -2609,7 +2601,7 @@
         'C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, S.SUBCATEGORIA_ID, S.D' +
         'ESCRICAO as SUBCATEGORIA, CT.CONTA_ID, CT.DESCRICAO as CONTA, FP' +
         '.FORMA_DE_PAGAMENTO_ID, FP.DESCRICAO as FORMA_DE_PAGAMENTO,'
-      'REG.OBS, REG.DATA_CADASTRO'
+      'REG.OBS, REG.DATA_CADASTRO, REG.USERID'
       ''
       'from'
       ''
@@ -2790,6 +2782,11 @@
       FieldName = 'SITUACAO_STATUS'
       Origin = 'SITUACAO_STATUS'
       Size = 10
+    end
+    object FDqryLctoUSERID: TIntegerField
+      FieldName = 'USERID'
+      Origin = 'USERID'
+      Required = True
     end
   end
   object dsLcto: TDataSource
@@ -8734,5 +8731,46 @@
     BCDToCurrency = False
     Left = 80
     Top = 448
+  end
+  object qryLogin: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    SQL.Strings = (
+      'SELECT * FROM LOGIN'
+      'WHERE LOGIN_ID = :ID')
+    Left = 696
+    Top = 472
+    ParamData = <
+      item
+        Name = 'ID'
+        DataType = ftInteger
+        ParamType = ptInput
+        Value = Null
+      end>
+    object qryLoginLOGIN_ID: TIntegerField
+      FieldName = 'LOGIN_ID'
+      Origin = 'LOGIN_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object qryLoginNOME: TStringField
+      FieldName = 'NOME'
+      Origin = 'NOME'
+      Required = True
+    end
+    object qryLoginSENHA: TStringField
+      FieldName = 'SENHA'
+      Origin = 'SENHA'
+      Required = True
+    end
+    object qryLoginNIVEL: TIntegerField
+      FieldName = 'NIVEL'
+      Origin = 'NIVEL'
+      Required = True
+    end
+  end
+  object dsLogin: TDataSource
+    DataSet = qryLogin
+    Left = 760
+    Top = 472
   end
 end

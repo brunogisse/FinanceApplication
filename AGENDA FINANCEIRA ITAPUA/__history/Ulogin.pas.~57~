@@ -55,13 +55,19 @@ uses UfrmPrincipal, UfrmLancamentos;
 
 procedure TfrmLogin.validarNivel;
 begin
-  if FDqryLogin['NIVEL'] < 3 then
+  if FDqryLogin['NIVEL'] < 2 then
 
         begin
           frmPrincipal.Cadastros.Visible := False;
-          frmPrincipal.lcto.Visible := false;
-          frmLancamento.gbBotoes.Visible := False;
-
+          frmPrincipal.lcto.Visible := False;
+          frmPrincipal.User.Visible := False;
+          frmPrincipal.AcessoNivel := 'restrito';
+        end
+        else
+        begin
+          frmPrincipal.AcessoNivel := 'OK';
+          if FDqryLogin['NIVEL'] = 3 then
+             frmPrincipal.User.Visible:= True;
         end;
 end;
 
@@ -76,11 +82,13 @@ begin
      begin
       showmessage('Bem vindo(a) ' + FDqryLogin['NOME']);
        acesso := 'Aceito';
-        frmPrincipal.AcessoNivel := 'OK';
-         nivel := FDqryLogin['NIVEL'];
-          frmLogin.Close;
-           validarNivel;
-            frmPrincipal.StatusBarMenu.Panels[0].Text := 'Login atual: '+FDqryLogin['NOME'] + ' | Parâmetro de acesso [' + IntToStr(nivel) + ']';
+        nivel := FDqryLogin['NIVEL'];
+         validarNivel;
+          frmPrincipal.StatusBarMenu.Panels[0].Text := 'Login atual: '+FDqryLogin['NOME'] + ' | Parâmetro de acesso [' + IntToStr(nivel) + ']';
+           frmPrincipal.FDqryLogin.Locate('LOGIN_ID',FDqryLogin['LOGIN_ID'],[]);
+            frmPrincipal.Timer1.Enabled := True;
+             frmPrincipal.backupautomtico1.Caption := 'Pausar Backup Automático';
+             frmLogin.Close;
      end
     else
      begin

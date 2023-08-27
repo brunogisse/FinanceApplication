@@ -55,15 +55,20 @@ uses UfrmPrincipal, UfrmLancamentos;
 
 procedure TfrmLogin.validarNivel;
 begin
-  if FDqryLogin['NIVEL'] < 3 then
+  if FDqryLogin['NIVEL'] < 2 then
 
         begin
           frmPrincipal.Cadastros.Visible := False;
-          frmPrincipal.lcto.Visible := false;
+          frmPrincipal.lcto.Visible := False;
+          frmPrincipal.User.Visible := False;
           frmPrincipal.AcessoNivel := 'restrito';
         end
         else
+        begin
           frmPrincipal.AcessoNivel := 'OK';
+          if FDqryLogin['NIVEL'] = 3 then
+             frmPrincipal.User.Visible:= True;
+        end;
 end;
 
 procedure TfrmLogin.btnCancelarClick(Sender: TObject);
@@ -73,20 +78,33 @@ end;
 
 procedure TfrmLogin.btnLogarClick(Sender: TObject);
 begin
- if edtSenha.Text = FDqryLogin['SENHA'] then
-     begin
-      showmessage('Bem vindo(a) ' + FDqryLogin['NOME']);
-       acesso := 'Aceito';
-        nivel := FDqryLogin['NIVEL'];
-         frmLogin.Close;
-           validarNivel;
-            frmPrincipal.StatusBarMenu.Panels[0].Text := 'Login atual: '+FDqryLogin['NOME'] + ' | Parâmetro de acesso [' + IntToStr(nivel) + ']';
-     end
+  if edtSenha.Text = FDqryLogin['SENHA'] then
+  begin
+    showmessage('Bem vindo(a) ' + FDqryLogin['NOME']);
+    acesso := 'Aceito';
+    nivel := FDqryLogin['NIVEL'];
+    validarNivel;
+    frmPrincipal.StatusBarMenu.Panels[0].Text := 'Login atual: ' + FDqryLogin
+      ['NOME'] + ' | Parâmetro de acesso [' + IntToStr(nivel) + ']';
+    frmPrincipal.FDqryLogin.Locate('LOGIN_ID', FDqryLogin['LOGIN_ID'], []);
+
+    if (FDqryLogin['LOGIN_ID'] <> 1) then
+    begin
+      frmPrincipal.Timer1.Enabled := False;
+      frmPrincipal.backupautomtico1.Visible := False;
+      frmPrincipal.menuBackup.Visible := False;
+    end
     else
-     begin
-      showmessage('Senha inválida');
-      application.Terminate;
-     end;
+      frmPrincipal.Timer1.Enabled := True;
+
+    frmPrincipal.backupautomtico1.Caption := 'Pausar Backup Automático';
+    frmLogin.Close;
+  end
+  else
+  begin
+    showmessage('Senha inválida');
+    application.Terminate;
+  end;
 end;
 
 procedure TfrmLogin.edtLoginExit(Sender: TObject);
