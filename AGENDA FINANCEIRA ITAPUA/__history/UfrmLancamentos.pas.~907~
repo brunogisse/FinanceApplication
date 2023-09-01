@@ -1165,7 +1165,7 @@ end;
 
 procedure TfrmLancamento.btnAlterarClick(Sender: TObject);
 begin
-//  procPermitirAlterarExcluir;
+  procPermitirAlterarExcluir;
   alterarRegistro;
   gridLancamento.Enabled := False;
   if FDqryLcto['PAGO'] = 1 then
