@@ -97,6 +97,21 @@
       ParentFont = False
       Visible = False
     end
+    object btnCarregarPlanilha: TSpeedButton
+      Left = 1044
+      Top = 9
+      Width = 100
+      Height = 39
+      Caption = 'Carregar Grid'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Segoe UI Semibold'
+      Font.Style = [fsBold]
+      ParentFont = False
+      Visible = False
+      OnClick = btnCarregarPlanilhaClick
+    end
     object dataBancoInicio: TDateTimePicker
       Left = 404
       Top = 36

@@ -205,6 +205,7 @@ type
     qryLoginSENHA: TStringField;
     qryLoginNIVEL: TIntegerField;
     FDqryLctoUSERID: TIntegerField;
+    btnCarregarPlanilha: TSpeedButton;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -248,6 +249,7 @@ type
     procedure rbValorClick(Sender: TObject);
     procedure rbValorPrevistoClick(Sender: TObject);
     procedure btnImprimirConsultaClick(Sender: TObject);
+    procedure btnCarregarPlanilhaClick(Sender: TObject);
   private
 
     procedure refreshBanco;
@@ -294,7 +296,7 @@ implementation
 {$R *.dfm}
 
 uses UfrmPrincipal, UfrmPesqDespesas, UConta, UfrmConfirmarParcelamento,
-  UpesquisaCategoria;
+  UpesquisaCategoria, UfrmLancamentosEmLote;
 
 procedure TfrmLancamento.allowPrint(status: String);
 begin
@@ -1191,6 +1193,16 @@ begin
   gridLancamento.Enabled := True;
   cboxConfirmarPgto.Checked := False;
   editValorPrev.Clear;
+end;
+
+procedure TfrmLancamento.btnCarregarPlanilhaClick(Sender: TObject);
+begin
+  try
+    Application.CreateForm(TfrmLancamentosEmLote, frmLancamentosEmLote);
+    frmLancamentosEmLote.ShowModal;
+  finally
+    FreeAndNil(frmLancamentosEmLote);
+  end;
 end;
 
 procedure TfrmLancamento.btnClearSubClick(Sender: TObject);
