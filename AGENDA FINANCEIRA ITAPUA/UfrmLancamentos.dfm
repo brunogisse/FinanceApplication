@@ -109,7 +109,6 @@
       Font.Name = 'Segoe UI Semibold'
       Font.Style = [fsBold]
       ParentFont = False
-      Visible = False
       OnClick = btnCarregarPlanilhaClick
     end
     object dataBancoInicio: TDateTimePicker
@@ -461,7 +460,7 @@
           Caption = 'Conta:'
         end
         object labelPesqDespSub: TLabel
-          Left = 124
+          Left = 119
           Top = 51
           Width = 74
           Height = 13

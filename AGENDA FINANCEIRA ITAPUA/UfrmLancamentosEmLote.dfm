@@ -12,6 +12,8 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   Font.Style = []
   OldCreateOrder = False
   Position = poDesktopCenter
+  OnClose = FormClose
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object pnlGeral: TPanel
@@ -22,17 +24,17 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitHeight = 221
+    ExplicitTop = 1
     object pnlTopo: TPanel
       Left = 0
       Top = 0
       Width = 977
-      Height = 121
+      Height = 209
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
       object btnPlanilha: TSpeedButton
-        Left = 528
+        Left = 342
         Top = 34
         Width = 35
         Height = 21
@@ -83,7 +85,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       object editCaminhoPlanilha: TEdit
         Left = 16
         Top = 34
-        Width = 506
+        Width = 321
         Height = 21
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -93,12 +95,59 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         ParentFont = False
         TabOrder = 0
       end
+      object GroupBox1: TGroupBox
+        Left = 383
+        Top = 24
+        Width = 557
+        Height = 145
+        Caption = 'Escolha a categoria  '
+        TabOrder = 1
+        object labelPesqDespSub: TLabel
+          Left = 13
+          Top = 24
+          Width = 64
+          Height = 13
+          Caption = 'Subdespesa:'
+        end
+        object labelConta: TLabel
+          Left = 13
+          Top = 79
+          Width = 32
+          Height = 13
+          Caption = 'Conta:'
+        end
+        object editPesquisaDespSub: TEdit
+          Left = 13
+          Top = 37
+          Width = 527
+          Height = 21
+          CharCase = ecUpperCase
+          Color = 15395562
+          TabOrder = 0
+          OnDblClick = editPesquisaDespSubDblClick
+          OnKeyPress = editPesquisaDespSubKeyPress
+        end
+        object cmbContas: TDBLookupComboBox
+          AlignWithMargins = True
+          Left = 13
+          Top = 93
+          Width = 241
+          Height = 21
+          Color = 15395562
+          DataField = 'CONTA'
+          DataSource = dsLcto
+          KeyField = 'CONTA_ID'
+          ListField = 'DESCRICAO'
+          ListSource = dsContas
+          TabOrder = 1
+        end
+      end
     end
     object gridLote: TDBGrid
       Left = 0
-      Top = 127
+      Top = 288
       Width = 977
-      Height = 442
+      Height = 281
       Align = alBottom
       DataSource = dsPlanilhaLote
       TabOrder = 1
@@ -164,5 +213,259 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   object OpenDialog1: TOpenDialog
     Left = 864
     Top = 320
+  end
+  object FDqryLcto: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcLcto
+    UpdateOptions.AssignedValues = [uvGeneratorName, uvCheckReadOnly, uvAutoCommitUpdates]
+    UpdateOptions.GeneratorName = 'GEN_REGISTRO_DE_GASTOS_ID'
+    UpdateOptions.CheckReadOnly = False
+    UpdateOptions.AutoCommitUpdates = True
+    UpdateOptions.UpdateTableName = 'REGISTRO_DE_GASTOS'
+    UpdateOptions.KeyFields = 'GASTOS_ID'
+    UpdateOptions.AutoIncFields = 'GASTOS_ID'
+    SQL.Strings = (
+      'select'
+      ''
+      
+        'REG.GASTOS_ID, REG.CATEGORIA_ID as CATEGORIA_FK, REG.SUBCATEGORI' +
+        'A_ID as SUBCATEGORIA_FK, REG.CONTA_ID as CONTA_FK, REG.FORMA_DE_' +
+        'PAGAMENTO_ID as FORMA_DE_PAGAMENTO_FK,'
+      
+        'REG.DESCRICAO as LANCAMENTO, REG.VALOR_PAGO, REG.VALOR_PREVISTO,' +
+        ' REG.NOTA_FISCAL,REG.CHEQUE,'
+      
+        'REG.CHEQUE_COMPENSADO,REG.DATA_VENCIMENTO, REG.DATA_PAGAMENTO, R' +
+        'EG.PAGO, REG.ENTRADA_ID, REG.SITUACAO_STATUS,'
+      
+        'C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, S.SUBCATEGORIA_ID, S.D' +
+        'ESCRICAO as SUBCATEGORIA, CT.CONTA_ID, CT.DESCRICAO as CONTA, FP' +
+        '.FORMA_DE_PAGAMENTO_ID, FP.DESCRICAO as FORMA_DE_PAGAMENTO,'
+      'REG.OBS, REG.DATA_CADASTRO, REG.USERID'
+      ''
+      'from'
+      ''
+      
+        'REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, ' +
+        'FORMA_DE_PAGAMENTO FP'
+      ''
+      ''
+      'where'
+      ''
+      '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and'
+      '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and'
+      '(REG.CONTA_ID = CT.CONTA_ID) and'
+      '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and'
+      '(DATA_CADASTRO between :INICIO and :FIM)'
+      ''
+      'order by REG.DATA_VENCIMENTO')
+    Left = 35
+    Top = 226
+    ParamData = <
+      item
+        Name = 'INICIO'
+        DataType = ftDate
+        ParamType = ptInput
+        Value = Null
+      end
+      item
+        Name = 'FIM'
+        DataType = ftDate
+        ParamType = ptInput
+      end>
+    object FDqryLctoGASTOS_ID: TFDAutoIncField
+      FieldName = 'GASTOS_ID'
+      Origin = 'GASTOS_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      IdentityInsert = True
+    end
+    object FDqryLctoCATEGORIA_FK: TIntegerField
+      FieldName = 'CATEGORIA_FK'
+      Origin = 'CATEGORIA_ID'
+      Required = True
+    end
+    object FDqryLctoSUBCATEGORIA_FK: TIntegerField
+      FieldName = 'SUBCATEGORIA_FK'
+      Origin = 'SUBCATEGORIA_ID'
+      Required = True
+    end
+    object FDqryLctoCONTA_FK: TIntegerField
+      FieldName = 'CONTA_FK'
+      Origin = 'CONTA_ID'
+      Required = True
+    end
+    object FDqryLctoLANCAMENTO: TStringField
+      DisplayLabel = 'Descri'#231#227'o'
+      FieldName = 'LANCAMENTO'
+      Origin = 'DESCRICAO'
+      Size = 200
+    end
+    object FDqryLctoVALOR_PAGO: TSingleField
+      DisplayLabel = 'R$ pago'
+      FieldName = 'VALOR_PAGO'
+      Origin = 'VALOR_PAGO'
+      currency = True
+    end
+    object FDqryLctoVALOR_PREVISTO: TSingleField
+      DisplayLabel = 'R$ previsto'
+      FieldName = 'VALOR_PREVISTO'
+      Origin = 'VALOR_PREVISTO'
+      currency = True
+    end
+    object FDqryLctoNOTA_FISCAL: TIntegerField
+      DisplayLabel = 'NF'
+      FieldName = 'NOTA_FISCAL'
+      Origin = 'NOTA_FISCAL'
+    end
+    object FDqryLctoCHEQUE: TIntegerField
+      DisplayLabel = 'Cheque'
+      FieldName = 'CHEQUE'
+      Origin = 'CHEQUE'
+    end
+    object FDqryLctoCHEQUE_COMPENSADO: TStringField
+      DisplayLabel = 'Ch. comp.'
+      FieldName = 'CHEQUE_COMPENSADO'
+      Origin = 'CHEQUE_COMPENSADO'
+      FixedChar = True
+      Size = 1
+    end
+    object FDqryLctoDATA_VENCIMENTO: TDateField
+      DisplayLabel = 'Vencimento'
+      FieldName = 'DATA_VENCIMENTO'
+      Origin = 'DATA_VENCIMENTO'
+    end
+    object FDqryLctoDATA_PAGAMENTO: TDateField
+      DisplayLabel = 'Data pago'
+      FieldName = 'DATA_PAGAMENTO'
+      Origin = 'DATA_PAGAMENTO'
+    end
+    object FDqryLctoPAGO: TIntegerField
+      FieldName = 'PAGO'
+      Origin = 'PAGO'
+    end
+    object FDqryLctoCATEGORIA_ID: TIntegerField
+      AutoGenerateValue = arDefault
+      FieldName = 'CATEGORIA_ID'
+      Origin = 'CATEGORIA_ID'
+      ProviderFlags = []
+    end
+    object FDqryLctoCATEGORIA: TStringField
+      AutoGenerateValue = arDefault
+      DisplayLabel = 'Categoria'
+      FieldName = 'CATEGORIA'
+      Origin = 'DESCRICAO'
+      ProviderFlags = []
+      Size = 100
+    end
+    object FDqryLctoSUBCATEGORIA_ID: TIntegerField
+      AutoGenerateValue = arDefault
+      FieldName = 'SUBCATEGORIA_ID'
+      Origin = 'SUBCATEGORIA_ID'
+      ProviderFlags = []
+    end
+    object FDqryLctoSUBCATEGORIA: TStringField
+      AutoGenerateValue = arDefault
+      DisplayLabel = 'Subcategoria'
+      FieldName = 'SUBCATEGORIA'
+      Origin = 'DESCRICAO'
+      ProviderFlags = []
+      Size = 100
+    end
+    object FDqryLctoCONTA_ID: TIntegerField
+      AutoGenerateValue = arDefault
+      FieldName = 'CONTA_ID'
+      Origin = 'CONTA_ID'
+      ProviderFlags = []
+    end
+    object FDqryLctoCONTA: TStringField
+      AutoGenerateValue = arDefault
+      DisplayLabel = 'Conta'
+      FieldName = 'CONTA'
+      Origin = 'DESCRICAO'
+      ProviderFlags = []
+      Size = 50
+    end
+    object FDqryLctoFORMA_DE_PAGAMENTO_ID: TIntegerField
+      AutoGenerateValue = arDefault
+      FieldName = 'FORMA_DE_PAGAMENTO_ID'
+      Origin = 'FORMA_DE_PAGAMENTO_ID'
+      ProviderFlags = []
+    end
+    object FDqryLctoFORMA_DE_PAGAMENTO: TStringField
+      AutoGenerateValue = arDefault
+      DisplayLabel = 'Forma Pgto.'
+      FieldName = 'FORMA_DE_PAGAMENTO'
+      Origin = 'DESCRICAO'
+      ProviderFlags = []
+      Size = 50
+    end
+    object FDqryLctoOBS: TStringField
+      FieldName = 'OBS'
+      Origin = 'OBS'
+      Size = 200
+    end
+    object FDqryLctoDATA_CADASTRO: TDateField
+      FieldName = 'DATA_CADASTRO'
+      Origin = 'DATA_CADASTRO'
+    end
+    object FDqryLctoFORMA_DE_PAGAMENTO_FK: TIntegerField
+      FieldName = 'FORMA_DE_PAGAMENTO_FK'
+      Origin = 'FORMA_DE_PAGAMENTO_ID'
+    end
+    object FDqryLctoENTRADA_ID: TIntegerField
+      DisplayLabel = 'Entrada:'
+      FieldName = 'ENTRADA_ID'
+      Origin = 'ENTRADA_ID'
+    end
+    object FDqryLctoSITUACAO_STATUS: TStringField
+      DisplayLabel = 'Status:'
+      FieldName = 'SITUACAO_STATUS'
+      Origin = 'SITUACAO_STATUS'
+      Size = 10
+    end
+    object FDqryLctoUSERID: TIntegerField
+      FieldName = 'USERID'
+      Origin = 'USERID'
+      Required = True
+    end
+  end
+  object dsLcto: TDataSource
+    DataSet = FDqryLcto
+    Left = 92
+    Top = 227
+  end
+  object FDtcLcto: TFDTransaction
+    Options.AutoStop = False
+    Connection = frmPrincipal.FDconexao
+    Left = 32
+    Top = 280
+  end
+  object dsContas: TDataSource
+    DataSet = FDqryContas
+    Left = 749
+    Top = 394
+  end
+  object FDqryContas: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcLcto
+    UpdateOptions.AssignedValues = [uvGeneratorName]
+    UpdateOptions.GeneratorName = 'GEN_CONTAS_ID'
+    UpdateOptions.UpdateTableName = 'CONTAS'
+    UpdateOptions.KeyFields = 'CONTA_ID'
+    SQL.Strings = (
+      'select * from CONTAS order by DESCRICAO asc')
+    Left = 672
+    Top = 392
+    object FDqryContasCONTA_ID: TIntegerField
+      FieldName = 'CONTA_ID'
+      Origin = 'CONTA_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object FDqryContasDESCRICAO: TStringField
+      FieldName = 'DESCRICAO'
+      Origin = 'DESCRICAO'
+      Size = 50
+    end
   end
 end

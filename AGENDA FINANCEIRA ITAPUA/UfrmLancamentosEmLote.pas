@@ -7,7 +7,8 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids, Vcl.DBGrids,
   Vcl.ExtCtrls, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
   FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
-  FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.StdCtrls, Vcl.Buttons, ComObj;
+  FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.StdCtrls, Vcl.Buttons, ComObj,
+  FireDAC.Stan.Async, FireDAC.DApt, Vcl.DBCtrls;
 
 type
   TfrmLancamentosEmLote = class(TForm)
@@ -25,9 +26,52 @@ type
     OpenDialog1: TOpenDialog;
     gridLote: TDBGrid;
     btnLimpar: TSpeedButton;
+    GroupBox1: TGroupBox;
+    labelPesqDespSub: TLabel;
+    editPesquisaDespSub: TEdit;
+    FDqryLcto: TFDQuery;
+    FDqryLctoGASTOS_ID: TFDAutoIncField;
+    FDqryLctoCATEGORIA_FK: TIntegerField;
+    FDqryLctoSUBCATEGORIA_FK: TIntegerField;
+    FDqryLctoCONTA_FK: TIntegerField;
+    FDqryLctoLANCAMENTO: TStringField;
+    FDqryLctoVALOR_PAGO: TSingleField;
+    FDqryLctoVALOR_PREVISTO: TSingleField;
+    FDqryLctoNOTA_FISCAL: TIntegerField;
+    FDqryLctoCHEQUE: TIntegerField;
+    FDqryLctoCHEQUE_COMPENSADO: TStringField;
+    FDqryLctoDATA_VENCIMENTO: TDateField;
+    FDqryLctoDATA_PAGAMENTO: TDateField;
+    FDqryLctoPAGO: TIntegerField;
+    FDqryLctoCATEGORIA_ID: TIntegerField;
+    FDqryLctoCATEGORIA: TStringField;
+    FDqryLctoSUBCATEGORIA_ID: TIntegerField;
+    FDqryLctoSUBCATEGORIA: TStringField;
+    FDqryLctoCONTA_ID: TIntegerField;
+    FDqryLctoCONTA: TStringField;
+    FDqryLctoFORMA_DE_PAGAMENTO_ID: TIntegerField;
+    FDqryLctoFORMA_DE_PAGAMENTO: TStringField;
+    FDqryLctoOBS: TStringField;
+    FDqryLctoDATA_CADASTRO: TDateField;
+    FDqryLctoFORMA_DE_PAGAMENTO_FK: TIntegerField;
+    FDqryLctoENTRADA_ID: TIntegerField;
+    FDqryLctoSITUACAO_STATUS: TStringField;
+    FDqryLctoUSERID: TIntegerField;
+    dsLcto: TDataSource;
+    FDtcLcto: TFDTransaction;
+    labelConta: TLabel;
+    cmbContas: TDBLookupComboBox;
+    dsContas: TDataSource;
+    FDqryContas: TFDQuery;
+    FDqryContasCONTA_ID: TIntegerField;
+    FDqryContasDESCRICAO: TStringField;
     procedure btnPlanilhaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
     procedure btnLimparClick(Sender: TObject);
+    procedure editPesquisaDespSubKeyPress(Sender: TObject; var Key: Char);
+    procedure editPesquisaDespSubDblClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormShow(Sender: TObject);
   private
 
     { Private declarations }
@@ -42,6 +86,8 @@ var
 implementation
 
 {$R *.dfm}
+
+uses UfrmLancamentos, UfrmPesqDespesas, UfrmPrincipal;
 
 procedure TfrmLancamentosEmLote.CarregarDadosDoExcel;
 
@@ -100,6 +146,38 @@ begin
   end;
 end;
 
+
+procedure TfrmLancamentosEmLote.editPesquisaDespSubDblClick(Sender: TObject);
+begin
+  frmPesqDespSub.setarEditFoco := 'cadastro em lote';
+  FDqryLcto.Insert;
+  frmPesqDespSub.ShowModal;
+end;
+
+procedure TfrmLancamentosEmLote.editPesquisaDespSubKeyPress(Sender: TObject;
+  var Key: Char);
+begin
+  if Key = #13 then
+  begin
+    frmPesqDespSub.setarEditFoco := 'cadastro em lote';
+    FDqryLcto.Insert;
+    frmPesqDespSub.ShowModal;
+    Key := #0;
+  end;
+end;
+
+procedure TfrmLancamentosEmLote.FormClose(Sender: TObject;
+  var Action: TCloseAction);
+begin
+  FDqryLcto.Close;
+  FDqryContas.Close;
+end;
+
+procedure TfrmLancamentosEmLote.FormShow(Sender: TObject);
+begin
+  FDqryLcto.Open();
+  FDqryContas.Open();
+end;
 
 procedure TfrmLancamentosEmLote.btnCarregarPlanilhaClick(Sender: TObject);
 begin
