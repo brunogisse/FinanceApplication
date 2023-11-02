@@ -17,9 +17,6 @@ type
     pnlTopo: TPanel;
     cldsPlanilhaLote: TFDMemTable;
     dsPlanilhaLote: TDataSource;
-    cldsPlanilhaLoteDESCRICAO: TStringField;
-    cldsPlanilhaLoteVALOR_PAGO: TFloatField;
-    cldsPlanilhaLoteDATA_VENCIMENTO: TDateField;
     btnPlanilha: TSpeedButton;
     labelBanco: TLabel;
     editCaminhoPlanilha: TEdit;
@@ -67,6 +64,9 @@ type
     FDqryContasDESCRICAO: TStringField;
     cmbContas: TDBComboBox;
     btnSalvar: TBitBtn;
+    cldsPlanilhaLoteDATA: TDateField;
+    cldsPlanilhaLoteDESCRICAO: TStringField;
+    cldsPlanilhaLoteVALOR: TFloatField;
     procedure btnPlanilhaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
     procedure btnLimparClick(Sender: TObject);
@@ -75,6 +75,7 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
   private
+    function LimparNumero(Str: string): string;
 
     { Private declarations }
   public
@@ -98,32 +99,51 @@ var
   Planilha: Variant;
   Linha: Integer;
   NomePlanilha, NomeArquivo: String;
+  DataStr: string;
+  DataValida: TDateTime;
+  ValorStr: string;
+  ValorFloat: Double;
+  DescricaoConcatenada : String;
 begin
   try
     try
-      ExcelApp := CreateOleObject('Excel.Application');
-      // Cria uma instância do Excel
+      ExcelApp := CreateOleObject('Excel.Application'); // Cria uma instância do Excel
       ExcelApp.Workbooks.Open(editCaminhoPlanilha.Text);
-      // Substitua pelo caminho da sua planilha
-
       NomePlanilha := ExtractFileName(editCaminhoPlanilha.Text);
-
       Planilha := ExcelApp.Worksheets['Planilha1'];
-      // Substitua 'Planilha' pelo nome da sua planilha
-
       cldsPlanilhaLote.EmptyDataSet;
       gridLote.DataSource := nil;
 
       // Adiciona os campos ao FDMemTable baseado nas colunas da planilha
       for Linha := 2 to Planilha.UsedRange.Rows.Count - 1 do
       begin
+        DataStr := VarToStr(Planilha.Cells[Linha, 1]);
+        DescricaoConcatenada := '';
+
+        if (DataStr = '') then
+        begin
+          cldsPlanilhaLote.Last;
+          DescricaoConcatenada := cldsPlanilhaLoteDESCRICAO.AsString;
+          DescricaoConcatenada := DescricaoConcatenada + ' - ' + DescricaoConcatenada; //+ ' - ' + Planilha.Cells[Linha, 2];
+          cldsPlanilhaLote.Edit;
+          cldsPlanilhaLote.Fields[1].AsString := DescricaoConcatenada;
+          cldsPlanilhaLote.Post;
+        end
+        else
+        begin
         // Adiciona os registros nas linhas seguintes
-        cldsPlanilhaLote.Append;
-        cldsPlanilhaLote.Fields[0].AsString := Planilha.Cells[Linha, 1];
-        cldsPlanilhaLote.Fields[1].AsFloat := Planilha.Cells[Linha, 2];
-        cldsPlanilhaLote.Fields[2].AsDateTime := Planilha.Cells[Linha, 3];
-        // ... atribua os outros campos conforme necessário
-        cldsPlanilhaLote.Post;
+          cldsPlanilhaLote.Append;
+
+          DataValida := StrToDate(DataStr);
+          cldsPlanilhaLote.Fields[0].AsDateTime := DataValida;
+          cldsPlanilhaLote.Fields[1].AsString := Planilha.Cells[Linha, 2];
+
+          ValorStr := LimparNumero(Planilha.Cells[Linha, 3]);
+          ValorFloat := StrToFloat(ValorStr);
+          cldsPlanilhaLote.Fields[2].AsFloat := ValorFloat;
+
+          cldsPlanilhaLote.Post;
+        end;
       end;
     finally
       ExcelApp.Quit; // Fecha o Excel
@@ -135,7 +155,7 @@ begin
     On E: Exception do
     begin
       MessageDlg('Por favor, escolha um documento válido para ser aberto.' + #13
-        + #13 + 'Sugestões:' + #13 + E.Message, TMsgDlgType.mtWarning,
+        + #13 + 'Motivo do erro:' + #13 + E.Message, TMsgDlgType.mtWarning,
         [TMsgDlgBtn.mbOK], 0);
 
       if not(VarIsEmpty(ExcelApp)) then
@@ -192,8 +212,7 @@ procedure TfrmLancamentosEmLote.btnCarregarPlanilhaClick(Sender: TObject);
 begin
   if editCaminhoPlanilha.Text = '' then
   begin
-    MessageDlg('Por favor, escolha um documento válido para ser aberto.' + #13 +
-      #13 + 'Sugestões:' + #13, TMsgDlgType.mtWarning,
+    MessageDlg('Por favor, escolha um documento válido para ser aberto', TMsgDlgType.mtWarning,
       [TMsgDlgBtn.mbOK], 0);
     Exit;
   end;
@@ -210,6 +229,20 @@ procedure TfrmLancamentosEmLote.btnPlanilhaClick(Sender: TObject);
 begin
   if OpenDialog1.Execute() then;
   editCaminhoPlanilha.Text := OpenDialog1.FileName;
+end;
+
+function TfrmLancamentosEmLote.LimparNumero(Str: string): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  for i := 1 to Length(Str) do
+  begin
+    if (Str[i] >= '0') and (Str[i] <= '9') then
+      Result := Result + Str[i]
+    else if Str[i] = ',' then
+      Result := Result + ',';
+  end;
 end;
 
 end.

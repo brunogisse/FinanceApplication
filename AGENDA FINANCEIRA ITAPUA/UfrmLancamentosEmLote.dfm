@@ -3,7 +3,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   Top = 0
   Caption = 'Lan'#231'amentos em lote'
   ClientHeight = 569
-  ClientWidth = 1051
+  ClientWidth = 1212
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,19 +19,21 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   object pnlGeral: TPanel
     Left = 0
     Top = 0
-    Width = 1051
+    Width = 1212
     Height = 569
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
+    ExplicitWidth = 1051
     object pnlTopo: TPanel
       Left = 0
       Top = 0
-      Width = 1051
+      Width = 1212
       Height = 258
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
+      ExplicitWidth = 1051
       object btnPlanilha: TSpeedButton
         Left = 590
         Top = 34
@@ -80,6 +82,19 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         Font.Style = [fsBold]
         ParentFont = False
         OnClick = btnLimparClick
+      end
+      object lblQuantidade: TLabel
+        Left = 648
+        Top = 232
+        Width = 317
+        Height = 24
+        Caption = 'Quantidade de registros importada: '
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -20
+        Font.Name = 'Roboto'
+        Font.Style = []
+        ParentFont = False
       end
       object editCaminhoPlanilha: TEdit
         Left = 16
@@ -151,7 +166,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     object gridLote: TDBGrid
       Left = 0
       Top = 271
-      Width = 1051
+      Width = 1212
       Height = 298
       Align = alBottom
       DataSource = dsPlanilhaLote
@@ -167,18 +182,18 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     Active = True
     FieldDefs = <
       item
+        Name = 'DATA'
+        DataType = ftDate
+      end
+      item
         Name = 'DESCRICAO'
         DataType = ftString
-        Size = 20
+        Size = 200
       end
       item
-        Name = 'VALOR_PAGO'
+        Name = 'VALOR'
         DataType = ftFloat
         Precision = 15
-      end
-      item
-        Name = 'DATA_VENCIMENTO'
-        DataType = ftDate
       end>
     IndexDefs = <>
     FetchOptions.AssignedValues = [evMode]
@@ -191,23 +206,21 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     StoreDefs = True
     Left = 768
     Top = 320
+    object cldsPlanilhaLoteDATA: TDateField
+      DisplayWidth = 10
+      FieldKind = fkInternalCalc
+      FieldName = 'DATA'
+    end
     object cldsPlanilhaLoteDESCRICAO: TStringField
-      DisplayLabel = 'Descri'#231#227'o'
-      DisplayWidth = 89
+      DisplayWidth = 132
       FieldKind = fkInternalCalc
       FieldName = 'DESCRICAO'
+      Size = 200
     end
-    object cldsPlanilhaLoteVALOR_PAGO: TFloatField
-      DisplayLabel = 'Valor Pago'
-      DisplayWidth = 37
+    object cldsPlanilhaLoteVALOR: TFloatField
+      DisplayWidth = 20
       FieldKind = fkInternalCalc
-      FieldName = 'VALOR_PAGO'
-    end
-    object cldsPlanilhaLoteDATA_VENCIMENTO: TDateField
-      DisplayLabel = 'Vencimento'
-      DisplayWidth = 17
-      FieldKind = fkInternalCalc
-      FieldName = 'DATA_VENCIMENTO'
+      FieldName = 'VALOR'
     end
   end
   object dsPlanilhaLote: TDataSource

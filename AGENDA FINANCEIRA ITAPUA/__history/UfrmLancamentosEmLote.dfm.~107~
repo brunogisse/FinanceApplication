@@ -24,12 +24,11 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitWidth = 977
     object pnlTopo: TPanel
       Left = 0
       Top = 0
       Width = 1051
-      Height = 265
+      Height = 258
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
@@ -165,22 +164,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     end
   end
   object cldsPlanilhaLote: TFDMemTable
-    Active = True
-    FieldDefs = <
-      item
-        Name = 'DESCRICAO'
-        DataType = ftString
-        Size = 20
-      end
-      item
-        Name = 'VALOR_PAGO'
-        DataType = ftFloat
-        Precision = 15
-      end
-      item
-        Name = 'DATA_VENCIMENTO'
-        DataType = ftDate
-      end>
+    FieldDefs = <>
     IndexDefs = <>
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
@@ -192,23 +176,18 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     StoreDefs = True
     Left = 768
     Top = 320
+    object cldsPlanilhaLoteDATA: TDateField
+      FieldKind = fkInternalCalc
+      FieldName = 'DATA'
+    end
     object cldsPlanilhaLoteDESCRICAO: TStringField
-      DisplayLabel = 'Descri'#231#227'o'
-      DisplayWidth = 89
+      DisplayWidth = 200
       FieldKind = fkInternalCalc
       FieldName = 'DESCRICAO'
     end
-    object cldsPlanilhaLoteVALOR_PAGO: TFloatField
-      DisplayLabel = 'Valor Pago'
-      DisplayWidth = 37
+    object cldsPlanilhaLoteVALOR: TFloatField
       FieldKind = fkInternalCalc
-      FieldName = 'VALOR_PAGO'
-    end
-    object cldsPlanilhaLoteDATA_VENCIMENTO: TDateField
-      DisplayLabel = 'Vencimento'
-      DisplayWidth = 17
-      FieldKind = fkInternalCalc
-      FieldName = 'DATA_VENCIMENTO'
+      FieldName = 'VALOR'
     end
   end
   object dsPlanilhaLote: TDataSource
