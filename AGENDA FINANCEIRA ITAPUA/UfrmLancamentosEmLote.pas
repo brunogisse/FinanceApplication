@@ -3,7 +3,8 @@ unit UfrmLancamentosEmLote;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids, Vcl.DBGrids,
   Vcl.ExtCtrls, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
   FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
@@ -26,7 +27,7 @@ type
     OpenDialog1: TOpenDialog;
     gridLote: TDBGrid;
     btnLimpar: TSpeedButton;
-    GroupBox1: TGroupBox;
+    gbSelecao: TGroupBox;
     labelPesqDespSub: TLabel;
     editPesquisaDespSub: TEdit;
     FDqryLcto: TFDQuery;
@@ -60,11 +61,12 @@ type
     dsLcto: TDataSource;
     FDtcLcto: TFDTransaction;
     labelConta: TLabel;
-    cmbContas: TDBLookupComboBox;
     dsContas: TDataSource;
     FDqryContas: TFDQuery;
     FDqryContasCONTA_ID: TIntegerField;
     FDqryContasDESCRICAO: TStringField;
+    cmbContas: TDBComboBox;
+    btnSalvar: TBitBtn;
     procedure btnPlanilhaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
     procedure btnLimparClick(Sender: TObject);
@@ -95,44 +97,33 @@ var
   ExcelApp: Variant;
   Planilha: Variant;
   Linha: Integer;
-  NomePlanilha, NomeArquivo : String;
+  NomePlanilha, NomeArquivo: String;
 begin
   try
     try
-      ExcelApp := CreateOleObject('Excel.Application'); // Cria uma instância do Excel
-      ExcelApp.Workbooks.Open(editCaminhoPlanilha.Text); // Substitua pelo caminho da sua planilha
+      ExcelApp := CreateOleObject('Excel.Application');
+      // Cria uma instância do Excel
+      ExcelApp.Workbooks.Open(editCaminhoPlanilha.Text);
+      // Substitua pelo caminho da sua planilha
 
       NomePlanilha := ExtractFileName(editCaminhoPlanilha.Text);
 
-      Planilha := ExcelApp.Worksheets['Planilha1']; // Substitua 'Planilha' pelo nome da sua planilha
-
-     // cldsPlanilhaLote.FieldDefs.Clear; // Limpa as definições de campo existentes
+      Planilha := ExcelApp.Worksheets['Planilha1'];
+      // Substitua 'Planilha' pelo nome da sua planilha
 
       cldsPlanilhaLote.EmptyDataSet;
       gridLote.DataSource := nil;
 
-
       // Adiciona os campos ao FDMemTable baseado nas colunas da planilha
-      for Linha := 2 to Planilha.UsedRange.Rows.Count -1 do
+      for Linha := 2 to Planilha.UsedRange.Rows.Count - 1 do
       begin
-    //    if Linha = 1 then
-    //    begin
-    //      // Adiciona os campos na primeira linha
-    //      cldsPlanilhaLote.FieldDefs.Add(Planilha.Cells[Linha, 1], ftString, 50);
-    //      cldsPlanilhaLote.FieldDefs.Add(Planilha.Cells[Linha, 2], ftFloat);
-    //      cldsPlanilhaLote.FieldDefs.Add(Planilha.Cells[Linha, 3], ftDate);
-    //      // ... adicione os outros campos conforme necessário
-    //    end
-    //    else
-        begin
-          // Adiciona os registros nas linhas seguintes
-          cldsPlanilhaLote.Append;
-          cldsPlanilhaLote.Fields[0].AsString := Planilha.Cells[Linha, 1];
-          cldsPlanilhaLote.Fields[1].AsFloat := Planilha.Cells[Linha, 2];
-          cldsPlanilhaLote.Fields[2].AsDateTime := Planilha.Cells[Linha, 3];
-          // ... atribua os outros campos conforme necessário
-          cldsPlanilhaLote.Post;
-        end;
+        // Adiciona os registros nas linhas seguintes
+        cldsPlanilhaLote.Append;
+        cldsPlanilhaLote.Fields[0].AsString := Planilha.Cells[Linha, 1];
+        cldsPlanilhaLote.Fields[1].AsFloat := Planilha.Cells[Linha, 2];
+        cldsPlanilhaLote.Fields[2].AsDateTime := Planilha.Cells[Linha, 3];
+        // ... atribua os outros campos conforme necessário
+        cldsPlanilhaLote.Post;
       end;
     finally
       ExcelApp.Quit; // Fecha o Excel
@@ -141,16 +132,25 @@ begin
       cldsPlanilhaLote.First;
     end;
   Except
-    ExcelApp.Quit; // Fecha o Excel
-    ExcelApp := Unassigned; // Libera a instância do Excel
+    On E: Exception do
+    begin
+      MessageDlg('Por favor, escolha um documento válido para ser aberto.' + #13
+        + #13 + 'Motivo do erro:' + #13 + E.Message, TMsgDlgType.mtWarning,
+        [TMsgDlgBtn.mbOK], 0);
+
+      if not(VarIsEmpty(ExcelApp)) then
+        ExcelApp.Quit; // Fecha o Excel
+      ExcelApp := Unassigned; // Libera a instância do Excel
+      Abort;
+    end;
   end;
 end;
 
-
 procedure TfrmLancamentosEmLote.editPesquisaDespSubDblClick(Sender: TObject);
 begin
+  if not(dsLcto.State in [dsEdit, dsInsert]) then
+    FDqryLcto.Insert;
   frmPesqDespSub.setarEditFoco := 'cadastro em lote';
-  FDqryLcto.Insert;
   frmPesqDespSub.ShowModal;
 end;
 
@@ -159,8 +159,9 @@ procedure TfrmLancamentosEmLote.editPesquisaDespSubKeyPress(Sender: TObject;
 begin
   if Key = #13 then
   begin
+    if not(dsLcto.State in [dsEdit, dsInsert]) then
+      FDqryLcto.Insert;
     frmPesqDespSub.setarEditFoco := 'cadastro em lote';
-    FDqryLcto.Insert;
     frmPesqDespSub.ShowModal;
     Key := #0;
   end;
@@ -177,10 +178,25 @@ procedure TfrmLancamentosEmLote.FormShow(Sender: TObject);
 begin
   FDqryLcto.Open();
   FDqryContas.Open();
+
+  FDqryContas.First;
+  while (not FDqryContas.Eof) do
+  begin
+    cmbContas.Items.Add(FDqryContas.FieldByName('DESCRICAO').AsString);
+    FDqryContas.Next;
+  end;
+  FDqryContas.First;
 end;
 
 procedure TfrmLancamentosEmLote.btnCarregarPlanilhaClick(Sender: TObject);
 begin
+  if editCaminhoPlanilha.Text = '' then
+  begin
+    MessageDlg('Por favor, escolha um documento válido para ser aberto', TMsgDlgType.mtWarning,
+      [TMsgDlgBtn.mbOK], 0);
+    Exit;
+  end;
+
   CarregarDadosDoExcel;
 end;
 
@@ -191,8 +207,8 @@ end;
 
 procedure TfrmLancamentosEmLote.btnPlanilhaClick(Sender: TObject);
 begin
-   if OpenDialog1.Execute() then;
-    editCaminhoPlanilha.Text :=  OpenDialog1.FileName;
+  if OpenDialog1.Execute() then;
+  editCaminhoPlanilha.Text := OpenDialog1.FileName;
 end;
 
 end.

@@ -119,21 +119,25 @@ begin
     if FDqrySubdespesa['VALOR_MAXIMO'] <> null then
       frmLancamento.valorMAXIMOsubdespesa := FDqrySubdespesa['VALOR_MAXIMO'];
   end
+
   else if setarEditFoco = 'cadastro' then
+
   begin
     frmLancamento.editPesquisaDespSub.Text := FDqrySubdespesa['DESCRICAO'] +
       '  [' + FDqrySubdespesa['CATEGORIA'] + ']';
-    frmLancamento.FDqryLcto['SUBCATEGORIA_FK'] :=
-      FDqrySubdespesa['SUBCATEGORIA_ID'];
+    frmLancamento.FDqryLcto['SUBCATEGORIA_FK'] := FDqrySubdespesa['SUBCATEGORIA_ID'];
     frmLancamento.FDqryLcto['CATEGORIA_FK'] := FDqrySubdespesa['CATEGORIA_ID'];
   end
+
   else if setarEditFoco = 'cadastro em lote' then
+
   begin
     frmLancamentosEmLote.editPesquisaDespSub.Text := FDqrySubdespesa['DESCRICAO'] +
       '  [' + FDqrySubdespesa['CATEGORIA'] + ']';
     frmLancamentosEmLote.FDqryLcto['SUBCATEGORIA_FK'] := FDqrySubdespesa['SUBCATEGORIA_ID'];
     frmLancamentosEmLote.FDqryLcto['CATEGORIA_FK'] := FDqrySubdespesa['CATEGORIA_ID'];
   end;
+
   setarEditFoco := '';
   frmPesqDespSub.Close;
 end;

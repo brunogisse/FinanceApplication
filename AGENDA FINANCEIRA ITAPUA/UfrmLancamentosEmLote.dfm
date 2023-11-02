@@ -3,11 +3,11 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   Top = 0
   Caption = 'Lan'#231'amentos em lote'
   ClientHeight = 569
-  ClientWidth = 977
+  ClientWidth = 1051
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
+  Font.Height = -13
   Font.Name = 'Roboto'
   Font.Style = []
   OldCreateOrder = False
@@ -15,26 +15,25 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   OnClose = FormClose
   OnShow = FormShow
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   object pnlGeral: TPanel
     Left = 0
     Top = 0
-    Width = 977
+    Width = 1051
     Height = 569
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitTop = 1
     object pnlTopo: TPanel
       Left = 0
       Top = 0
-      Width = 977
-      Height = 209
+      Width = 1051
+      Height = 258
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
       object btnPlanilha: TSpeedButton
-        Left = 342
+        Left = 590
         Top = 34
         Width = 35
         Height = 21
@@ -50,15 +49,15 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       object labelBanco: TLabel
         Left = 16
         Top = 18
-        Width = 85
-        Height = 13
+        Width = 97
+        Height = 15
         Caption = 'Escolher planilha'
       end
       object btnCarregarPlanilha: TSpeedButton
         Left = 16
         Top = 61
         Width = 97
-        Height = 34
+        Height = 25
         Caption = 'Carregar Grid'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -72,7 +71,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         Left = 119
         Top = 61
         Width = 114
-        Height = 34
+        Height = 25
         Caption = 'Limpar informa'#231#245'es'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -85,7 +84,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       object editCaminhoPlanilha: TEdit
         Left = 16
         Top = 34
-        Width = 321
+        Width = 568
         Height = 21
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -95,65 +94,71 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         ParentFont = False
         TabOrder = 0
       end
-      object GroupBox1: TGroupBox
-        Left = 383
-        Top = 24
-        Width = 557
+      object gbSelecao: TGroupBox
+        Left = 16
+        Top = 106
+        Width = 609
         Height = 145
-        Caption = 'Escolha a categoria  '
+        Caption = '  Selecione conta e a categoria do lote que ser'#225' lan'#231'ado  '
         TabOrder = 1
         object labelPesqDespSub: TLabel
           Left = 13
-          Top = 24
-          Width = 64
-          Height = 13
+          Top = 23
+          Width = 74
+          Height = 15
           Caption = 'Subdespesa:'
         end
         object labelConta: TLabel
           Left = 13
           Top = 79
-          Width = 32
-          Height = 13
+          Width = 36
+          Height = 15
           Caption = 'Conta:'
         end
         object editPesquisaDespSub: TEdit
           Left = 13
           Top = 37
-          Width = 527
-          Height = 21
+          Width = 555
+          Height = 23
           CharCase = ecUpperCase
           Color = 15395562
+          ReadOnly = True
           TabOrder = 0
           OnDblClick = editPesquisaDespSubDblClick
           OnKeyPress = editPesquisaDespSubKeyPress
         end
-        object cmbContas: TDBLookupComboBox
-          AlignWithMargins = True
+        object cmbContas: TDBComboBox
           Left = 13
           Top = 93
-          Width = 241
-          Height = 21
+          Width = 273
+          Height = 23
+          BevelInner = bvNone
           Color = 15395562
-          DataField = 'CONTA'
-          DataSource = dsLcto
-          KeyField = 'CONTA_ID'
-          ListField = 'DESCRICAO'
-          ListSource = dsContas
+          DataField = 'DESCRICAO'
+          DataSource = dsContas
           TabOrder = 1
+        end
+        object btnSalvar: TBitBtn
+          Left = 449
+          Top = 85
+          Width = 119
+          Height = 39
+          Caption = 'Iniciar lan'#231'amento'
+          TabOrder = 2
         end
       end
     end
     object gridLote: TDBGrid
       Left = 0
-      Top = 288
-      Width = 977
-      Height = 281
+      Top = 271
+      Width = 1051
+      Height = 298
       Align = alBottom
       DataSource = dsPlanilhaLote
       TabOrder = 1
       TitleFont.Charset = DEFAULT_CHARSET
       TitleFont.Color = clWindowText
-      TitleFont.Height = -11
+      TitleFont.Height = -13
       TitleFont.Name = 'Roboto'
       TitleFont.Style = []
     end
@@ -259,8 +264,8 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       '(DATA_CADASTRO between :INICIO and :FIM)'
       ''
       'order by REG.DATA_VENCIMENTO')
-    Left = 35
-    Top = 226
+    Left = 83
+    Top = 338
     ParamData = <
       item
         Name = 'INICIO'
@@ -431,14 +436,14 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   end
   object dsLcto: TDataSource
     DataSet = FDqryLcto
-    Left = 92
-    Top = 227
+    Left = 132
+    Top = 371
   end
   object FDtcLcto: TFDTransaction
     Options.AutoStop = False
     Connection = frmPrincipal.FDconexao
-    Left = 32
-    Top = 280
+    Left = 40
+    Top = 352
   end
   object dsContas: TDataSource
     DataSet = FDqryContas
