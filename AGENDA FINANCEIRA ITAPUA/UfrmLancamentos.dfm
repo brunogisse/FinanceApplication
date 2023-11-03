@@ -432,7 +432,7 @@
     Top = 65
     Width = 1308
     Height = 247
-    ActivePage = Aba1
+    ActivePage = Aba2
     Align = alTop
     TabOrder = 1
     object Aba1: TTabSheet
@@ -2811,7 +2811,7 @@
   object dsFormaPgto: TDataSource
     DataSet = FDqryFormaPgto
     Left = 976
-    Top = 440
+    Top = 443
   end
   object dsSubdespesa: TDataSource
     DataSet = FDqrySubdespesa

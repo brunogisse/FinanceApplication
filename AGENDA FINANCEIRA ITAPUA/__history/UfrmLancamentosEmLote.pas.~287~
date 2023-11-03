@@ -68,6 +68,12 @@ type
     cldsPlanilhaLoteDESCRICAO: TStringField;
     cldsPlanilhaLoteVALOR: TFloatField;
     lblQuantidade: TLabel;
+    Label1: TLabel;
+    cmbFormaPgto: TDBComboBox;
+    FDqryFormaPgto: TFDQuery;
+    FDqryFormaPgtoFORMA_DE_PAGAMENTO_ID: TIntegerField;
+    FDqryFormaPgtoDESCRICAO: TStringField;
+    dsFormaPgto: TDataSource;
     procedure btnPlanilhaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
     procedure btnLimparClick(Sender: TObject);
@@ -75,6 +81,7 @@ type
     procedure editPesquisaDespSubDblClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
+    procedure btnSalvarClick(Sender: TObject);
   private
     function LimparNumero(Str: string): string;
 
@@ -104,35 +111,34 @@ var
   DataValida: TDateTime;
   ValorStr: string;
   ValorFloat: Double;
-  DescricaoConcatenada : String;
+  DescricaoConcatenada: String;
 begin
   try
     try
-      ExcelApp := CreateOleObject('Excel.Application'); // Cria uma instância do Excel
+      ExcelApp := CreateOleObject('Excel.Application');
       ExcelApp.Workbooks.Open(editCaminhoPlanilha.Text);
       NomePlanilha := ExtractFileName(editCaminhoPlanilha.Text);
       Planilha := ExcelApp.Worksheets['Planilha1'];
       cldsPlanilhaLote.EmptyDataSet;
       gridLote.DataSource := nil;
 
-      // Adiciona os campos ao FDMemTable baseado nas colunas da planilha
       for Linha := 2 to Planilha.UsedRange.Rows.Count do
       begin
         DataStr := VarToStr(Planilha.Cells[Linha, 1]);
         DescricaoConcatenada := '';
 
+        //Caso a linha de baixo da planilha tenha data vazia, ou seja, ainda pertença ao registro de cima, então edita concatena a descrição
         if (DataStr = '') then
         begin
           cldsPlanilhaLote.Last;
           DescricaoConcatenada := cldsPlanilhaLoteDESCRICAO.AsString;
-          DescricaoConcatenada := DescricaoConcatenada + ' - ' + VarToStr(Planilha.Cells[Linha, 2]);//'texto avulso'; //+ ' - ' + Planilha.Cells[Linha, 2];
+          DescricaoConcatenada := DescricaoConcatenada + ' - ' + VarToStr(Planilha.Cells[Linha, 2]);
           cldsPlanilhaLote.Edit;
           cldsPlanilhaLote.Fields[1].AsString := DescricaoConcatenada;
           cldsPlanilhaLote.Post;
         end
-        else
+        else  //se houver data, ele adiciona novo registro..
         begin
-        // Adiciona os registros nas linhas seguintes
           cldsPlanilhaLote.Append;
 
           DataValida := StrToDate(DataStr);
@@ -147,8 +153,8 @@ begin
         end;
       end;
     finally
-      ExcelApp.Quit; // Fecha o Excel
-      ExcelApp := Unassigned; // Libera a instância do Excel
+      ExcelApp.Quit;
+      ExcelApp := Unassigned;
       gridLote.DataSource := dsPlanilhaLote;
       cldsPlanilhaLote.First;
     end;
@@ -160,8 +166,8 @@ begin
         [TMsgDlgBtn.mbOK], 0);
 
       if not(VarIsEmpty(ExcelApp)) then
-        ExcelApp.Quit; // Fecha o Excel
-      ExcelApp := Unassigned; // Libera a instância do Excel
+        ExcelApp.Quit;
+      ExcelApp := Unassigned;
       Abort;
     end;
   end;
@@ -193,12 +199,14 @@ procedure TfrmLancamentosEmLote.FormClose(Sender: TObject;
 begin
   FDqryLcto.Close;
   FDqryContas.Close;
+  FDqryFormaPgto.Close;
 end;
 
 procedure TfrmLancamentosEmLote.FormShow(Sender: TObject);
 begin
   FDqryLcto.Open();
   FDqryContas.Open();
+  FDqryFormaPgto.Open();
 
   FDqryContas.First;
   while (not FDqryContas.Eof) do
@@ -207,19 +215,29 @@ begin
     FDqryContas.Next;
   end;
   FDqryContas.First;
+
+  FDqryFormaPgto.First;
+  while (not FDqryFormaPgto.Eof) do
+  begin
+    cmbFormaPgto.Items.Add(FDqryFormaPgto.FieldByName('DESCRICAO').AsString);
+    FDqryFormaPgto.Next;
+  end;
+  FDqryFormaPgto.First;
+
 end;
 
 procedure TfrmLancamentosEmLote.btnCarregarPlanilhaClick(Sender: TObject);
 begin
   if editCaminhoPlanilha.Text = '' then
   begin
-    MessageDlg('Por favor, escolha um documento válido para ser aberto', TMsgDlgType.mtWarning,
-      [TMsgDlgBtn.mbOK], 0);
+    MessageDlg('Por favor, escolha um documento válido para ser aberto',
+      TMsgDlgType.mtWarning, [TMsgDlgBtn.mbOK], 0);
     Exit;
   end;
 
   CarregarDadosDoExcel;
-  lblQuantidade.Caption := IntToStr(cldsPlanilhaLote.RecordCount);
+  lblQuantidade.Caption := lblQuantidade.Caption +
+    IntToStr(cldsPlanilhaLote.RecordCount);
 end;
 
 procedure TfrmLancamentosEmLote.btnLimparClick(Sender: TObject);
@@ -231,6 +249,47 @@ procedure TfrmLancamentosEmLote.btnPlanilhaClick(Sender: TObject);
 begin
   if OpenDialog1.Execute() then;
   editCaminhoPlanilha.Text := OpenDialog1.FileName;
+end;
+
+procedure TfrmLancamentosEmLote.btnSalvarClick(Sender: TObject);
+var
+  CategoriaID, SubCategoriaID : Integer;
+begin
+  CategoriaID    := FDqryLcto['CATEGORIA_FK'];
+  SubCategoriaID := FDqryLcto['SUBCATEGORIA_FK'];
+
+  cldsPlanilhaLote.First;
+  while not cldsPlanilhaLote.Eof do
+  begin
+    if not (dsLcto.State in [dsInsert]) then
+    begin
+      FDqryLcto.Insert;
+      FDqryLcto['CATEGORIA_FK'] := CategoriaID;
+      FDqryLcto['SUBCATEGORIA_FK'] := SubCategoriaID;
+    end;
+    FDqryLcto['CONTA_FK'] := FDqryContas['CONTA_ID'];
+    FDqryLcto['FORMA_DE_PAGAMENTO_FK'] := FDqryFormaPgto['FORMA_DE_PAGAMENTO_ID'];
+    FDqryLcto['USERID'] := frmPrincipal.FDqryLogin['LOGIN_ID'];
+    FDqryLcto.FieldByName('LANCAMENTO').asstring := cldsPlanilhaLote.FieldByName('DESCRICAO').AsString;
+    FDqryLcto['DATA_VENCIMENTO'] := cldsPlanilhaLote.FieldByName('DATA').AsDateTime;
+    FDqryLcto['DATA_CADASTRO'] := Now;
+    FDqryLcto['VALOR_PREVISTO'] := cldsPlanilhaLote.FieldByName('VALOR').AsFloat;
+    FDqryLcto.FieldByName('').AsFloat := cldsPlanilhaLote.FieldByName('VALOR').AsFloat;
+    FDqryLcto['CHEQUE'] := 0;
+    FDqryLcto['CHEQUE_COMPENSADO'] := 'N';
+    FDqryLcto['NOTA_FISCAL'] := 0;
+    FDqryLcto['ENTRADA_ID'] := 0;
+    FDqryLcto['DATA_PAGAMENTO'] := cldsPlanilhaLote.FieldByName('DATA').AsDateTime;
+    FDqryLcto['PAGO'] := 1;
+    FDqryLcto.Post;
+    cldsPlanilhaLote.Next;
+  end;
+
+   try
+    FDtcLcto.CommitRetaining;
+  except
+    FDtcLcto.RollbackRetaining;
+  end;
 end;
 
 function TfrmLancamentosEmLote.LimparNumero(Str: string): string;

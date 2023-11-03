@@ -276,7 +276,6 @@ type
     { Private declarations }
   public
     { Public declarations }
-
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;

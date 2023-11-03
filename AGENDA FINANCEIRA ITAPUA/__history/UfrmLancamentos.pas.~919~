@@ -1197,14 +1197,14 @@ end;
 
 procedure TfrmLancamento.btnCarregarPlanilhaClick(Sender: TObject);
 begin
-
   try
     Application.CreateForm(TfrmLancamentosEmLote, frmLancamentosEmLote);
     frmLancamentosEmLote.ShowModal;
   finally
-
+    FreeAndNil(frmLancamentosEmLote);
+    refreshBanco;
+    btnPesquisar.Click;
   end;
-  
 end;
 
 procedure TfrmLancamento.btnClearSubClick(Sender: TObject);

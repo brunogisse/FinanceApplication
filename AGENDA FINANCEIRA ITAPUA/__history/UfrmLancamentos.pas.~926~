@@ -276,7 +276,7 @@ type
     { Private declarations }
   public
     { Public declarations }
-
+      procedure AtualizarAposCadastrarLote;
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;
@@ -823,6 +823,23 @@ begin
   editValorInicial.SetFocus;
 end;
 
+procedure TfrmLancamento.AtualizarAposCadastrarLote;
+var
+  dataInicio, dataFim: TDateTime;
+begin
+  dataInicio := IncMonth(Date, -6);
+  dataFim := Now;
+  dataBancoInicio.Date := dataInicio;
+  dataBancoFim.Date := dataFim;
+  with FDqryLcto do
+  begin
+    Close;
+    ParamByName('INICIO').AsDate := dataBancoInicio.Date;
+    ParamByName('FIM').AsDate := dataBancoFim.Date;
+    Open;
+  end;
+end;
+
 procedure TfrmLancamento.refreshBanco;
 var
   dataInicio, dataFim: TDateTime;
@@ -1197,13 +1214,12 @@ end;
 
 procedure TfrmLancamento.btnCarregarPlanilhaClick(Sender: TObject);
 begin
-
   try
     Application.CreateForm(TfrmLancamentosEmLote, frmLancamentosEmLote);
+    frmLancamentosEmLote.ShowModal;
   finally
-
+    FreeAndNil(frmLancamentosEmLote);
   end;
-  
 end;
 
 procedure TfrmLancamento.btnClearSubClick(Sender: TObject);

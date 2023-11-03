@@ -205,6 +205,7 @@ type
     qryLoginSENHA: TStringField;
     qryLoginNIVEL: TIntegerField;
     FDqryLctoUSERID: TIntegerField;
+    btnCarregarPlanilha: TSpeedButton;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -248,6 +249,7 @@ type
     procedure rbValorClick(Sender: TObject);
     procedure rbValorPrevistoClick(Sender: TObject);
     procedure btnImprimirConsultaClick(Sender: TObject);
+    procedure btnCarregarPlanilhaClick(Sender: TObject);
   private
 
     procedure refreshBanco;
@@ -269,6 +271,7 @@ type
     procedure CalcularValorNFentrada;
     procedure allowPrint(status: String);
     procedure procPermitirAlterarExcluir;
+    procedure AtualizarAposCadastrarLote;
     // function FormatarMoeda(valor : string) : string;
 
     { Private declarations }
@@ -294,7 +297,7 @@ implementation
 {$R *.dfm}
 
 uses UfrmPrincipal, UfrmPesqDespesas, UConta, UfrmConfirmarParcelamento,
-  UpesquisaCategoria;
+  UpesquisaCategoria, UfrmLancamentosEmLote;
 
 procedure TfrmLancamento.allowPrint(status: String);
 begin
@@ -821,6 +824,23 @@ begin
   editValorInicial.SetFocus;
 end;
 
+procedure TfrmLancamento.AtualizarAposCadastrarLote;
+var
+  dataInicio, dataFim: TDateTime;
+begin
+  dataInicio := IncMonth(Date, -6);
+  dataFim := Now;
+  dataBancoInicio.Date := dataInicio;
+  dataBancoFim.Date := dataFim;
+  with FDqryLcto do
+  begin
+    Close;
+    ParamByName('INICIO').AsDate := dataBancoInicio.Date;
+    ParamByName('FIM').AsDate := dataBancoFim.Date;
+    Open;
+  end;
+end;
+
 procedure TfrmLancamento.refreshBanco;
 var
   dataInicio, dataFim: TDateTime;
@@ -1191,6 +1211,16 @@ begin
   gridLancamento.Enabled := True;
   cboxConfirmarPgto.Checked := False;
   editValorPrev.Clear;
+end;
+
+procedure TfrmLancamento.btnCarregarPlanilhaClick(Sender: TObject);
+begin
+  try
+    Application.CreateForm(TfrmLancamentosEmLote, frmLancamentosEmLote);
+    frmLancamentosEmLote.ShowModal;
+  finally
+    FreeAndNil(frmLancamentosEmLote);
+  end;
 end;
 
 procedure TfrmLancamento.btnClearSubClick(Sender: TObject);

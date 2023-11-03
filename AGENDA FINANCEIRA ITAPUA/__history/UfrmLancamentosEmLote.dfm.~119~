@@ -3,7 +3,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   Top = 0
   Caption = 'Lan'#231'amentos em lote'
   ClientHeight = 569
-  ClientWidth = 1051
+  ClientWidth = 1212
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,7 +19,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   object pnlGeral: TPanel
     Left = 0
     Top = 0
-    Width = 1051
+    Width = 1212
     Height = 569
     Align = alClient
     BevelOuter = bvNone
@@ -27,7 +27,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     object pnlTopo: TPanel
       Left = 0
       Top = 0
-      Width = 1051
+      Width = 1212
       Height = 258
       Align = alTop
       BevelOuter = bvNone
@@ -81,12 +81,18 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         ParentFont = False
         OnClick = btnLimparClick
       end
-      object Label1: TLabel
-        Left = 672
-        Top = 225
-        Width = 201
-        Height = 15
-        Caption = 'Quantidade de registros importada:'
+      object lblQuantidade: TLabel
+        Left = 648
+        Top = 232
+        Width = 317
+        Height = 24
+        Caption = 'Quantidade de registros importada: '
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -20
+        Font.Name = 'Roboto'
+        Font.Style = []
+        ParentFont = False
       end
       object editCaminhoPlanilha: TEdit
         Left = 16
@@ -152,13 +158,14 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
           Height = 39
           Caption = 'Iniciar lan'#231'amento'
           TabOrder = 2
+          OnClick = btnSalvarClick
         end
       end
     end
     object gridLote: TDBGrid
       Left = 0
       Top = 271
-      Width = 1051
+      Width = 1212
       Height = 298
       Align = alBottom
       DataSource = dsPlanilhaLote
@@ -204,7 +211,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       FieldName = 'DATA'
     end
     object cldsPlanilhaLoteDESCRICAO: TStringField
-      DisplayWidth = 110
+      DisplayWidth = 132
       FieldKind = fkInternalCalc
       FieldName = 'DESCRICAO'
       Size = 200

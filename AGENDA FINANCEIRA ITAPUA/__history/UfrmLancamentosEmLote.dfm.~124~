@@ -3,7 +3,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   Top = 0
   Caption = 'Lan'#231'amentos em lote'
   ClientHeight = 569
-  ClientWidth = 1051
+  ClientWidth = 1212
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,7 +19,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   object pnlGeral: TPanel
     Left = 0
     Top = 0
-    Width = 1051
+    Width = 1212
     Height = 569
     Align = alClient
     BevelOuter = bvNone
@@ -27,11 +27,12 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     object pnlTopo: TPanel
       Left = 0
       Top = 0
-      Width = 1051
+      Width = 1212
       Height = 258
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
+      ExplicitTop = 7
       object btnPlanilha: TSpeedButton
         Left = 590
         Top = 34
@@ -81,6 +82,19 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         ParentFont = False
         OnClick = btnLimparClick
       end
+      object lblQuantidade: TLabel
+        Left = 648
+        Top = 232
+        Width = 317
+        Height = 24
+        Caption = 'Quantidade de registros importada: '
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -20
+        Font.Name = 'Roboto'
+        Font.Style = []
+        ParentFont = False
+      end
       object editCaminhoPlanilha: TEdit
         Left = 16
         Top = 34
@@ -96,7 +110,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       end
       object gbSelecao: TGroupBox
         Left = 16
-        Top = 106
+        Top = 105
         Width = 609
         Height = 145
         Caption = '  Selecione conta e a categoria do lote que ser'#225' lan'#231'ado  '
@@ -110,7 +124,14 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         end
         object labelConta: TLabel
           Left = 13
-          Top = 79
+          Top = 61
+          Width = 36
+          Height = 16
+          Caption = 'Conta:'
+        end
+        object Label1: TLabel
+          Left = 13
+          Top = 101
           Width = 36
           Height = 15
           Caption = 'Conta:'
@@ -129,7 +150,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         end
         object cmbContas: TDBComboBox
           Left = 13
-          Top = 93
+          Top = 75
           Width = 273
           Height = 23
           BevelInner = bvNone
@@ -145,13 +166,25 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
           Height = 39
           Caption = 'Iniciar lan'#231'amento'
           TabOrder = 2
+          OnClick = btnSalvarClick
+        end
+        object DBComboBox1: TDBComboBox
+          Left = 13
+          Top = 116
+          Width = 273
+          Height = 23
+          BevelInner = bvNone
+          Color = 15395562
+          DataField = 'DESCRICAO'
+          DataSource = dsFormaPgto
+          TabOrder = 3
         end
       end
     end
     object gridLote: TDBGrid
       Left = 0
       Top = 271
-      Width = 1051
+      Width = 1212
       Height = 298
       Align = alBottom
       DataSource = dsPlanilhaLote
@@ -164,7 +197,22 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     end
   end
   object cldsPlanilhaLote: TFDMemTable
-    FieldDefs = <>
+    Active = True
+    FieldDefs = <
+      item
+        Name = 'DATA'
+        DataType = ftDate
+      end
+      item
+        Name = 'DESCRICAO'
+        DataType = ftString
+        Size = 200
+      end
+      item
+        Name = 'VALOR'
+        DataType = ftFloat
+        Precision = 15
+      end>
     IndexDefs = <>
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
@@ -177,15 +225,18 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     Left = 768
     Top = 320
     object cldsPlanilhaLoteDATA: TDateField
+      DisplayWidth = 10
       FieldKind = fkInternalCalc
       FieldName = 'DATA'
     end
     object cldsPlanilhaLoteDESCRICAO: TStringField
-      DisplayWidth = 200
+      DisplayWidth = 132
       FieldKind = fkInternalCalc
       FieldName = 'DESCRICAO'
+      Size = 200
     end
     object cldsPlanilhaLoteVALOR: TFloatField
+      DisplayWidth = 20
       FieldKind = fkInternalCalc
       FieldName = 'VALOR'
     end
@@ -417,13 +468,13 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   object dsLcto: TDataSource
     DataSet = FDqryLcto
     Left = 132
-    Top = 371
+    Top = 339
   end
   object FDtcLcto: TFDTransaction
     Options.AutoStop = False
     Connection = frmPrincipal.FDconexao
-    Left = 40
-    Top = 352
+    Left = 24
+    Top = 448
   end
   object dsContas: TDataSource
     DataSet = FDqryContas
@@ -452,5 +503,34 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       Origin = 'DESCRICAO'
       Size = 50
     end
+  end
+  object FDqryFormaPgto: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcLcto
+    UpdateOptions.AssignedValues = [uvGeneratorName]
+    UpdateOptions.GeneratorName = 'GEN_FORMA_DE_PAGAMENTO_ID'
+    UpdateOptions.UpdateTableName = 'FORMA_DE_PAGAMENTO'
+    UpdateOptions.KeyFields = 'FORMA_DE_PAGAMENTO_ID'
+    UpdateOptions.AutoIncFields = 'FORMA_DE_PAGAMENTO_ID'
+    SQL.Strings = (
+      'select * from FORMA_DE_PAGAMENTO')
+    Left = 864
+    Top = 394
+    object FDqryFormaPgtoFORMA_DE_PAGAMENTO_ID: TIntegerField
+      AutoGenerateValue = arAutoInc
+      FieldName = 'FORMA_DE_PAGAMENTO_ID'
+      Origin = 'FORMA_DE_PAGAMENTO_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+    end
+    object FDqryFormaPgtoDESCRICAO: TStringField
+      FieldName = 'DESCRICAO'
+      Origin = 'DESCRICAO'
+      Size = 50
+    end
+  end
+  object dsFormaPgto: TDataSource
+    DataSet = FDqryFormaPgto
+    Left = 944
+    Top = 395
   end
 end

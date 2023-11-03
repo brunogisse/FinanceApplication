@@ -97,6 +97,20 @@
       ParentFont = False
       Visible = False
     end
+    object btnCarregarPlanilha: TSpeedButton
+      Left = 1044
+      Top = 9
+      Width = 100
+      Height = 39
+      Caption = 'Carregar Grid'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Segoe UI Semibold'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = btnCarregarPlanilhaClick
+    end
     object dataBancoInicio: TDateTimePicker
       Left = 404
       Top = 36
@@ -446,7 +460,7 @@
           Caption = 'Conta:'
         end
         object labelPesqDespSub: TLabel
-          Left = 124
+          Left = 119
           Top = 51
           Width = 74
           Height = 13
@@ -8772,16 +8786,5 @@
     DataSet = qryLogin
     Left = 760
     Top = 472
-  end
-  object FDMemTable1: TFDMemTable
-    FetchOptions.AssignedValues = [evMode]
-    FetchOptions.Mode = fmAll
-    ResourceOptions.AssignedValues = [rvSilentMode]
-    ResourceOptions.SilentMode = True
-    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
-    UpdateOptions.CheckRequired = False
-    UpdateOptions.AutoCommitUpdates = True
-    Left = 568
-    Top = 384
   end
 end

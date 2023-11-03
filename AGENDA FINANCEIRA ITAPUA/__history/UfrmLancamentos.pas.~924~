@@ -271,6 +271,7 @@ type
     procedure CalcularValorNFentrada;
     procedure allowPrint(status: String);
     procedure procPermitirAlterarExcluir;
+    procedure AtualizarAposCadastrarLote;
     // function FormatarMoeda(valor : string) : string;
 
     { Private declarations }
@@ -823,6 +824,23 @@ begin
   editValorInicial.SetFocus;
 end;
 
+procedure TfrmLancamento.AtualizarAposCadastrarLote;
+var
+  dataInicio, dataFim: TDateTime;
+begin
+  dataInicio := IncMonth(Date, -6);
+  dataFim := Now;
+  dataBancoInicio.Date := dataInicio;
+  dataBancoFim.Date := dataFim;
+  with FDqryLcto do
+  begin
+    Close;
+    ParamByName('INICIO').AsDate := dataBancoInicio.Date;
+    ParamByName('FIM').AsDate := dataBancoFim.Date;
+    Open;
+  end;
+end;
+
 procedure TfrmLancamento.refreshBanco;
 var
   dataInicio, dataFim: TDateTime;
@@ -1197,8 +1215,14 @@ end;
 
 procedure TfrmLancamento.btnCarregarPlanilhaClick(Sender: TObject);
 begin
-  if Application.CreateForm() then
-  
+  try
+    Application.CreateForm(TfrmLancamentosEmLote, frmLancamentosEmLote);
+    frmLancamentosEmLote.ShowModal;
+  finally
+    FreeAndNil(frmLancamentosEmLote);
+    AtualizarAposCadastrarLote;
+    btnPesquisar.Click;
+  end;
 end;
 
 procedure TfrmLancamento.btnClearSubClick(Sender: TObject);
