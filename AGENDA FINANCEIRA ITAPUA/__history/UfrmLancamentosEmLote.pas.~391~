@@ -273,6 +273,20 @@ procedure TfrmLancamentosEmLote.btnSalvarClick(Sender: TObject);
 var
   CategoriaID, SubCategoriaID : Integer;
 begin
+
+  if editPesquisaDespSub.Text = '' then
+  begin
+    MessageDlg('Por favor, escolha a despesa e subdespesa desse lote',  TMsgDlgType.mtInformation, [TMsgDlgBtn.mbOK], 0);
+    Abort;
+    Exit;
+  end;
+
+  if MessageBox(Application.Handle,'Confirma o lançamento do lote carregado?','Confirmação', MB_YESNO + MB_ICONQUESTION) = mrNO then
+  begin
+    Abort;
+    Exit;
+  end;
+
   try
     try
       habilitarEventos(False);
@@ -319,7 +333,7 @@ begin
   Except
     on E : Exception do
     begin
-       MessageDlg('Falha ao cadastrar lote: ' + #13 +  E.Message,  TMsgDlgType.mtWarning, [TMsgDlgBtn.mbOK], 0);
+       MessageDlg('Falha ao cadastrar lote: ' + #13 + #13 + E.Message,  TMsgDlgType.mtWarning, [TMsgDlgBtn.mbOK], 0);
     end;
   end;
 end;

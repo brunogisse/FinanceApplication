@@ -308,8 +308,8 @@ begin
         FDqryLcto.FieldByName('USERID').AsInteger                := frmPrincipal.FDqryLogin.FieldByName('LOGIN_ID').AsInteger;
         FDqryLcto.FieldByName('LANCAMENTO').asstring             := cldsPlanilhaLote.FieldByName('DESCRICAO').AsString;
         FDqryLcto.FieldByName('DATA_VENCIMENTO').AsDateTime      := cldsPlanilhaLote.FieldByName('DATA').AsDateTime;
-        FDqryLcto.FieldByName('DATA_VENCIMENTO').AsDateTime      := Now;
-        FDqryLcto.FieldByName('DATA_VENCIMENTO').AsFloat         := cldsPlanilhaLote.FieldByName('VALOR').AsFloat;
+        FDqryLcto.FieldByName('DATA_CADASTRO').AsDateTime        := Now;
+        FDqryLcto.FieldByName('VALOR_PREVISTO').AsFloat          := cldsPlanilhaLote.FieldByName('VALOR').AsFloat;
         FDqryLcto.FieldByName('VALOR_PAGO').AsFloat              := cldsPlanilhaLote.FieldByName('VALOR').AsFloat;
         FDqryLcto.FieldByName('CHEQUE').AsInteger                := 0;
         FDqryLcto.FieldByName('CHEQUE_COMPENSADO').AsString      := 'N';
