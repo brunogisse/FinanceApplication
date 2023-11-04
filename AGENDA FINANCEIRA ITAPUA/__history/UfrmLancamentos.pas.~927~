@@ -271,13 +271,11 @@ type
     procedure CalcularValorNFentrada;
     procedure allowPrint(status: String);
     procedure procPermitirAlterarExcluir;
-    procedure AtualizarAposCadastrarLote;
     // function FormatarMoeda(valor : string) : string;
 
     { Private declarations }
   public
     { Public declarations }
-
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;
@@ -824,23 +822,6 @@ begin
   editValorInicial.SetFocus;
 end;
 
-procedure TfrmLancamento.AtualizarAposCadastrarLote;
-var
-  dataInicio, dataFim: TDateTime;
-begin
-  dataInicio := IncMonth(Date, -6);
-  dataFim := Now;
-  dataBancoInicio.Date := dataInicio;
-  dataBancoFim.Date := dataFim;
-  with FDqryLcto do
-  begin
-    Close;
-    ParamByName('INICIO').AsDate := dataBancoInicio.Date;
-    ParamByName('FIM').AsDate := dataBancoFim.Date;
-    Open;
-  end;
-end;
-
 procedure TfrmLancamento.refreshBanco;
 var
   dataInicio, dataFim: TDateTime;
@@ -1220,8 +1201,6 @@ begin
     frmLancamentosEmLote.ShowModal;
   finally
     FreeAndNil(frmLancamentosEmLote);
-    refreshBanco;
-    btnPesquisar.Click;
   end;
 end;
 

@@ -276,7 +276,6 @@ type
     { Private declarations }
   public
     { Public declarations }
-
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;
@@ -828,8 +827,6 @@ var
   dataInicio, dataFim: TDateTime;
 begin
   FDqryContas.Close;
-  if FDqryContas.Active = True then
-  FDqryContas.Close;
   FDqryContas.Open;
   FDqrySubdespesa.Close;
   FDqrySubdespesa.Open;
@@ -1204,8 +1201,6 @@ begin
     frmLancamentosEmLote.ShowModal;
   finally
     FreeAndNil(frmLancamentosEmLote);
-    refreshBanco;
-    btnPesquisar.Click;
   end;
 end;
 

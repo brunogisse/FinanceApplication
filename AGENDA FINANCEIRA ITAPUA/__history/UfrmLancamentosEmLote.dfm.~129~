@@ -110,9 +110,9 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       end
       object gbSelecao: TGroupBox
         Left = 16
-        Top = 105
+        Top = 99
         Width = 609
-        Height = 145
+        Height = 154
         Caption = '  Selecione conta e a categoria do lote que ser'#225' lan'#231'ado  '
         TabOrder = 1
         object labelPesqDespSub: TLabel
@@ -124,17 +124,17 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         end
         object labelConta: TLabel
           Left = 13
-          Top = 61
+          Top = 64
           Width = 36
           Height = 16
           Caption = 'Conta:'
         end
         object Label1: TLabel
           Left = 13
-          Top = 101
-          Width = 36
+          Top = 106
+          Width = 124
           Height = 15
-          Caption = 'Conta:'
+          Caption = 'Forma de pagamento:'
         end
         object editPesquisaDespSub: TEdit
           Left = 13
@@ -150,7 +150,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         end
         object cmbContas: TDBComboBox
           Left = 13
-          Top = 75
+          Top = 79
           Width = 273
           Height = 23
           BevelInner = bvNone
@@ -167,6 +167,17 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
           Caption = 'Iniciar lan'#231'amento'
           TabOrder = 2
           OnClick = btnSalvarClick
+        end
+        object cmbFormaPgto: TDBComboBox
+          Left = 13
+          Top = 121
+          Width = 273
+          Height = 23
+          BevelInner = bvNone
+          Color = 15395562
+          DataField = 'DESCRICAO'
+          DataSource = dsFormaPgto
+          TabOrder = 3
         end
       end
     end
@@ -457,13 +468,13 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   object dsLcto: TDataSource
     DataSet = FDqryLcto
     Left = 132
-    Top = 371
+    Top = 339
   end
   object FDtcLcto: TFDTransaction
     Options.AutoStop = False
     Connection = frmPrincipal.FDconexao
-    Left = 40
-    Top = 352
+    Left = 24
+    Top = 448
   end
   object dsContas: TDataSource
     DataSet = FDqryContas
@@ -492,5 +503,34 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       Origin = 'DESCRICAO'
       Size = 50
     end
+  end
+  object FDqryFormaPgto: TFDQuery
+    Connection = frmPrincipal.FDconexao
+    Transaction = FDtcLcto
+    UpdateOptions.AssignedValues = [uvGeneratorName]
+    UpdateOptions.GeneratorName = 'GEN_FORMA_DE_PAGAMENTO_ID'
+    UpdateOptions.UpdateTableName = 'FORMA_DE_PAGAMENTO'
+    UpdateOptions.KeyFields = 'FORMA_DE_PAGAMENTO_ID'
+    UpdateOptions.AutoIncFields = 'FORMA_DE_PAGAMENTO_ID'
+    SQL.Strings = (
+      'select * from FORMA_DE_PAGAMENTO')
+    Left = 864
+    Top = 394
+    object FDqryFormaPgtoFORMA_DE_PAGAMENTO_ID: TIntegerField
+      AutoGenerateValue = arAutoInc
+      FieldName = 'FORMA_DE_PAGAMENTO_ID'
+      Origin = 'FORMA_DE_PAGAMENTO_ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+    end
+    object FDqryFormaPgtoDESCRICAO: TStringField
+      FieldName = 'DESCRICAO'
+      Origin = 'DESCRICAO'
+      Size = 50
+    end
+  end
+  object dsFormaPgto: TDataSource
+    DataSet = FDqryFormaPgto
+    Left = 944
+    Top = 395
   end
 end

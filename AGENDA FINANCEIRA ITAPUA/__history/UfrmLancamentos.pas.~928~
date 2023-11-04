@@ -276,7 +276,6 @@ type
     { Private declarations }
   public
     { Public declarations }
-
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;
@@ -1203,7 +1202,6 @@ begin
   finally
     FreeAndNil(frmLancamentosEmLote);
   end;
-  
 end;
 
 procedure TfrmLancamento.btnClearSubClick(Sender: TObject);
@@ -1464,7 +1462,7 @@ begin
     PageControlLancamentos.TabIndex := 1;
     cbPago.Text := '(TODOS)';
     btnPesquisaPrevisto.Click;
-    cboxIntervaloData.Checked := True;
+    cboxIntervaloData.Check := True;
   end;
   FDqryLcto.First;
   configurarEnables(0);

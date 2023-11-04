@@ -276,7 +276,6 @@ type
     { Private declarations }
   public
     { Public declarations }
-
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;
@@ -1202,8 +1201,6 @@ begin
     frmLancamentosEmLote.ShowModal;
   finally
     FreeAndNil(frmLancamentosEmLote);
-    refreshBanco;
-    btnPesquisar.Click;
   end;
 end;
 
@@ -1460,12 +1457,13 @@ begin
   else
   begin
     atribuirDataDoDia;
+    cboxIntervaloData.Checked := True;
+    cbPago.Text := '(TODOS)';
+    PageControlLancamentos.TabIndex := 1;
+    btnPesquisaPrevisto.Click;
     dataPesquisaPrevistoFim.Date := Now;
     refreshBanco;
-    PageControlLancamentos.TabIndex := 1;
-    cbPago.Text := '(TODOS)';
-    btnPesquisaPrevisto.Click;
-    cboxIntervaloData.Checked := True;
+
   end;
   FDqryLcto.First;
   configurarEnables(0);

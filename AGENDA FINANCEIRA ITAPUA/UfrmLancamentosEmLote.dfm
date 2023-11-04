@@ -32,7 +32,6 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
-      ExplicitTop = 7
       object btnPlanilha: TSpeedButton
         Left = 590
         Top = 34
@@ -126,7 +125,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
           Left = 13
           Top = 64
           Width = 36
-          Height = 16
+          Height = 15
           Caption = 'Conta:'
         end
         object Label1: TLabel
@@ -242,6 +241,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     end
   end
   object dsPlanilhaLote: TDataSource
+    AutoEdit = False
     DataSet = cldsPlanilhaLote
     Left = 672
     Top = 320

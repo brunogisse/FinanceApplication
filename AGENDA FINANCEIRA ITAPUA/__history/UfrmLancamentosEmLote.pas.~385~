@@ -84,6 +84,8 @@ type
     procedure btnSalvarClick(Sender: TObject);
   private
     function LimparNumero(Str: string): string;
+    function RemoverAcentos(const texto: string): string;
+    procedure  habilitarEventos(habilitar : Boolean);
 
     { Private declarations }
   public
@@ -132,7 +134,7 @@ begin
         begin
           cldsPlanilhaLote.Last;
           DescricaoConcatenada := cldsPlanilhaLoteDESCRICAO.AsString;
-          DescricaoConcatenada := DescricaoConcatenada + ' - ' + VarToStr(Planilha.Cells[Linha, 2]);
+          DescricaoConcatenada := DescricaoConcatenada + ' - ' +  UpperCase(RemoverAcentos(VarToStr(Planilha.Cells[Linha, 2])));
           cldsPlanilhaLote.Edit;
           cldsPlanilhaLote.Fields[1].AsString := DescricaoConcatenada;
           cldsPlanilhaLote.Post;
@@ -143,7 +145,7 @@ begin
 
           DataValida := StrToDate(DataStr);
           cldsPlanilhaLote.Fields[0].AsDateTime := DataValida;
-          cldsPlanilhaLote.Fields[1].AsString := Planilha.Cells[Linha, 2];
+          cldsPlanilhaLote.Fields[1].AsString := UpperCase(RemoverAcentos(Planilha.Cells[Linha, 2]));
 
           ValorStr := LimparNumero(Planilha.Cells[Linha, 3]);
           ValorFloat := StrToFloat(ValorStr);
@@ -251,43 +253,79 @@ begin
   editCaminhoPlanilha.Text := OpenDialog1.FileName;
 end;
 
+procedure TfrmLancamentosEmLote.habilitarEventos(habilitar : Boolean);
+begin
+  if habilitar then
+  begin
+    btnCarregarPlanilha.Enabled := True;
+    btnLimpar.Enabled := True;
+    gbSelecao.Enabled := True;
+  end
+  else
+  begin
+    btnCarregarPlanilha.Enabled := False;
+    btnLimpar.Enabled := False;
+    gbSelecao.Enabled := False;
+  end;
+end;
+
 procedure TfrmLancamentosEmLote.btnSalvarClick(Sender: TObject);
 var
   CategoriaID, SubCategoriaID : Integer;
 begin
 
-  cldsPlanilhaLote.First;
-  while not cldsPlanilhaLote.Eof do
-  begin
-    if not (dsLcto.State in [dsInsert]) then
-    begin
+  if MessageBox(Application.Handle,'Deseja realmente excluir esta forma de pagamento?','Confirmaзгo', MB_YESNO + MB_ICONQUESTION) = mrNO then
+  Abort;
+  Exit;
+
+  try
+    try
+      habilitarEventos(False);
+
       CategoriaID    := FDqryLcto['CATEGORIA_FK'];
       SubCategoriaID := FDqryLcto['SUBCATEGORIA_FK'];
-      FDqryLcto.Insert;
-    end;
-    FDqryLcto['CATEGORIA_FK'] :=
-    FDqryLcto['SUBCATEGORIA_FK'] :=
-    FDqryLcto['CONTA_FK'] := FDqryContas['CONTA_ID'];
-    FDqryLcto['FORMA_DE_PAGAMENTO_FK'] := FDqryFormaPgto['FORMA_DE_PAGAMENTO_ID'];
-    FDqryLcto['USERID'] := frmPrincipal.FDqryLogin['LOGIN_ID'];
-    FDqryLcto.FieldByName('LANCAMENTO').asstring := cldsPlanilhaLote.FieldByName('DESCRICAO').AsString;
-    FDqryLcto['DATA_VENCIMENTO'] := cldsPlanilhaLote.FieldByName('DATA').AsDateTime;
-    FDqryLcto['DATA_CADASTRO'] := Now;
-    FDqryLcto['VALOR_PREVISTO'] := cldsPlanilhaLote.FieldByName('VALOR').AsFloat;
-    FDqryLcto['CHEQUE'] := 0;
-    FDqryLcto['CHEQUE_COMPENSADO'] := 'N';
-    FDqryLcto['NOTA_FISCAL'] := 0;
-    FDqryLcto['ENTRADA_ID'] := 0;
-    FDqryLcto['DATA_PAGAMENTO'] := cldsPlanilhaLote.FieldByName('DATA').AsDateTime;
-    FDqryLcto['PAGO'] := 1;
-    FDqryLcto.Post;
-    cldsPlanilhaLote.Next;
-  end;
 
-   try
-    FDtcLcto.CommitRetaining;
-  except
-    FDtcLcto.RollbackRetaining;
+      cldsPlanilhaLote.First;
+      while not cldsPlanilhaLote.Eof do
+      begin
+        if not (dsLcto.State in [dsInsert]) then
+        begin
+          FDqryLcto.Insert;
+          FDqryLcto['CATEGORIA_FK'] := CategoriaID;
+          FDqryLcto['SUBCATEGORIA_FK'] := SubCategoriaID;
+        end;
+        FDqryLcto.FieldByName('CONTA_FK').AsInteger              := FDqryContas.FieldByName('CONTA_ID').AsInteger;
+        FDqryLcto.FieldByName('FORMA_DE_PAGAMENTO_FK').AsInteger := FDqryFormaPgto.FieldByName('FORMA_DE_PAGAMENTO_ID').AsInteger;
+        FDqryLcto.FieldByName('USERID').AsInteger                := frmPrincipal.FDqryLogin.FieldByName('LOGIN_ID').AsInteger;
+        FDqryLcto.FieldByName('LANCAMENTO').asstring             := cldsPlanilhaLote.FieldByName('DESCRICAO').AsString;
+        FDqryLcto.FieldByName('DATA_VENCIMENTO').AsDateTime      := cldsPlanilhaLote.FieldByName('DATA').AsDateTime;
+        FDqryLcto.FieldByName('DATA_VENCIMENTO').AsDateTime      := Now;
+        FDqryLcto.FieldByName('DATA_VENCIMENTO').AsFloat         := cldsPlanilhaLote.FieldByName('VALOR').AsFloat;
+        FDqryLcto.FieldByName('VALOR_PAGO').AsFloat              := cldsPlanilhaLote.FieldByName('VALOR').AsFloat;
+        FDqryLcto.FieldByName('CHEQUE').AsInteger                := 0;
+        FDqryLcto.FieldByName('CHEQUE_COMPENSADO').AsString      := 'N';
+        FDqryLcto.FieldByName('NOTA_FISCAL').AsInteger           := 0;
+        FDqryLcto.FieldByName('ENTRADA_ID').AsInteger            := 0;
+        FDqryLcto.FieldByName('DATA_PAGAMENTO').AsDateTime       := cldsPlanilhaLote.FieldByName('DATA').AsDateTime;
+        FDqryLcto.FieldByName('PAGO').AsInteger                  := 1;
+        FDqryLcto.Post;
+        cldsPlanilhaLote.Next;
+      end;
+
+       try
+        FDtcLcto.CommitRetaining;
+        MessageDlg('Lote cadastrado com sucesso!',  TMsgDlgType.mtInformation, [TMsgDlgBtn.mbOK], 0);
+      except
+        FDtcLcto.RollbackRetaining;
+      end;
+    finally
+      habilitarEventos(True);
+    end;
+  Except
+    on E : Exception do
+    begin
+       MessageDlg('Falha ao cadastrar lote: ' + #13 + #13 + E.Message,  TMsgDlgType.mtWarning, [TMsgDlgBtn.mbOK], 0);
+    end;
   end;
 end;
 
@@ -302,6 +340,33 @@ begin
       Result := Result + Str[i]
     else if Str[i] = ',' then
       Result := Result + ',';
+  end;
+end;
+
+function TfrmLancamentosEmLote.RemoverAcentos(const texto: string): string;
+const
+    COM_ACENTO: array[0..44] of string = (
+    'д', 'а', 'в', 'л', 'к', 'ф', 'ы', 'г', 'х', 'б', 'и', 'й', 'о', 'п', 'м', 'н', 'ц', 'т', 'у', 'щ', 'ъ', 'з', 'ь', 'с',
+    'А', 'В', 'К', 'Ф', 'Ы', 'Г', 'Х', 'А', 'Б', 'И', 'Й', 'М', 'Н', 'Т', 'У', 'Щ', 'Ъ', 'З', 'Ь', 'Ђ', 'С'
+  );
+
+    SEM_ACENTO: array[0..44] of string = (
+    'a', 'a', 'a', 'e', 'e', 'o', 'u', 'a', 'o', 'a', 'e', 'e', 'i', 'i', 'i', 'i', 'o', 'o', 'o', 'u', 'u', 'c', 'u', 'n',
+    'A', 'A', 'E', 'O', 'U', 'A', 'O', 'A', 'A', 'E', 'E', 'I', 'I', 'O', 'O', 'U', 'U', 'C', 'U', 'E', 'N'
+  );
+var
+  i, j: Integer;
+begin
+  Result := LowerCase(texto);
+  for i := Low(COM_ACENTO) to High(COM_ACENTO) do
+  begin
+    j := Pos(COM_ACENTO[i], Result);
+    while j > 0 do
+    begin
+      Delete(Result, j, Length(COM_ACENTO[i]));
+      Insert(SEM_ACENTO[i], Result, j);
+      j := Pos(COM_ACENTO[i], Result);
+    end;
   end;
 end;
 
