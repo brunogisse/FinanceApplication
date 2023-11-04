@@ -26883,7 +26883,6 @@
         'ebug\Dados\DADOS_14032022_ZERADO.FDB'
       'DriverID=FB')
     UpdateOptions.AssignedValues = [uvGeneratorName]
-    Connected = True
     LoginPrompt = False
     Left = 33
     Top = 32

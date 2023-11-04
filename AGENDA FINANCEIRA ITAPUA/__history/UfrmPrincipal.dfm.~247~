@@ -25,6 +25,7 @@
     Width = 556
     Height = 667
     Anchors = [akLeft, akTop, akRight, akBottom]
+    ParentShowHint = False
     Picture.Data = {
       0A544A504547496D61676567080D00FFD8FFE000104A46494600010100000100
       010000FFE20C584943435F50524F46494C4500010100000C484C696E6F021000
@@ -26719,7 +26720,9 @@
       1451400514514005145140051451400514514005145140051451400514514005
       145140051451400514514005145140051451401FFFD9}
     Proportional = True
+    ShowHint = False
     Stretch = True
+    Transparent = True
     ExplicitWidth = 817
     ExplicitHeight = 817
   end
@@ -26732,8 +26735,6 @@
     Color = 7171382
     ParentBackground = False
     TabOrder = 0
-    ExplicitLeft = 1090
-    ExplicitHeight = 586
     object btnSair: TImage
       Left = 109
       Top = 17
@@ -26803,7 +26804,6 @@
       Height = 0
       Align = alBottom
       TabOrder = 0
-      ExplicitTop = 472
       object Label4: TLabel
         Left = 40
         Top = 48
@@ -26821,9 +26821,8 @@
       BevelOuter = bvNone
       TabOrder = 1
       Visible = False
-      ExplicitTop = 472
       object labelNotification: TLabel
-        Left = 16
+        Left = 7
         Top = 83
         Width = 80
         Height = 13
@@ -26873,8 +26872,6 @@
         Text = 'Hora'
         Width = 100
       end>
-    ExplicitTop = 586
-    ExplicitWidth = 1299
   end
   object FDconexao: TFDConnection
     Params.Strings = (
@@ -26990,6 +26987,10 @@
         Caption = 'BackUp'
         OnClick = menuBackupClick
       end
+      object backupautomtico1: TMenuItem
+        Caption = 'backup autom'#225'tico'
+        OnClick = backupautomtico1Click
+      end
     end
     object Sobre: TMenuItem
       Caption = 'Sobre'
@@ -27045,5 +27046,12 @@
         OnClick = RelatorioSaidasClick
       end
     end
+  end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 30000
+    OnTimer = Timer1Timer
+    Left = 467
+    Top = 107
   end
 end
