@@ -1457,12 +1457,13 @@ begin
   else
   begin
     atribuirDataDoDia;
+    cboxIntervaloData.Checked := True;
+    rbDescricao.Checked := True;
+    cbPago.Text := '(TODOS)';
+    PageControlLancamentos.TabIndex := 1;
+    btnPesquisaPrevisto.Click;
     dataPesquisaPrevistoFim.Date := Now;
     refreshBanco;
-    PageControlLancamentos.TabIndex := 1;
-    cbPago.Text := '(TODOS)';
-    btnPesquisaPrevisto.Click;
-    cboxIntervaloData.Checked := True;
   end;
   FDqryLcto.First;
   configurarEnables(0);

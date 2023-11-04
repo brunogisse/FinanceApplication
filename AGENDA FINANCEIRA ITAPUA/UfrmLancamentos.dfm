@@ -98,11 +98,11 @@
       Visible = False
     end
     object btnCarregarPlanilha: TSpeedButton
-      Left = 1044
+      Left = 1024
       Top = 9
-      Width = 100
-      Height = 39
-      Caption = 'Carregar Grid'
+      Width = 144
+      Height = 46
+      Caption = 'Lan'#231'amentos por Lote'
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
       Font.Height = -11

@@ -1201,6 +1201,7 @@ begin
     frmLancamentosEmLote.ShowModal;
   finally
     FreeAndNil(frmLancamentosEmLote);
+    Close;
   end;
 end;
 
@@ -1446,6 +1447,13 @@ end;
 
 procedure TfrmLancamento.FormShow(Sender: TObject);
 begin
+
+  if (frmPrincipal.FDqryLogin.FieldByName('NIVEL').AsInteger < 3) then
+  btnCarregarPlanilha.Visible := False
+  else
+  btnCarregarPlanilha.Visible := True;
+
+
   if frmPrincipal.FDqryVencimentos.RecordCount = 0 then
   begin
     PageControlLancamentos.TabIndex := 0;

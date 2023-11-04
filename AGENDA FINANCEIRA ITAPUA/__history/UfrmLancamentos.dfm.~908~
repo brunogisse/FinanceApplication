@@ -97,6 +97,20 @@
       ParentFont = False
       Visible = False
     end
+    object btnCarregarPlanilha: TSpeedButton
+      Left = 1024
+      Top = 13
+      Width = 144
+      Height = 32
+      Caption = 'Carregar Grid'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Segoe UI Semibold'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = btnCarregarPlanilhaClick
+    end
     object dataBancoInicio: TDateTimePicker
       Left = 404
       Top = 36
@@ -418,7 +432,7 @@
     Top = 65
     Width = 1308
     Height = 247
-    ActivePage = Aba1
+    ActivePage = Aba2
     Align = alTop
     TabOrder = 1
     object Aba1: TTabSheet
@@ -446,7 +460,7 @@
           Caption = 'Conta:'
         end
         object labelPesqDespSub: TLabel
-          Left = 124
+          Left = 119
           Top = 51
           Width = 74
           Height = 13
@@ -2797,7 +2811,7 @@
   object dsFormaPgto: TDataSource
     DataSet = FDqryFormaPgto
     Left = 976
-    Top = 440
+    Top = 443
   end
   object dsSubdespesa: TDataSource
     DataSet = FDqrySubdespesa

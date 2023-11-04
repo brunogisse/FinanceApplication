@@ -276,7 +276,6 @@ type
     { Private declarations }
   public
     { Public declarations }
-      procedure AtualizarAposCadastrarLote;
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;
@@ -821,23 +820,6 @@ end;
 procedure TfrmLancamento.rbValorPrevistoClick(Sender: TObject);
 begin
   editValorInicial.SetFocus;
-end;
-
-procedure TfrmLancamento.AtualizarAposCadastrarLote;
-var
-  dataInicio, dataFim: TDateTime;
-begin
-  dataInicio := IncMonth(Date, -6);
-  dataFim := Now;
-  dataBancoInicio.Date := dataInicio;
-  dataBancoFim.Date := dataFim;
-  with FDqryLcto do
-  begin
-    Close;
-    ParamByName('INICIO').AsDate := dataBancoInicio.Date;
-    ParamByName('FIM').AsDate := dataBancoFim.Date;
-    Open;
-  end;
 end;
 
 procedure TfrmLancamento.refreshBanco;
@@ -1464,6 +1446,13 @@ end;
 
 procedure TfrmLancamento.FormShow(Sender: TObject);
 begin
+
+  if (frmPrincipal.FDqryLogin.FieldByName('NIVEL').AsInteger < 3) then
+  btnCarregarPlanilha.Visible := False
+  else
+  btnCarregarPlanilha.Visible := True;
+
+
   if frmPrincipal.FDqryVencimentos.RecordCount = 0 then
   begin
     PageControlLancamentos.TabIndex := 0;
@@ -1475,12 +1464,13 @@ begin
   else
   begin
     atribuirDataDoDia;
+    cboxIntervaloData.Checked := True;
+    rbDescricao.Checked := True;
+    cbPago.Text := '(TODOS)';
+    PageControlLancamentos.TabIndex := 1;
+    btnPesquisaPrevisto.Click;
     dataPesquisaPrevistoFim.Date := Now;
     refreshBanco;
-    PageControlLancamentos.TabIndex := 1;
-    cbPago.Text := '(TODOS)';
-    btnPesquisaPrevisto.Click;
-    cboxIntervaloData.Checked := True;
   end;
   FDqryLcto.First;
   configurarEnables(0);
