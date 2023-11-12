@@ -77,6 +77,7 @@ type
     btnCarregarPlanilha: TSpeedButton;
     btnLimpar: TSpeedButton;
     imgTipoPg: TPngImageList;
+    cldsPlanilhaLoteATIVO: TBooleanField;
     procedure btnPlanilhaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
     procedure btnLimparClick(Sender: TObject);
@@ -85,6 +86,10 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
     procedure btnSalvarClick(Sender: TObject);
+    procedure cldsPlanilhaLoteATIVOChange(Sender: TField);
+    procedure gridLoteDrawColumnCell(Sender: TObject; const Rect: TRect;
+      DataCol: Integer; Column: TColumn; State: TGridDrawState);
+    procedure gridLoteCellClick(Column: TColumn);
   private
     function LimparNumero(Str: string): string;
     function RemoverAcentos(const texto: string): string;
@@ -140,7 +145,7 @@ begin
           DescricaoConcatenada := cldsPlanilhaLoteDESCRICAO.AsString;
           DescricaoConcatenada := DescricaoConcatenada + ' - ' +  UpperCase(RemoverAcentos(VarToStr(Planilha.Cells[Linha, 2])));
           cldsPlanilhaLote.Edit;
-          cldsPlanilhaLote.Fields[1].AsString := DescricaoConcatenada;
+          cldsPlanilhaLote.Fields[2].AsString := DescricaoConcatenada;
           cldsPlanilhaLote.Post;
         end
         else  //se houver data, ele adiciona novo registro..
@@ -148,12 +153,13 @@ begin
           cldsPlanilhaLote.Append;
 
           DataValida := StrToDate(DataStr);
-          cldsPlanilhaLote.Fields[0].AsDateTime := DataValida;
-          cldsPlanilhaLote.Fields[1].AsString := UpperCase(RemoverAcentos(Planilha.Cells[Linha, 2]));
+          cldsPlanilhaLote.Fields[0].AsBoolean := False;
+          cldsPlanilhaLote.Fields[1].AsDateTime := DataValida;
+          cldsPlanilhaLote.Fields[2].AsString := UpperCase(RemoverAcentos(Planilha.Cells[Linha, 2]));
 
           ValorStr := LimparNumero(Planilha.Cells[Linha, 3]);
           ValorFloat := StrToFloat(ValorStr);
-          cldsPlanilhaLote.Fields[2].AsFloat := ValorFloat;
+          cldsPlanilhaLote.Fields[3].AsFloat := ValorFloat;
 
           cldsPlanilhaLote.Post;
         end;
@@ -177,6 +183,14 @@ begin
       Abort;
     end;
   end;
+end;
+
+procedure TfrmLancamentosEmLote.cldsPlanilhaLoteATIVOChange(Sender: TField);
+begin
+//  if cldsPlanilhaLoteATIVO.AsBoolean = False then
+//  imgTipoPg.PngImages[0].Assign(imgTipoPg.PngImages[0])
+//  else
+//  imgTipoPg.PngImages[0].Assign(imgTipoPg.PngImages[1])
 end;
 
 procedure TfrmLancamentosEmLote.editPesquisaDespSubDblClick(Sender: TObject);
@@ -230,6 +244,38 @@ begin
   end;
   FDqryFormaPgto.First;
 
+end;
+
+procedure TfrmLancamentosEmLote.gridLoteCellClick(Column: TColumn);
+begin
+  cldsPlanilhaLote.Edit;
+
+  if cldsPlanilhaLoteATIVO.AsBoolean = False then
+    cldsPlanilhaLoteATIVO.AsBoolean := True
+  else
+    cldsPlanilhaLoteATIVO.AsBoolean := False;
+
+    cldsPlanilhaLote.Post;
+end;
+
+procedure TfrmLancamentosEmLote.gridLoteDrawColumnCell(Sender: TObject;
+  const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
+var
+  ValorCelula: Boolean;
+  ImagemIndex: Integer;
+begin
+  if Column.FieldName = 'ATIVO' then
+  begin
+    ValorCelula := cldsPlanilhaLoteATIVO.AsBoolean; // Substitua 'ATIVO' pelo nome real do campo booleano
+
+    if ValorCelula = False then
+      ImagemIndex := 0 // Substitua pelo índice da imagem ativa no seu TPngImageList
+    else
+      ImagemIndex := 1; // Substitua pelo índice da imagem inativa no seu TPngImageList
+
+    imgTipoPg.Draw(gridLote.Canvas, Rect.Left + (Rect.Width - imgTipoPg.Width) div 2,
+      Rect.Top + (Rect.Height - imgTipoPg.Height) div 2, ImagemIndex);
+  end;
 end;
 
 procedure TfrmLancamentosEmLote.btnCarregarPlanilhaClick(Sender: TObject);
