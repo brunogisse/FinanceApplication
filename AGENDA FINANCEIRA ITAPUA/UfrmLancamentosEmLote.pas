@@ -9,7 +9,8 @@ uses
   Vcl.ExtCtrls, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
   FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
   FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.StdCtrls, Vcl.Buttons, ComObj,
-  FireDAC.Stan.Async, FireDAC.DApt, Vcl.DBCtrls;
+  FireDAC.Stan.Async, FireDAC.DApt, Vcl.DBCtrls, System.ImageList, Vcl.ImgList,
+  PngImageList;
 
 type
   TfrmLancamentosEmLote = class(TForm)
@@ -75,6 +76,7 @@ type
     btnPlanilha: TSpeedButton;
     btnCarregarPlanilha: TSpeedButton;
     btnLimpar: TSpeedButton;
+    imgTipoPg: TPngImageList;
     procedure btnPlanilhaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
     procedure btnLimparClick(Sender: TObject);
