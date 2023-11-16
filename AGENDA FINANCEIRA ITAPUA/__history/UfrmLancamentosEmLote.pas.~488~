@@ -89,6 +89,7 @@ type
     procedure cldsPlanilhaLoteATIVOChange(Sender: TField);
     procedure gridLoteDrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
+    procedure gridLoteCellClick(Column: TColumn);
   private
     function LimparNumero(Str: string): string;
     function RemoverAcentos(const texto: string): string;
@@ -179,6 +180,8 @@ begin
       if not(VarIsEmpty(ExcelApp)) then
         ExcelApp.Quit;
       ExcelApp := Unassigned;
+      btnCarregarPlanilha.Enabled := True;
+      btnLimpar.Enabled := False;
       Abort;
     end;
   end;
@@ -223,6 +226,7 @@ end;
 
 procedure TfrmLancamentosEmLote.FormShow(Sender: TObject);
 begin
+  btnLimpar.Enabled := False;
   FDqryLcto.Open();
   FDqryContas.Open();
   FDqryFormaPgto.Open();
@@ -245,6 +249,13 @@ begin
 
 end;
 
+procedure TfrmLancamentosEmLote.gridLoteCellClick(Column: TColumn);
+begin
+  cldsPlanilhaLote.Edit;
+  cldsPlanilhaLoteATIVO.AsBoolean := not cldsPlanilhaLoteATIVO.AsBoolean;
+  cldsPlanilhaLote.Post;
+end;
+
 procedure TfrmLancamentosEmLote.gridLoteDrawColumnCell(Sender: TObject;
   const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
 var
@@ -256,9 +267,9 @@ begin
     ValorCelula := cldsPlanilhaLoteATIVO.AsBoolean; // Substitua 'ATIVO' pelo nome real do campo booleano
 
     if ValorCelula = False then
-      ImagemIndex := 1 // Substitua pelo índice da imagem ativa no seu TPngImageList
+      ImagemIndex := 0 // Substitua pelo índice da imagem ativa no seu TPngImageList
     else
-      ImagemIndex := 0; // Substitua pelo índice da imagem inativa no seu TPngImageList
+      ImagemIndex := 1; // Substitua pelo índice da imagem inativa no seu TPngImageList
 
     imgTipoPg.Draw(gridLote.Canvas, Rect.Left + (Rect.Width - imgTipoPg.Width) div 2,
       Rect.Top + (Rect.Height - imgTipoPg.Height) div 2, ImagemIndex);
@@ -267,13 +278,15 @@ end;
 
 procedure TfrmLancamentosEmLote.btnCarregarPlanilhaClick(Sender: TObject);
 begin
+  lblQuantidade.Caption := 'Quantidade de registros importados: ';
   if editCaminhoPlanilha.Text = '' then
   begin
     MessageDlg('Por favor, escolha um documento válido para ser aberto',
       TMsgDlgType.mtWarning, [TMsgDlgBtn.mbOK], 0);
     Exit;
   end;
-
+  btnCarregarPlanilha.Enabled := False;
+  btnLimpar.Enabled := True;
   CarregarDadosDoExcel;
   lblQuantidade.Caption := lblQuantidade.Caption +
     IntToStr(cldsPlanilhaLote.RecordCount);
@@ -282,6 +295,8 @@ end;
 procedure TfrmLancamentosEmLote.btnLimparClick(Sender: TObject);
 begin
   cldsPlanilhaLote.EmptyDataSet;
+  btnCarregarPlanilha.Enabled := True;
+  TSpeedButton(Sender).Enabled := False;
 end;
 
 procedure TfrmLancamentosEmLote.btnPlanilhaClick(Sender: TObject);

@@ -89,6 +89,7 @@ type
     procedure cldsPlanilhaLoteATIVOChange(Sender: TField);
     procedure gridLoteDrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
+    procedure gridLoteCellClick(Column: TColumn);
   private
     function LimparNumero(Str: string): string;
     function RemoverAcentos(const texto: string): string;
@@ -179,6 +180,8 @@ begin
       if not(VarIsEmpty(ExcelApp)) then
         ExcelApp.Quit;
       ExcelApp := Unassigned;
+      btnCarregarPlanilha.Enabled := True;
+      btnLimpar.Enabled := False;
       Abort;
     end;
   end;
@@ -223,6 +226,7 @@ end;
 
 procedure TfrmLancamentosEmLote.FormShow(Sender: TObject);
 begin
+  btnLimpar.Enabled := False;
   FDqryLcto.Open();
   FDqryContas.Open();
   FDqryFormaPgto.Open();
@@ -243,6 +247,13 @@ begin
   end;
   FDqryFormaPgto.First;
 
+end;
+
+procedure TfrmLancamentosEmLote.gridLoteCellClick(Column: TColumn);
+begin
+  cldsPlanilhaLote.Edit;
+  cldsPlanilhaLoteATIVO.AsBoolean := not cldsPlanilhaLoteATIVO.AsBoolean;
+  cldsPlanilhaLote.Post;
 end;
 
 procedure TfrmLancamentosEmLote.gridLoteDrawColumnCell(Sender: TObject;
@@ -267,13 +278,15 @@ end;
 
 procedure TfrmLancamentosEmLote.btnCarregarPlanilhaClick(Sender: TObject);
 begin
+  lblQuantidade.Caption := lblQuantidade.Caption + '';
   if editCaminhoPlanilha.Text = '' then
   begin
     MessageDlg('Por favor, escolha um documento válido para ser aberto',
       TMsgDlgType.mtWarning, [TMsgDlgBtn.mbOK], 0);
     Exit;
   end;
-
+  btnCarregarPlanilha.Enabled := False;
+  btnLimpar.Enabled := True;
   CarregarDadosDoExcel;
   lblQuantidade.Caption := lblQuantidade.Caption +
     IntToStr(cldsPlanilhaLote.RecordCount);
@@ -282,6 +295,8 @@ end;
 procedure TfrmLancamentosEmLote.btnLimparClick(Sender: TObject);
 begin
   cldsPlanilhaLote.EmptyDataSet;
+  btnCarregarPlanilha.Enabled := True;
+  TSpeedButton(Sender).Enabled := False;
 end;
 
 procedure TfrmLancamentosEmLote.btnPlanilhaClick(Sender: TObject);

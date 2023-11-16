@@ -122,7 +122,6 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
         Top = 8
         Width = 545
         Height = 127
-        Caption = 'GroupBox1'
         TabOrder = 1
         object labelBanco: TLabel
           Left = 16

@@ -180,6 +180,8 @@ begin
       if not(VarIsEmpty(ExcelApp)) then
         ExcelApp.Quit;
       ExcelApp := Unassigned;
+      btnCarregarPlanilha.Enabled := True;
+      btnLimpar.Enabled := False;
       Abort;
     end;
   end;
@@ -224,6 +226,7 @@ end;
 
 procedure TfrmLancamentosEmLote.FormShow(Sender: TObject);
 begin
+  btnLimpar.Enabled := True;
   FDqryLcto.Open();
   FDqryContas.Open();
   FDqryFormaPgto.Open();
@@ -249,13 +252,8 @@ end;
 procedure TfrmLancamentosEmLote.gridLoteCellClick(Column: TColumn);
 begin
   cldsPlanilhaLote.Edit;
-
-  if cldsPlanilhaLoteATIVO.AsBoolean = False then
-    cldsPlanilhaLoteATIVO.AsBoolean := True
-  else
-   cldsPlanilhaLoteATIVO.AsBoolean := False;
-
-   cldsPlanilhaLote.Post;
+  cldsPlanilhaLoteATIVO.AsBoolean := not cldsPlanilhaLoteATIVO.AsBoolean;
+  cldsPlanilhaLote.Post;
 end;
 
 procedure TfrmLancamentosEmLote.gridLoteDrawColumnCell(Sender: TObject;
@@ -286,7 +284,8 @@ begin
       TMsgDlgType.mtWarning, [TMsgDlgBtn.mbOK], 0);
     Exit;
   end;
-
+  btnCarregarPlanilha.Enabled := False;
+  btnLimpar.Enabled := True;
   CarregarDadosDoExcel;
   lblQuantidade.Caption := lblQuantidade.Caption +
     IntToStr(cldsPlanilhaLote.RecordCount);
@@ -295,6 +294,8 @@ end;
 procedure TfrmLancamentosEmLote.btnLimparClick(Sender: TObject);
 begin
   cldsPlanilhaLote.EmptyDataSet;
+  btnCarregarPlanilha.Enabled := True;
+  TSpeedButton(Sender).Enabled := False;
 end;
 
 procedure TfrmLancamentosEmLote.btnPlanilhaClick(Sender: TObject);
