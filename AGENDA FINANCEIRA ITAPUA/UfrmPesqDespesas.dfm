@@ -10,10 +10,8 @@ object frmPesqDespSub: TfrmPesqDespSub
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poDesktopCenter
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object gridPesqDespSub: TDBGrid
     Left = 0
@@ -58,6 +56,7 @@ object frmPesqDespSub: TfrmPesqDespSub
     Height = 65
     Align = alTop
     TabOrder = 1
+    ExplicitWidth = 738
     object editPesquisa: TEdit
       Left = 16
       Top = 23

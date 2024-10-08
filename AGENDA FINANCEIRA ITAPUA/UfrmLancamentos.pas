@@ -11,8 +11,8 @@ uses
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt,
   FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.StdCtrls, Vcl.DBCtrls,
   Vcl.Mask,
-  Vcl.Buttons, frxClass, frxDBSet, StrUtils, frxExportMail, frxExportBaseDialog,
-  frxExportPDF;
+  Vcl.Buttons, frxClass, frxDBSet, StrUtils, frxExportPDF, {frxExportBaseDialog}  {frxExportMail} frxExportBaseDialog
+  {frxExportPDF};
 
 type
   TfrmLancamento = class(TForm)
@@ -158,7 +158,6 @@ type
     rbNF: TRadioButton;
     rbChequeDocumento: TRadioButton;
     editPesqLancamento: TEdit;
-    frxMailExport1: TfrxMailExport;
     frxPDFExport1: TfrxPDFExport;
     FDqryCadastroNF: TFDQuery;
     dsCadastroNF: TDataSource;

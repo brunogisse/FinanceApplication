@@ -395,8 +395,8 @@ begin
 
    // Descomentar para testar no desenvolvimento - colocar timer de 5000 (5 segundos para testes)
 
-  //  if not CopyFile(PChar('C:\PROGRAMAS\V OFICIAL\AGENDA FINANCEIRA ITAPUA\Win32\Debug\Dados\DADOS_14032022_ZERADO.FDB'),
-  //       PChar('C:\Users\bruno\OneDrive\Área de Trabalho\DADOS_14032022_ZERADO.FDB'), false) then
+//    if not CopyFile(PChar('C:\PROGRAMAS\V OFICIAL\AGENDA FINANCEIRA ITAPUA\Win32\Debug\Dados\DADOS_14032022_ZERADO.FDB'),
+//         PChar('C:\Users\bruno\OneDrive\Área de Trabalho\DADOS_14032022_ZERADO.FDB'), false) then
 
 
       ShowMessage('Erro ao fazer backup');

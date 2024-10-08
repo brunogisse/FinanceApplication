@@ -11,13 +11,11 @@
   Font.Name = 'Tahoma'
   Font.Style = []
   Menu = MainMenu1
-  OldCreateOrder = False
   OnCreate = FormCreate
   OnShow = FormShow
   DesignSize = (
     763
     538)
-  PixelsPerInch = 96
   TextHeight = 13
   object Image1: TImage
     Left = 0
@@ -26735,6 +26733,8 @@
     Color = 7171382
     ParentBackground = False
     TabOrder = 0
+    ExplicitLeft = 548
+    ExplicitHeight = 513
     object btnSair: TImage
       Left = 109
       Top = 17
@@ -26804,6 +26804,7 @@
       Height = 0
       Align = alBottom
       TabOrder = 0
+      ExplicitTop = 399
       object Label4: TLabel
         Left = 40
         Top = 48
@@ -26821,6 +26822,7 @@
       BevelOuter = bvNone
       TabOrder = 1
       Visible = False
+      ExplicitTop = 399
       object labelNotification: TLabel
         Left = 7
         Top = 83
@@ -26872,6 +26874,8 @@
         Text = 'Hora'
         Width = 100
       end>
+    ExplicitTop = 513
+    ExplicitWidth = 757
   end
   object FDconexao: TFDConnection
     Params.Strings = (

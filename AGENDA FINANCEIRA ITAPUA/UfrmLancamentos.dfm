@@ -2,26 +2,25 @@
   Left = 0
   Top = 0
   Caption = 'Registro de Lan'#231'amentos'
-  ClientHeight = 666
-  ClientWidth = 1308
+  ClientHeight = 654
+  ClientWidth = 1296
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poDesktopCenter
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 1308
+    Width = 1296
     Height = 65
     Align = alTop
     TabOrder = 0
+    ExplicitWidth = 1274
     object btnSair: TImage
       Left = 1201
       Top = 9
@@ -430,11 +429,12 @@
   object PageControlLancamentos: TPageControl
     Left = 0
     Top = 65
-    Width = 1308
+    Width = 1296
     Height = 247
     ActivePage = Aba2
     Align = alTop
     TabOrder = 1
+    ExplicitWidth = 1274
     object Aba1: TTabSheet
       Caption = 
         'Cadastro                                                        ' +
@@ -2381,28 +2381,32 @@
   end
   object painelBottom: TPanel
     Left = 0
-    Top = 646
-    Width = 1308
+    Top = 634
+    Width = 1296
     Height = 20
     Align = alBottom
     TabOrder = 2
+    ExplicitTop = 579
+    ExplicitWidth = 1274
   end
   object memoOBS: TDBMemo
     Left = 0
-    Top = 601
-    Width = 1308
+    Top = 589
+    Width = 1296
     Height = 45
     Align = alBottom
     DataField = 'OBS'
     DataSource = dsLcto
     TabOrder = 3
+    ExplicitTop = 534
+    ExplicitWidth = 1274
   end
   object gridLancamento: TDBGrid
     AlignWithMargins = True
     Left = 3
     Top = 315
-    Width = 1302
-    Height = 254
+    Width = 1290
+    Height = 242
     Align = alClient
     DataSource = dsLcto
     DefaultDrawing = False
@@ -2502,11 +2506,13 @@
   end
   object painelRodape: TPanel
     Left = 0
-    Top = 572
-    Width = 1308
+    Top = 560
+    Width = 1296
     Height = 29
     Align = alBottom
     TabOrder = 5
+    ExplicitTop = 505
+    ExplicitWidth = 1274
     object labelOBS: TLabel
       Left = 4
       Top = 11
@@ -3021,7 +3027,7 @@
     Top = 408
   end
   object reportLancamento: TfrxReport
-    Version = '6.7.6'
+    Version = '2022.2.7'
     DotMatrixReport = True
     IniFile = '\Software\Fast Reports'
     PreviewOptions.Buttons = [pbPrint, pbLoad, pbSave, pbExport, pbZoom, pbFind, pbOutline, pbPageSetup, pbTools, pbEdit, pbNavigator, pbExportQuick, pbCopy, pbSelection]
@@ -3087,6 +3093,10 @@
       MirrorMode = []
       object ReportTitle1: TfrxReportTitle
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 127.763760000000000000
         Top = 18.897650000000000000
@@ -5292,6 +5302,10 @@
       end
       object MasterData1: TfrxMasterData
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 14.789829230000000000
         Top = 298.582870000000000000
@@ -5462,6 +5476,10 @@
       end
       object PageFooter1: TfrxPageFooter
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 25.897650000000000000
         Top = 517.795610000000000000
@@ -5480,6 +5498,10 @@
       end
       object Header1: TfrxHeader
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 67.559060000000000000
         Top = 207.874150000000000000
@@ -5656,6 +5678,10 @@
       end
       object ReportSummary1: TfrxReportSummary
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 120.574830000000000000
         Top = 374.173470000000000000
@@ -5793,6 +5819,7 @@
       'ENTRADA_ID=ENTRADA_ID')
     DataSet = FDqryLcto
     BCDToCurrency = False
+    DataSetOptions = []
     Left = 1192
     Top = 360
   end
@@ -5864,26 +5891,13 @@
     Left = 480
     Top = 400
   end
-  object frxMailExport1: TfrxMailExport
-    UseFileCache = True
-    ShowProgress = True
-    OverwritePrompt = False
-    DataOnly = False
-    ShowExportDialog = True
-    SmtpPort = 25
-    UseIniFile = True
-    TimeOut = 60
-    ConfurmReading = False
-    UseMAPI = SMTP
-    MAPISendFlag = 0
-    Left = 1160
-    Top = 416
-  end
   object frxPDFExport1: TfrxPDFExport
     UseFileCache = True
     ShowProgress = True
     OverwritePrompt = False
     DataOnly = False
+    EmbedFontsIfProtected = False
+    InteractiveFormsFontSubset = 'A-Z,a-z,0-9,#43-#47 '
     OpenAfterExport = False
     PrintOptimized = False
     Outline = False
@@ -5893,6 +5907,7 @@
     Transparency = False
     Author = 'FastReport'
     Subject = 'FastReport PDF export'
+    Creator = 'FastReport'
     ProtectionFlags = [ePrint, eModify, eCopy, eAnnot]
     HideToolbar = False
     HideMenubar = False
@@ -5971,7 +5986,7 @@
     Top = 496
   end
   object reportConsultaLancamento: TfrxReport
-    Version = '6.7.6'
+    Version = '2022.2.7'
     DotMatrixReport = True
     IniFile = '\Software\Fast Reports'
     PreviewOptions.Buttons = [pbPrint, pbLoad, pbSave, pbExport, pbZoom, pbFind, pbOutline, pbPageSetup, pbTools, pbEdit, pbNavigator, pbExportQuick, pbCopy, pbSelection]
@@ -6037,6 +6052,10 @@
       MirrorMode = []
       object ReportTitle1: TfrxReportTitle
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 127.763760000000000000
         Top = 18.897650000000000000
@@ -8242,6 +8261,10 @@
       end
       object MasterData1: TfrxMasterData
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 14.789829230000000000
         Top = 298.582870000000000000
@@ -8412,6 +8435,10 @@
       end
       object PageFooter1: TfrxPageFooter
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 25.897650000000000000
         Top = 487.559370000000000000
@@ -8430,6 +8457,10 @@
       end
       object Header1: TfrxHeader
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 67.559060000000000000
         Top = 207.874150000000000000
@@ -8606,6 +8637,10 @@
       end
       object ReportSummary1: TfrxReportSummary
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 90.338590000000000000
         Top = 374.173470000000000000
@@ -8743,6 +8778,7 @@
       'ENTRADA_ID=ENTRADA_ID')
     DataSet = FDqryLcto
     BCDToCurrency = False
+    DataSetOptions = []
     Left = 80
     Top = 448
   end

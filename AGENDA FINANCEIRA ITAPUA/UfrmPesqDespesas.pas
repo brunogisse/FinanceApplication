@@ -155,6 +155,7 @@ begin
   FDqrySubdespesa.Close;
   FDqrySubdespesa.Open;
   rgOrdenar.ItemIndex := 0;
+  editpesquisa.SetFocus;
 end;
 
 procedure TfrmPesqDespSub.gridPesqDespSubDblClick(Sender: TObject);
