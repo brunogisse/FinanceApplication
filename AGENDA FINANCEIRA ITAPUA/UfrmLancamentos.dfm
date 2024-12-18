@@ -20,7 +20,7 @@
     Height = 65
     Align = alTop
     TabOrder = 0
-    ExplicitWidth = 1274
+    ExplicitWidth = 1290
     object btnSair: TImage
       Left = 1201
       Top = 9
@@ -434,7 +434,7 @@
     ActivePage = Aba2
     Align = alTop
     TabOrder = 1
-    ExplicitWidth = 1274
+    ExplicitWidth = 1290
     object Aba1: TTabSheet
       Caption = 
         'Cadastro                                                        ' +
@@ -2386,8 +2386,8 @@
     Height = 20
     Align = alBottom
     TabOrder = 2
-    ExplicitTop = 579
-    ExplicitWidth = 1274
+    ExplicitTop = 628
+    ExplicitWidth = 1290
   end
   object memoOBS: TDBMemo
     Left = 0
@@ -2398,8 +2398,8 @@
     DataField = 'OBS'
     DataSource = dsLcto
     TabOrder = 3
-    ExplicitTop = 534
-    ExplicitWidth = 1274
+    ExplicitTop = 583
+    ExplicitWidth = 1290
   end
   object gridLancamento: TDBGrid
     AlignWithMargins = True
@@ -2511,8 +2511,8 @@
     Height = 29
     Align = alBottom
     TabOrder = 5
-    ExplicitTop = 505
-    ExplicitWidth = 1274
+    ExplicitTop = 554
+    ExplicitWidth = 1290
     object labelOBS: TLabel
       Left = 4
       Top = 11

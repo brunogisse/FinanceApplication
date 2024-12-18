@@ -203,8 +203,8 @@ type
     qryLoginNOME: TStringField;
     qryLoginSENHA: TStringField;
     qryLoginNIVEL: TIntegerField;
-    FDqryLctoUSERID: TIntegerField;
     btnCarregarPlanilha: TSpeedButton;
+    FDqryLctoUSERID: TIntegerField;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -872,7 +872,7 @@ end;
 
 procedure TfrmLancamento.btnPesqLancamentoClick(Sender: TObject);
 var
-  paymentCondition, dataInicio: String;
+  paymentCondition, dataInicio, SUBCATEGORIA, CONTA: String;
 
 begin
   allowPrint('print');
@@ -883,8 +883,19 @@ begin
   if cbPago.Text = '(TODOS)' then
     paymentCondition := '';
 
+   if editRELATORIOpesqDS.Text <> '' then
+    SUBCATEGORIA := '(S.DESCRICAO = ' + QuotedStr(editRELATORIOpesqDS.Text) + ') and '
+  else
+    SUBCATEGORIA := '';
+
+  if editContaPesq.Text <> '' then
+    CONTA := '(CT.DESCRICAO = ' + QuotedStr(editContaPesq.Text) + ') and '
+  else
+    CONTA := '';
+
   if rbDescricao.Checked = True then
   begin
+
     with FDqryLcto do
     begin
       Close;
@@ -900,11 +911,12 @@ begin
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) ' + paymentCondition + 'and ' +
         '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) ' +
-        ' and (DATA_VENCIMENTO between :INICIO and :FIM) and ' +
+        ' and (DATA_VENCIMENTO between :INICIO and :FIM) and ' + SUBCATEGORIA + CONTA +
         ' REG.DESCRICAO like ' + QuotedStr('%' + editPesqLancamento.Text + '%')
         + 'order by REG.DATA_VENCIMENTO');
       ParamByName('INICIO').AsDate := dataChequeInicio.Date;
       ParamByName('FIM').AsDate := dataChequeFim.Date;
+     // showmessage(SQL.Text);
       Open;
     end;
   end;
@@ -926,7 +938,7 @@ begin
         ' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
         + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
-        '(REG.CONTA_ID = CT.CONTA_ID) and ' +
+        '(REG.CONTA_ID = CT.CONTA_ID) and ' +  SUBCATEGORIA + CONTA +
         '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and '
         // +'(DATA_CADASTRO between :INICIO and :FIM) and REG.NOTA_FISCAL like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
         + '(DATA_CADASTRO between :INICIO and :FIM) and ' +
@@ -959,7 +971,7 @@ begin
         + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) and ' +
-        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' +
+        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' + SUBCATEGORIA + CONTA +
         '(DATA_VENCIMENTO between :INICIO and :FIM) and ' + 'REG.CHEQUE like ' +
         QuotedStr('%' + editPesqLancamento.Text + '%') +
         'order by REG.DATA_VENCIMENTO');
@@ -989,7 +1001,7 @@ begin
         + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) and ' +
-        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' +
+        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' + SUBCATEGORIA + CONTA +
         '(DATA_VENCIMENTO between :INICIO and :FIM) and ' +
         '(REG.VALOR_PREVISTO between :VALORINICIO and :VALORFIM) ' +
         'order by REG.DATA_VENCIMENTO');
@@ -1018,7 +1030,7 @@ begin
         + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) and ' +
-        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' +
+        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' + SUBCATEGORIA + CONTA +
         '(DATA_PAGAMENTO between :INICIO and :FIM) and ' +
         '(REG.VALOR_PAGO between :VALORINICIO and :VALORFIM) ' +
         'order by REG.DATA_VENCIMENTO');
@@ -1045,7 +1057,7 @@ begin
         + 'REG.OBS, REG.DATA_CADASTRO, REG.USERID' + ' from ' +
         ' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
         + ' where ' +
-        '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and (REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and (DATA_CADASTRO between :INICIO and :FIM) and REG.SITUACAO_STATUS like '
+        '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID)  and ' + SUBCATEGORIA + CONTA + '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and (DATA_CADASTRO between :INICIO and :FIM) and REG.SITUACAO_STATUS like '
         + QuotedStr('%' + editPesqLancamento.Text + '%') +
         'order by REG.DATA_VENCIMENTO');
       ParamByName('INICIO').AsDate := dataChequeInicio.Date;
@@ -1068,7 +1080,7 @@ begin
         + 'REG.OBS, REG.DATA_CADASTRO, REG.USERID' + ' from ' +
         ' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
         + ' where ' +
-        '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and '
+        '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' + SUBCATEGORIA + CONTA + '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and '
         + '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and REG.CHEQUE_COMPENSADO like '
         + QuotedStr('%' + editPesqLancamento.Text + '%') +
         ' order by REG.DATA_VENCIMENTO');
