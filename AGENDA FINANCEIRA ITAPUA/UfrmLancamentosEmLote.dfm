@@ -10,11 +10,9 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
   Font.Height = -13
   Font.Name = 'Roboto'
   Font.Style = []
-  OldCreateOrder = False
   Position = poDesktopCenter
   OnClose = FormClose
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 15
   object pnlGeral: TPanel
     Left = 0
@@ -24,6 +22,8 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
+    ExplicitWidth = 1206
+    ExplicitHeight = 563
     object pnlTopo: TPanel
       Left = 0
       Top = 0
@@ -32,6 +32,7 @@ object frmLancamentosEmLote: TfrmLancamentosEmLote
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
+      ExplicitWidth = 1206
       object lblQuantidade: TLabel
         Left = 5
         Top = 136

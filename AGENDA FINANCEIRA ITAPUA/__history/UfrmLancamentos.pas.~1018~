@@ -12,7 +12,7 @@ uses
   FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.StdCtrls, Vcl.DBCtrls,
   Vcl.Mask,
   Vcl.Buttons, frxClass, frxDBSet, StrUtils, frxExportPDF, {frxExportBaseDialog}  {frxExportMail} frxExportBaseDialog
-  {frxExportPDF};
+  {frxExportPDF}, ComObj, Math;
 
 type
   TfrmLancamento = class(TForm)
@@ -205,6 +205,8 @@ type
     qryLoginNIVEL: TIntegerField;
     btnCarregarPlanilha: TSpeedButton;
     FDqryLctoUSERID: TIntegerField;
+    BitBtn1: TBitBtn;
+    ProgressBar1: TProgressBar;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -249,6 +251,7 @@ type
     procedure rbValorPrevistoClick(Sender: TObject);
     procedure btnImprimirConsultaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
+    procedure BitBtn1Click(Sender: TObject);
   private
 
     procedure refreshBanco;
@@ -270,6 +273,7 @@ type
     procedure CalcularValorNFentrada;
     procedure allowPrint(status: String);
     procedure procPermitirAlterarExcluir;
+    procedure ExportarParaExcel;
     // function FormatarMoeda(valor : string) : string;
 
     { Private declarations }
@@ -479,6 +483,11 @@ begin
   dataPago.Date := Now;
   // dataPesquisaPrevistoInicio.Date := Now;
   // dataPesquisaPrevistoFim.Date := Now;
+end;
+
+procedure TfrmLancamento.BitBtn1Click(Sender: TObject);
+begin
+  ExportarParaExcel;
 end;
 
 procedure TfrmLancamento.btnRelatorioClick(Sender: TObject);
@@ -883,18 +892,18 @@ begin
   if cbPago.Text = '(TODOS)' then
     paymentCondition := '';
 
+   if editRELATORIOpesqDS.Text <> '' then
+    SUBCATEGORIA := '(S.DESCRICAO = ' + QuotedStr(editRELATORIOpesqDS.Text) + ') and '
+  else
+    SUBCATEGORIA := '';
+
+  if editContaPesq.Text <> '' then
+    CONTA := '(CT.DESCRICAO = ' + QuotedStr(editContaPesq.Text) + ') and '
+  else
+    CONTA := '';
+
   if rbDescricao.Checked = True then
   begin
-    if editRELATORIOpesqDS.Text <> '' then
-      SUBCATEGORIA := editRELATORIOpesqDS.Text
-    else
-      SUBCATEGORIA := '';
-
-    if editContaPesq.Text <> '' then
-      CONTA := editContaPesq.Text
-    else
-      CONTA := '';
-
     with FDqryLcto do
     begin
       Close;
@@ -910,13 +919,12 @@ begin
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) ' + paymentCondition + 'and ' +
         '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) ' +
-        ' and (DATA_VENCIMENTO between :INICIO and :FIM) and ' +
-        '(S.DESCRICAO = ' + QuotedStr(SUBCATEGORIA) + ') and ' +
+        ' and (DATA_VENCIMENTO between :INICIO and :FIM) and ' + SUBCATEGORIA + CONTA +
         ' REG.DESCRICAO like ' + QuotedStr('%' + editPesqLancamento.Text + '%')
         + 'order by REG.DATA_VENCIMENTO');
       ParamByName('INICIO').AsDate := dataChequeInicio.Date;
       ParamByName('FIM').AsDate := dataChequeFim.Date;
-      showmessage(SQL.Text);
+     // showmessage(SQL.Text);
       Open;
     end;
   end;
@@ -938,7 +946,7 @@ begin
         ' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
         + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
-        '(REG.CONTA_ID = CT.CONTA_ID) and ' +
+        '(REG.CONTA_ID = CT.CONTA_ID) and ' +  SUBCATEGORIA + CONTA +
         '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and '
         // +'(DATA_CADASTRO between :INICIO and :FIM) and REG.NOTA_FISCAL like ' + QuotedStr('%'+ editPesqLancamento.Text +'%') + 'order by REG.DATA_VENCIMENTO');
         + '(DATA_CADASTRO between :INICIO and :FIM) and ' +
@@ -953,7 +961,6 @@ begin
   end;
 
   if rbChequeDocumento.Checked = True then
-
   begin
     dataInicio := DateToStr(dataChequeInicio.Date);
     dataChequeInicio.Date := StrToDate('01/01/2018');
@@ -971,7 +978,7 @@ begin
         + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) and ' +
-        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' +
+        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' + SUBCATEGORIA + CONTA +
         '(DATA_VENCIMENTO between :INICIO and :FIM) and ' + 'REG.CHEQUE like ' +
         QuotedStr('%' + editPesqLancamento.Text + '%') +
         'order by REG.DATA_VENCIMENTO');
@@ -985,7 +992,6 @@ begin
   end;
 
   if (rbValor.Checked = True) and (rbValorPrevisto.Checked = True) then
-
   begin
     with FDqryLcto do
     begin
@@ -1001,7 +1007,7 @@ begin
         + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) and ' +
-        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' +
+        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' + SUBCATEGORIA + CONTA +
         '(DATA_VENCIMENTO between :INICIO and :FIM) and ' +
         '(REG.VALOR_PREVISTO between :VALORINICIO and :VALORFIM) ' +
         'order by REG.DATA_VENCIMENTO');
@@ -1014,7 +1020,6 @@ begin
   end;
 
   if (rbValor.Checked = True) and (rbValorPago.Checked = True) then
-
   begin
     with FDqryLcto do
     begin
@@ -1030,7 +1035,7 @@ begin
         + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) and ' +
-        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' +
+        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and ' + SUBCATEGORIA + CONTA +
         '(DATA_PAGAMENTO between :INICIO and :FIM) and ' +
         '(REG.VALOR_PAGO between :VALORINICIO and :VALORFIM) ' +
         'order by REG.DATA_VENCIMENTO');
@@ -1043,7 +1048,6 @@ begin
   end;
 
   if rbStatus.Checked = True then
-
   begin
     with FDqryLcto do
     begin
@@ -1057,7 +1061,7 @@ begin
         + 'REG.OBS, REG.DATA_CADASTRO, REG.USERID' + ' from ' +
         ' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
         + ' where ' +
-        '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and (REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and (DATA_CADASTRO between :INICIO and :FIM) and REG.SITUACAO_STATUS like '
+        '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID)  and ' + SUBCATEGORIA + CONTA + '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and (DATA_CADASTRO between :INICIO and :FIM) and REG.SITUACAO_STATUS like '
         + QuotedStr('%' + editPesqLancamento.Text + '%') +
         'order by REG.DATA_VENCIMENTO');
       ParamByName('INICIO').AsDate := dataChequeInicio.Date;
@@ -1080,7 +1084,7 @@ begin
         + 'REG.OBS, REG.DATA_CADASTRO, REG.USERID' + ' from ' +
         ' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
         + ' where ' +
-        '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and (REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and '
+        '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' + SUBCATEGORIA + CONTA + '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and (REG.CONTA_ID = CT.CONTA_ID) and '
         + '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) and REG.CHEQUE_COMPENSADO like '
         + QuotedStr('%' + editPesqLancamento.Text + '%') +
         ' order by REG.DATA_VENCIMENTO');
@@ -1550,6 +1554,135 @@ begin
   editRELATORIOpesqDS.Enabled := True;
   frmPesqDespSub.setarEditFoco := 'relatório';
   frmPesqDespSub.ShowModal;
+end;
+
+procedure TfrmLancamento.ExportarParaExcel;
+var
+  ExcelApp, ExcelSheet: Variant;
+  i, j, col: Integer;
+  ValorArredondado, SomaValorPrevisto, SomaValorPago: Double;
+  CamposUtilizados: array of string;
+  TotalRegistros, ContadorRegistros: Integer;
+begin
+  // Definir os campos desejados
+  CamposUtilizados := ['LANCAMENTO', 'VALOR_PAGO', 'VALOR_PREVISTO', 'NOTA_FISCAL', 'CHEQUE', 'DATA_VENCIMENTO', 'DATA_PAGAMENTO', 'CONTA'];
+
+  // Verifica se há dados para exportar
+  if FDqryLcto.IsEmpty then
+  begin
+    ShowMessage('Não há dados para exportar!');
+    Exit;
+  end;
+
+  // Cria a instância do Excel
+  ExcelApp := CreateOleObject('Excel.Application');
+
+  // Desabilita a atualização da tela e alertas
+  ExcelApp.ScreenUpdating := False;
+  ExcelApp.DisplayAlerts := False;
+
+  // Mostra a mensagem de "Carregando..." durante a exportação
+  Application.ProcessMessages;
+ // ShowMessage('Iniciando exportação. Aguarde...');
+
+  // Cria uma nova planilha
+  ExcelApp.Workbooks.Add;
+  ExcelSheet := ExcelApp.Workbooks[1].Sheets[1];
+
+  // Inicializa as somas
+  SomaValorPrevisto := 0;
+  SomaValorPago := 0;
+
+  // Calcula o total de registros para o ProgressBar
+  TotalRegistros := FDqryLcto.RecordCount;
+  ContadorRegistros := 0;
+
+  ProgressBar1.Visible := True;
+
+  // Define o progresso do ProgressBar
+  ProgressBar1.Min := 0;               // Define o valor mínimo
+  ProgressBar1.Max := TotalRegistros;  // Define o valor máximo
+  ProgressBar1.Position := 0;          // Inicia o progresso
+
+  // Exporta os títulos das colunas
+  i := 1; // Começa na linha 1 (títulos)
+  for j := 0 to FDqryLcto.FieldCount - 1 do
+  begin
+    if AnsiIndexStr(FDqryLcto.Fields[j].FieldName, CamposUtilizados) >= 0 then
+    begin
+      ExcelSheet.Cells[1, i] := FDqryLcto.Fields[j].FieldName;
+      Inc(i); // Avança para a próxima coluna
+    end;
+  end;
+
+  // Exporta os dados do DataSet
+  FDqryLcto.First;
+  i := 2; // Começa na segunda linha para os dados
+  while not FDqryLcto.Eof do
+  begin
+    col := 1; // Começa na primeira coluna para os dados
+    for j := 0 to FDqryLcto.FieldCount - 1 do
+    begin
+      if AnsiIndexStr(FDqryLcto.Fields[j].FieldName, CamposUtilizados) >= 0 then
+      begin
+        // Verifica se o campo é do tipo moeda ou valor e aplica a formatação
+        if (FDqryLcto.Fields[j].DataType in [ftFloat, ftCurrency]) or
+           (FDqryLcto.Fields[j].FieldName = 'VALOR_PREVISTO') or (FDqryLcto.Fields[j].FieldName = 'VALOR_PAGO')then
+        begin
+          ValorArredondado := RoundTo(FDqryLcto.Fields[j].AsFloat, -2); // -2 significa 2 casas decimais
+          ExcelSheet.Cells[i, col] := ValorArredondado;
+
+          // Aplica a formatação de moeda brasileira (R$)
+          ExcelSheet.Cells[i, col].NumberFormat := '[$R$-416] #,##0.00';
+
+          // Atualiza as somas
+          if FDqryLcto.Fields[j].FieldName = 'VALOR_PREVISTO' then
+            SomaValorPrevisto := SomaValorPrevisto + ValorArredondado
+          else if FDqryLcto.Fields[j].FieldName = 'VALOR_PAGO' then
+            SomaValorPago := SomaValorPago + ValorArredondado;
+        end
+        else
+        begin
+          // Exporta valores como texto
+          ExcelSheet.Cells[i, col] := FDqryLcto.Fields[j].AsString;
+        end;
+        Inc(col); // Avança para a próxima coluna
+      end;
+    end;
+    Inc(i); // Avança para a próxima linha
+    FDqryLcto.Next;
+
+    // Atualiza a interface para permitir que o usuário veja o progresso
+    ProgressBar1.Position := i - 1; // Atualiza o progresso no ProgressBar
+    Application.ProcessMessages;     // Permite que a interface seja atualizada
+  end;
+
+  // Adiciona a linha com as somas
+  ExcelSheet.Cells[i, 1] := 'Total'; // Coloca o título "Total"
+  ExcelSheet.Cells[i, 2] := SomaValorPrevisto; // Soma dos valores do campo VALOR_PREVISTO
+  ExcelSheet.Cells[i, 3] := SomaValorPago;     // Soma dos valores do campo VALOR_PAGO
+
+  // Aplica a formatação de moeda nas somas
+  ExcelSheet.Cells[i, 2].NumberFormat := '[$R$-416] #,##0.00';
+  ExcelSheet.Cells[i, 3].NumberFormat := '[$R$-416] #,##0.00';
+
+  Inc(i); // Avança para a próxima linha após a soma
+
+  // Ajusta a largura das colunas automaticamente
+  ExcelSheet.Columns.AutoFit;
+
+  // Reabilita a atualização de tela e alertas
+  ExcelApp.ScreenUpdating := True;
+  ExcelApp.DisplayAlerts := True;
+
+  // Exibe o Excel para o usuário
+  ExcelApp.Visible := True;
+
+  // Exibe a mensagem de sucesso
+  ShowMessage('Dados exportados com sucesso para o Excel!');
+
+  ProgressBar1.Min := 0;
+  ProgressBar1.Visible := False;
 end;
 
 end.

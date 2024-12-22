@@ -1601,6 +1601,7 @@
               Top = 137
               Width = 254
               Height = 21
+              ReadOnly = True
               TabOrder = 6
             end
             object editRELATORIOpesqDS: TEdit
@@ -1609,6 +1610,7 @@
               Width = 254
               Height = 21
               Enabled = False
+              ReadOnly = True
               TabOrder = 7
             end
             object cbPago: TComboBox
@@ -2345,6 +2347,15 @@
               TabOrder = 12
               OnClick = btnImprimirConsultaClick
             end
+            object BitBtn1: TBitBtn
+              Left = 299
+              Top = 87
+              Width = 133
+              Height = 27
+              Caption = 'Exportar par Excel'
+              TabOrder = 13
+              OnClick = BitBtn1Click
+            end
           end
           object btnBuscarCategoria: TBitBtn
             Left = 153
@@ -2381,17 +2392,27 @@
   end
   object painelBottom: TPanel
     Left = 0
-    Top = 634
+    Top = 637
     Width = 1296
-    Height = 20
+    Height = 17
     Align = alBottom
     TabOrder = 2
-    ExplicitTop = 628
-    ExplicitWidth = 1290
+    object ProgressBar1: TProgressBar
+      Left = 1
+      Top = 1
+      Width = 150
+      Height = 15
+      Align = alLeft
+      TabOrder = 0
+      Visible = False
+      ExplicitLeft = 88
+      ExplicitTop = 8
+      ExplicitHeight = 17
+    end
   end
   object memoOBS: TDBMemo
     Left = 0
-    Top = 589
+    Top = 592
     Width = 1296
     Height = 45
     Align = alBottom
@@ -2406,7 +2427,7 @@
     Left = 3
     Top = 315
     Width = 1290
-    Height = 242
+    Height = 245
     Align = alClient
     DataSource = dsLcto
     DefaultDrawing = False
@@ -2506,7 +2527,7 @@
   end
   object painelRodape: TPanel
     Left = 0
-    Top = 560
+    Top = 563
     Width = 1296
     Height = 29
     Align = alBottom

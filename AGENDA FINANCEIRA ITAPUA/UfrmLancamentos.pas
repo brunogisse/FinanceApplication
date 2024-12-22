@@ -12,7 +12,7 @@ uses
   FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.StdCtrls, Vcl.DBCtrls,
   Vcl.Mask,
   Vcl.Buttons, frxClass, frxDBSet, StrUtils, frxExportPDF, {frxExportBaseDialog}  {frxExportMail} frxExportBaseDialog
-  {frxExportPDF};
+  {frxExportPDF}, ComObj, Math;
 
 type
   TfrmLancamento = class(TForm)
@@ -205,6 +205,8 @@ type
     qryLoginNIVEL: TIntegerField;
     btnCarregarPlanilha: TSpeedButton;
     FDqryLctoUSERID: TIntegerField;
+    BitBtn1: TBitBtn;
+    ProgressBar1: TProgressBar;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -249,6 +251,7 @@ type
     procedure rbValorPrevistoClick(Sender: TObject);
     procedure btnImprimirConsultaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
+    procedure BitBtn1Click(Sender: TObject);
   private
 
     procedure refreshBanco;
@@ -270,6 +273,7 @@ type
     procedure CalcularValorNFentrada;
     procedure allowPrint(status: String);
     procedure procPermitirAlterarExcluir;
+    procedure ExportarParaExcel;
     // function FormatarMoeda(valor : string) : string;
 
     { Private declarations }
@@ -479,6 +483,11 @@ begin
   dataPago.Date := Now;
   // dataPesquisaPrevistoInicio.Date := Now;
   // dataPesquisaPrevistoFim.Date := Now;
+end;
+
+procedure TfrmLancamento.BitBtn1Click(Sender: TObject);
+begin
+  ExportarParaExcel;
 end;
 
 procedure TfrmLancamento.btnRelatorioClick(Sender: TObject);
@@ -895,7 +904,6 @@ begin
 
   if rbDescricao.Checked = True then
   begin
-
     with FDqryLcto do
     begin
       Close;
@@ -953,7 +961,6 @@ begin
   end;
 
   if rbChequeDocumento.Checked = True then
-
   begin
     dataInicio := DateToStr(dataChequeInicio.Date);
     dataChequeInicio.Date := StrToDate('01/01/2018');
@@ -985,7 +992,6 @@ begin
   end;
 
   if (rbValor.Checked = True) and (rbValorPrevisto.Checked = True) then
-
   begin
     with FDqryLcto do
     begin
@@ -1014,7 +1020,6 @@ begin
   end;
 
   if (rbValor.Checked = True) and (rbValorPago.Checked = True) then
-
   begin
     with FDqryLcto do
     begin
@@ -1043,7 +1048,6 @@ begin
   end;
 
   if rbStatus.Checked = True then
-
   begin
     with FDqryLcto do
     begin
@@ -1550,6 +1554,136 @@ begin
   editRELATORIOpesqDS.Enabled := True;
   frmPesqDespSub.setarEditFoco := 'relatório';
   frmPesqDespSub.ShowModal;
+end;
+
+procedure TfrmLancamento.ExportarParaExcel;
+var
+  ExcelApp, ExcelSheet: Variant;
+  i, j, col: Integer;
+  ValorArredondado, SomaValorPrevisto, SomaValorPago: Double;
+  CamposUtilizados: array of string;
+  TotalRegistros, ContadorRegistros: Integer;
+begin
+  // Definir os campos desejados
+  CamposUtilizados := ['LANCAMENTO', 'VALOR_PAGO', 'VALOR_PREVISTO', 'NOTA_FISCAL', 'CHEQUE', 'DATA_VENCIMENTO', 'DATA_PAGAMENTO', 'CONTA'];
+
+  // Verifica se há dados para exportar
+  if FDqryLcto.IsEmpty then
+  begin
+    ShowMessage('Não há dados para exportar!');
+    Exit;
+  end;
+
+  // Cria a instância do Excel
+  ExcelApp := CreateOleObject('Excel.Application');
+
+  // Desabilita a atualização da tela e alertas
+  ExcelApp.ScreenUpdating := False;
+  ExcelApp.DisplayAlerts := False;
+
+  // Mostra a mensagem de "Carregando..." durante a exportação
+  Application.ProcessMessages;
+ // ShowMessage('Iniciando exportação. Aguarde...');
+
+  // Cria uma nova planilha
+  ExcelApp.Workbooks.Add;
+  ExcelSheet := ExcelApp.Workbooks[1].Sheets[1];
+
+  // Inicializa as somas
+  SomaValorPrevisto := 0;
+  SomaValorPago := 0;
+
+  // Calcula o total de registros para o ProgressBar
+  TotalRegistros := FDqryLcto.RecordCount;
+  ContadorRegistros := 0;
+
+  ProgressBar1.Visible := True;
+
+  // Define o progresso do ProgressBar
+  ProgressBar1.Min := 0;               // Define o valor mínimo
+  ProgressBar1.Max := TotalRegistros;  // Define o valor máximo
+  ProgressBar1.Position := 0;          // Inicia o progresso
+
+  // Exporta os títulos das colunas
+  i := 1; // Começa na linha 1 (títulos)
+  for j := 0 to FDqryLcto.FieldCount - 1 do
+  begin
+    if AnsiIndexStr(FDqryLcto.Fields[j].FieldName, CamposUtilizados) >= 0 then
+    begin
+      ExcelSheet.Cells[1, i] := FDqryLcto.Fields[j].FieldName;
+      Inc(i); // Avança para a próxima coluna
+    end;
+  end;
+
+  // Exporta os dados do DataSet
+  FDqryLcto.First;
+  i := 2; // Começa na segunda linha para os dados
+  while not FDqryLcto.Eof do
+  begin
+    col := 1; // Começa na primeira coluna para os dados
+    for j := 0 to FDqryLcto.FieldCount - 1 do
+    begin
+      if AnsiIndexStr(FDqryLcto.Fields[j].FieldName, CamposUtilizados) >= 0 then
+      begin
+        // Verifica se o campo é do tipo moeda ou valor e aplica a formatação
+        if (FDqryLcto.Fields[j].DataType in [ftFloat, ftCurrency]) or
+           (FDqryLcto.Fields[j].FieldName = 'VALOR_PREVISTO') or (FDqryLcto.Fields[j].FieldName = 'VALOR_PAGO')then
+        begin
+          ValorArredondado := RoundTo(FDqryLcto.Fields[j].AsFloat, -2); // -2 significa 2 casas decimais
+          ExcelSheet.Cells[i, col] := ValorArredondado;
+
+          // Aplica a formatação de moeda brasileira (R$)
+          ExcelSheet.Cells[i, col].NumberFormat := '[$R$-416] #,##0.00';
+
+          // Atualiza as somas
+          if FDqryLcto.Fields[j].FieldName = 'VALOR_PREVISTO' then
+            SomaValorPrevisto := SomaValorPrevisto + ValorArredondado
+          else if FDqryLcto.Fields[j].FieldName = 'VALOR_PAGO' then
+            SomaValorPago := SomaValorPago + ValorArredondado;
+        end
+        else
+        begin
+          // Exporta valores como texto
+          ExcelSheet.Cells[i, col] := FDqryLcto.Fields[j].AsString;
+        end;
+        Inc(col); // Avança para a próxima coluna
+      end;
+    end;
+    Inc(i); // Avança para a próxima linha
+    FDqryLcto.Next;
+
+    // Atualiza a interface para permitir que o usuário veja o progresso
+    ProgressBar1.Position := i - 1; // Atualiza o progresso no ProgressBar
+    Application.ProcessMessages;     // Permite que a interface seja atualizada
+  end;
+
+  Inc(i);
+  // Adiciona a linha com as somas
+  ExcelSheet.Cells[i, 1] := 'TOTAL'; // Coloca o título "Total"
+  ExcelSheet.Cells[i, 2] := SomaValorPago;     // Soma dos valores do campo VALOR_PAGO
+  ExcelSheet.Cells[i, 3] := SomaValorPrevisto; // Soma dos valores do campo VALOR_PREVISTO
+
+  // Aplica a formatação de moeda nas somas
+  ExcelSheet.Cells[i, 2].NumberFormat := '[$R$-416] #,##0.00';
+  ExcelSheet.Cells[i, 3].NumberFormat := '[$R$-416] #,##0.00';
+
+  Inc(i); // Avança para a próxima linha após a soma
+
+  // Ajusta a largura das colunas automaticamente
+  ExcelSheet.Columns.AutoFit;
+
+  // Reabilita a atualização de tela e alertas
+  ExcelApp.ScreenUpdating := True;
+  ExcelApp.DisplayAlerts := True;
+
+  // Exibe o Excel para o usuário
+  ExcelApp.Visible := True;
+
+  // Exibe a mensagem de sucesso
+  ShowMessage('Dados exportados com sucesso para o Excel!');
+
+  ProgressBar1.Min := 0;
+  ProgressBar1.Visible := False;
 end;
 
 end.

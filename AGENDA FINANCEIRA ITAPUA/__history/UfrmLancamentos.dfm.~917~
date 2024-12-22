@@ -1601,6 +1601,7 @@
               Top = 137
               Width = 254
               Height = 21
+              ReadOnly = True
               TabOrder = 6
             end
             object editRELATORIOpesqDS: TEdit
@@ -1609,6 +1610,7 @@
               Width = 254
               Height = 21
               Enabled = False
+              ReadOnly = True
               TabOrder = 7
             end
             object cbPago: TComboBox
@@ -2621,7 +2623,7 @@
         'C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, S.SUBCATEGORIA_ID, S.D' +
         'ESCRICAO as SUBCATEGORIA, CT.CONTA_ID, CT.DESCRICAO as CONTA, FP' +
         '.FORMA_DE_PAGAMENTO_ID, FP.DESCRICAO as FORMA_DE_PAGAMENTO,'
-      'REG.OBS, REG.DATA_CADASTRO'
+      'REG.OBS, REG.DATA_CADASTRO, REG.USERID'
       ''
       'from'
       ''
@@ -2802,6 +2804,11 @@
       FieldName = 'SITUACAO_STATUS'
       Origin = 'SITUACAO_STATUS'
       Size = 10
+    end
+    object FDqryLctoUSERID: TIntegerField
+      FieldName = 'USERID'
+      Origin = 'USERID'
+      Required = True
     end
   end
   object dsLcto: TDataSource

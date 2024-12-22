@@ -1601,6 +1601,7 @@
               Top = 137
               Width = 254
               Height = 21
+              ReadOnly = True
               TabOrder = 6
             end
             object editRELATORIOpesqDS: TEdit
@@ -1609,6 +1610,7 @@
               Width = 254
               Height = 21
               Enabled = False
+              ReadOnly = True
               TabOrder = 7
             end
             object cbPago: TComboBox
@@ -2344,6 +2346,15 @@
                 000000000000}
               TabOrder = 12
               OnClick = btnImprimirConsultaClick
+            end
+            object BitBtn1: TBitBtn
+              Left = 299
+              Top = 87
+              Width = 133
+              Height = 27
+              Caption = 'Exportar par Excel'
+              TabOrder = 13
+              OnClick = BitBtn1Click
             end
           end
           object btnBuscarCategoria: TBitBtn
