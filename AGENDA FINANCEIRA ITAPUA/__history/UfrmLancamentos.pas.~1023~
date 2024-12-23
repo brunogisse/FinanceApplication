@@ -206,6 +206,7 @@ type
     btnCarregarPlanilha: TSpeedButton;
     FDqryLctoUSERID: TIntegerField;
     BitBtn1: TBitBtn;
+    ProgressBar1: TProgressBar;
     procedure btnSairClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure editPesquisaDespSubDblClick(Sender: TObject);
@@ -1561,6 +1562,7 @@ var
   i, j, col: Integer;
   ValorArredondado, SomaValorPrevisto, SomaValorPago: Double;
   CamposUtilizados: array of string;
+  TotalRegistros, ContadorRegistros: Integer;
 begin
   // Definir os campos desejados
   CamposUtilizados := ['LANCAMENTO', 'VALOR_PAGO', 'VALOR_PREVISTO', 'NOTA_FISCAL', 'CHEQUE', 'DATA_VENCIMENTO', 'DATA_PAGAMENTO', 'CONTA'];
@@ -1581,7 +1583,7 @@ begin
 
   // Mostra a mensagem de "Carregando..." durante a exportação
   Application.ProcessMessages;
-  ShowMessage('Iniciando exportação. Aguarde...');
+ // ShowMessage('Iniciando exportação. Aguarde...');
 
   // Cria uma nova planilha
   ExcelApp.Workbooks.Add;
@@ -1590,6 +1592,17 @@ begin
   // Inicializa as somas
   SomaValorPrevisto := 0;
   SomaValorPago := 0;
+
+  // Calcula o total de registros para o ProgressBar
+  TotalRegistros := FDqryLcto.RecordCount;
+  ContadorRegistros := 0;
+
+  ProgressBar1.Visible := True;
+
+  // Define o progresso do ProgressBar
+  ProgressBar1.Min := 0;               // Define o valor mínimo
+  ProgressBar1.Max := TotalRegistros;  // Define o valor máximo
+  ProgressBar1.Position := 0;          // Inicia o progresso
 
   // Exporta os títulos das colunas
   i := 1; // Começa na linha 1 (títulos)
@@ -1614,7 +1627,7 @@ begin
       begin
         // Verifica se o campo é do tipo moeda ou valor e aplica a formatação
         if (FDqryLcto.Fields[j].DataType in [ftFloat, ftCurrency]) or
-           (FDqryLcto.Fields[j].FieldName = 'VALOR_PREVISTO') then
+           (FDqryLcto.Fields[j].FieldName = 'VALOR_PREVISTO') or (FDqryLcto.Fields[j].FieldName = 'VALOR_PAGO')then
         begin
           ValorArredondado := RoundTo(FDqryLcto.Fields[j].AsFloat, -2); // -2 significa 2 casas decimais
           ExcelSheet.Cells[i, col] := ValorArredondado;
@@ -1628,6 +1641,14 @@ begin
           else if FDqryLcto.Fields[j].FieldName = 'VALOR_PAGO' then
             SomaValorPago := SomaValorPago + ValorArredondado;
         end
+        else if (FDqryLcto.Fields[j].FieldName = 'DATA_PAGAMENTO') or
+          (FDqryLcto.Fields[j].FieldName = 'DATA_VENCIMENTO') then
+          begin
+            ExcelSheet.Cells[i, col] := FDqryLcto.Fields[j].AsDateTime;
+
+            // Aplica a formatação de data resumida
+            ExcelSheet.Cells[i, col].NumberFormat := 'dd/MM/yyyy'
+          end
         else
         begin
           // Exporta valores como texto
@@ -1639,14 +1660,16 @@ begin
     Inc(i); // Avança para a próxima linha
     FDqryLcto.Next;
 
-    // Atualiza a interface para permitir que o usuário veja que o processo está em andamento
-    Application.ProcessMessages;
+    // Atualiza a interface para permitir que o usuário veja o progresso
+    ProgressBar1.Position := i - 1; // Atualiza o progresso no ProgressBar
+    Application.ProcessMessages;     // Permite que a interface seja atualizada
   end;
 
+  Inc(i);
   // Adiciona a linha com as somas
-  ExcelSheet.Cells[i, 1] := 'Total'; // Coloca o título "Total"
-  ExcelSheet.Cells[i, 2] := SomaValorPrevisto; // Soma dos valores do campo VALOR_PREVISTO
-  ExcelSheet.Cells[i, 3] := SomaValorPago;     // Soma dos valores do campo VALOR_PAGO
+  ExcelSheet.Cells[i, 1] := 'TOTAL'; // Coloca o título "Total"
+  ExcelSheet.Cells[i, 2] := SomaValorPago;     // Soma dos valores do campo VALOR_PAGO
+  ExcelSheet.Cells[i, 3] := SomaValorPrevisto; // Soma dos valores do campo VALOR_PREVISTO
 
   // Aplica a formatação de moeda nas somas
   ExcelSheet.Cells[i, 2].NumberFormat := '[$R$-416] #,##0.00';
@@ -1661,11 +1684,21 @@ begin
   ExcelApp.ScreenUpdating := True;
   ExcelApp.DisplayAlerts := True;
 
-  // Exibe o Excel para o usuário
-  ExcelApp.Visible := True;
-
-  // Exibe a mensagem de sucesso
-  ShowMessage('Dados exportados com sucesso para o Excel!');
+  try
+    // Reabilita a atualização de tela e alertas
+    ExcelApp.ScreenUpdating := True;
+    ExcelApp.DisplayAlerts := True;
+    // Exibe o Excel para o usuário
+    ExcelApp.Visible := True;
+    // Exibe a mensagem de sucesso
+    ShowMessage('Dados exportados com sucesso para o Excel!');
+  finally
+    // Libera as referências aos objetos ExcelSheet e ExcelApp
+    ExcelSheet := Unassigned; // Libera a planilha
+    ExcelApp := Unassigned;   // Libera o aplicativo Excel
+    ProgressBar1.Min := 0;
+    ProgressBar1.Visible := False;
+  end;
 end;
 
 end.

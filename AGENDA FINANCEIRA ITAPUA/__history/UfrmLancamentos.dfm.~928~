@@ -2,8 +2,8 @@
   Left = 0
   Top = 0
   Caption = 'Registro de Lan'#231'amentos'
-  ClientHeight = 654
-  ClientWidth = 1296
+  ClientHeight = 648
+  ClientWidth = 1290
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -16,11 +16,10 @@
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 1296
+    Width = 1290
     Height = 65
     Align = alTop
     TabOrder = 0
-    ExplicitWidth = 1290
     object btnSair: TImage
       Left = 1201
       Top = 9
@@ -429,12 +428,11 @@
   object PageControlLancamentos: TPageControl
     Left = 0
     Top = 65
-    Width = 1296
+    Width = 1290
     Height = 247
     ActivePage = Aba2
     Align = alTop
     TabOrder = 1
-    ExplicitWidth = 1290
     object Aba1: TTabSheet
       Caption = 
         'Cadastro                                                        ' +
@@ -2347,6 +2345,15 @@
               TabOrder = 12
               OnClick = btnImprimirConsultaClick
             end
+            object BitBtn1: TBitBtn
+              Left = 299
+              Top = 87
+              Width = 133
+              Height = 27
+              Caption = 'Exportar par Excel'
+              TabOrder = 13
+              OnClick = BitBtn1Click
+            end
           end
           object btnBuscarCategoria: TBitBtn
             Left = 153
@@ -2383,32 +2390,37 @@
   end
   object painelBottom: TPanel
     Left = 0
-    Top = 634
-    Width = 1296
-    Height = 20
+    Top = 631
+    Width = 1290
+    Height = 17
     Align = alBottom
     TabOrder = 2
-    ExplicitTop = 628
-    ExplicitWidth = 1290
+    object ProgressBar1: TProgressBar
+      Left = 1
+      Top = 1
+      Width = 150
+      Height = 15
+      Align = alLeft
+      TabOrder = 0
+      Visible = False
+    end
   end
   object memoOBS: TDBMemo
     Left = 0
-    Top = 589
-    Width = 1296
+    Top = 586
+    Width = 1290
     Height = 45
     Align = alBottom
     DataField = 'OBS'
     DataSource = dsLcto
     TabOrder = 3
-    ExplicitTop = 583
-    ExplicitWidth = 1290
   end
   object gridLancamento: TDBGrid
     AlignWithMargins = True
     Left = 3
     Top = 315
-    Width = 1290
-    Height = 242
+    Width = 1284
+    Height = 239
     Align = alClient
     DataSource = dsLcto
     DefaultDrawing = False
@@ -2508,13 +2520,11 @@
   end
   object painelRodape: TPanel
     Left = 0
-    Top = 560
-    Width = 1296
+    Top = 557
+    Width = 1290
     Height = 29
     Align = alBottom
     TabOrder = 5
-    ExplicitTop = 554
-    ExplicitWidth = 1290
     object labelOBS: TLabel
       Left = 4
       Top = 11

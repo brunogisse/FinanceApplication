@@ -1676,14 +1676,21 @@ begin
   ExcelApp.ScreenUpdating := True;
   ExcelApp.DisplayAlerts := True;
 
-  // Exibe o Excel para o usuário
-  ExcelApp.Visible := True;
-
-  // Exibe a mensagem de sucesso
-  ShowMessage('Dados exportados com sucesso para o Excel!');
-
-  ProgressBar1.Min := 0;
-  ProgressBar1.Visible := False;
+  try
+    // Reabilita a atualização de tela e alertas
+    ExcelApp.ScreenUpdating := True;
+    ExcelApp.DisplayAlerts := True;
+    // Exibe o Excel para o usuário
+    ExcelApp.Visible := True;
+    // Exibe a mensagem de sucesso
+    ShowMessage('Dados exportados com sucesso para o Excel!');
+  finally
+    // Libera as referências aos objetos ExcelSheet e ExcelApp
+    ExcelSheet := Unassigned; // Libera a planilha
+    ExcelApp := Unassigned;   // Libera o aplicativo Excel
+    ProgressBar1.Min := 0;
+    ProgressBar1.Visible := False;
+  end;
 end;
 
 end.
