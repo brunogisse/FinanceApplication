@@ -49,6 +49,9 @@ type
     procedure novoRegistro;
   public
     { Public declarations }
+
+    var Pesquisa : string;
+
   end;
 
 var
@@ -58,7 +61,7 @@ implementation
 
 {$R *.dfm}
 
-uses UfrmPrincipal;
+uses UfrmPrincipal, UfrmLancamentos;
 
 procedure TfrmConta.novoRegistro;
 begin
@@ -78,8 +81,7 @@ end;
 procedure TfrmConta.salvarRegistro;
 begin
   FDqryConta.Post;
-
-try
+ try
    // FDqryConta.Transaction.StartTransaction;
     FDtcConta.Commit;
 except
@@ -151,6 +153,7 @@ end;
 procedure TfrmConta.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
 FDqryConta.Close;
+Pesquisa := 'não';
 end;
 
 procedure TfrmConta.FormShow(Sender: TObject);
@@ -167,8 +170,18 @@ end;
 
 procedure TfrmConta.gridContasDblClick(Sender: TObject);
 begin
- if MessageBox(Application.Handle,'Deseja alterar essa conta?','Confirmação',MB_YESNO + MB_ICONQUESTION) = mrYes then
-    alterarRegistro;
+
+    if Pesquisa = 'pesquisando' then
+    begin
+    frmLancamento.editContaPesq.Text := FDqryConta['DESCRICAO'];
+    frmLancamento.editContaPesq.Enabled := False;
+    Close;
+    end
+   else
+    begin
+     if MessageBox(Application.Handle,'Deseja alterar essa conta?','Confirmação',MB_YESNO + MB_ICONQUESTION) = mrYes then
+        alterarRegistro;
+    end;
 end;
 
 procedure TfrmConta.Image1Click(Sender: TObject);

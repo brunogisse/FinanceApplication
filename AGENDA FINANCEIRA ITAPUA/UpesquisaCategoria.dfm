@@ -10,11 +10,9 @@
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poDesktopCenter
   OnClose = FormClose
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object PainelPesquisaCategoria: TPanel
     Left = 0
@@ -23,6 +21,7 @@
     Height = 81
     Align = alTop
     TabOrder = 0
+    ExplicitWidth = 979
     object labelPesqCategoria: TLabel
       Left = 128
       Top = 7
@@ -122,6 +121,7 @@
     Height = 335
     Align = alClient
     DataSource = dsPesquisaCategoria
+    Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
     TabOrder = 1
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
@@ -163,6 +163,7 @@
     Height = 256
     Align = alBottom
     DataSource = dsRelatorioSubcategoria
+    Options = [dgEditing, dgTitles, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
     TabOrder = 2
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
@@ -170,6 +171,7 @@
     TitleFont.Name = 'Tahoma'
     TitleFont.Style = []
     Visible = False
+    OnDblClick = gridSubDblClick
     Columns = <
       item
         Expanded = False
@@ -215,6 +217,8 @@
     Height = 49
     Align = alBottom
     TabOrder = 3
+    ExplicitTop = 666
+    ExplicitWidth = 979
     object btnImprimirSubdetalhado: TBitBtn
       Left = 672
       Top = 6
@@ -341,11 +345,12 @@
   end
   object dsPesquisaCategoria: TDataSource
     DataSet = fdqryPesquisaCategoria
+    OnDataChange = dsPesquisaCategoriaDataChange
     Left = 416
     Top = 296
   end
   object reportPesquisaCategoria: TfrxReport
-    Version = '6.7.6'
+    Version = '2022.2.7'
     DotMatrixReport = False
     IniFile = '\Software\Fast Reports'
     PreviewOptions.Buttons = [pbPrint, pbLoad, pbSave, pbExport, pbZoom, pbFind, pbOutline, pbPageSetup, pbTools, pbEdit, pbNavigator, pbExportQuick, pbCopy, pbSelection]
@@ -404,6 +409,10 @@
       MirrorMode = []
       object ReportTitle1: TfrxReportTitle
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 86.929190000000000000
         Top = 18.897650000000000000
@@ -427,6 +436,10 @@
       end
       object PageHeader1: TfrxPageHeader
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 71.811070000000000000
         Top = 128.504020000000000000
@@ -584,6 +597,10 @@
       end
       object MasterData1: TfrxMasterData
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 22.677180000000000000
         Top = 260.787570000000000000
@@ -645,6 +662,10 @@
       end
       object ReportSummary1: TfrxReportSummary
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 147.401670000000000000
         Top = 343.937230000000000000
@@ -739,6 +760,7 @@
     CloseDataSource = False
     DataSet = fdqryPesquisaCategoria
     BCDToCurrency = False
+    DataSetOptions = []
     Left = 400
     Top = 200
   end
@@ -956,11 +978,12 @@
     CloseDataSource = False
     DataSet = qryRelatorioSubcategoria
     BCDToCurrency = False
+    DataSetOptions = []
     Left = 248
     Top = 608
   end
   object reportSubcategoria: TfrxReport
-    Version = '6.7.6'
+    Version = '2022.2.7'
     DotMatrixReport = False
     IniFile = '\Software\Fast Reports'
     PreviewOptions.Buttons = [pbPrint, pbLoad, pbSave, pbExport, pbZoom, pbFind, pbOutline, pbPageSetup, pbTools, pbEdit, pbNavigator, pbExportQuick, pbCopy, pbSelection]
@@ -1019,6 +1042,10 @@
       MirrorMode = []
       object ReportTitle1: TfrxReportTitle
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 79.370130000000000000
         Top = 18.897650000000000000
@@ -1042,6 +1069,10 @@
       end
       object PageHeader1: TfrxPageHeader
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 83.149660000000000000
         Top = 120.944960000000000000
@@ -1187,6 +1218,10 @@
       end
       object MasterData1: TfrxMasterData
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 83.960730000000000000
         Top = 264.567100000000000000
@@ -1475,6 +1510,10 @@
       end
       object ReportSummary1: TfrxReportSummary
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 98.267780000000000000
         Top = 408.189240000000000000
@@ -1550,6 +1589,10 @@
       end
       object PageFooter1: TfrxPageFooter
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 30.236240000000000000
         Top = 529.134200000000000000

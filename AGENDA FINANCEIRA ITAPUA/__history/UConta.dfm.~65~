@@ -23,6 +23,7 @@ object frmConta: TfrmConta
     Height = 244
     Align = alClient
     DataSource = dsConta
+    ReadOnly = True
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
@@ -52,11 +53,9 @@ object frmConta: TfrmConta
     Height = 105
     Align = alTop
     TabOrder = 1
-    ExplicitTop = -6
-    ExplicitWidth = 613
     object btnNovo: TImage
-      Left = 22
-      Top = 16
+      Left = 6
+      Top = 12
       Width = 33
       Height = 33
       Cursor = crHandPoint
@@ -105,15 +104,15 @@ object frmConta: TfrmConta
       OnClick = btnNovoClick
     end
     object labelConta: TLabel
-      Left = 16
-      Top = 64
+      Left = 6
+      Top = 66
       Width = 29
       Height = 13
       Caption = 'Conta'
     end
     object btnCancelar: TImage
-      Left = 61
-      Top = 16
+      Left = 45
+      Top = 12
       Width = 41
       Height = 35
       Cursor = crHandPoint
@@ -149,8 +148,8 @@ object frmConta: TfrmConta
       OnClick = btnCancelarClick
     end
     object btnSalvar: TImage
-      Left = 108
-      Top = 16
+      Left = 92
+      Top = 12
       Width = 36
       Height = 35
       Cursor = crHandPoint
@@ -185,8 +184,8 @@ object frmConta: TfrmConta
       OnClick = btnSalvarClick
     end
     object btnAlterar: TImage
-      Left = 150
-      Top = 16
+      Left = 134
+      Top = 12
       Width = 35
       Height = 35
       Cursor = crHandPoint
@@ -225,8 +224,8 @@ object frmConta: TfrmConta
       OnClick = btnAlterarClick
     end
     object btnExcluir: TImage
-      Left = 191
-      Top = 16
+      Left = 175
+      Top = 12
       Width = 39
       Height = 35
       Cursor = crHandPoint
@@ -326,10 +325,11 @@ object frmConta: TfrmConta
       OnClick = Image1Click
     end
     object editContas: TDBEdit
-      Left = 16
+      Left = 6
       Top = 78
       Width = 508
       Height = 21
+      CharCase = ecUpperCase
       DataField = 'DESCRICAO'
       DataSource = dsConta
       TabOrder = 0
@@ -337,12 +337,12 @@ object frmConta: TfrmConta
     end
   end
   object FDtcConta: TFDTransaction
+    Options.AutoStop = False
     Connection = frmPrincipal.FDconexao
     Left = 384
     Top = 184
   end
   object FDqryConta: TFDQuery
-    Active = True
     Connection = frmPrincipal.FDconexao
     Transaction = FDtcConta
     UpdateOptions.AssignedValues = [uvRefreshMode, uvGeneratorName, uvCheckReadOnly]
@@ -352,7 +352,7 @@ object frmConta: TfrmConta
     UpdateOptions.KeyFields = 'CONTA_ID'
     UpdateOptions.AutoIncFields = 'CONTA_ID'
     SQL.Strings = (
-      'select * from CONTAS')
+      'select * from CONTAS order by descricao asc')
     Left = 480
     Top = 184
     object FDqryContaCONTA_ID: TIntegerField

@@ -3,7 +3,8 @@ unit UConta;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
   FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, Data.DB,
@@ -43,14 +44,15 @@ type
   private
     { Private declarations }
 
-    procedure configurarEnables(status : integer);
+    procedure configurarEnables(status: integer);
     procedure salvarRegistro;
     procedure alterarRegistro;
     procedure novoRegistro;
   public
     { Public declarations }
 
-    var Pesquisa : string;
+  var
+    Pesquisa: string;
 
   end;
 
@@ -70,140 +72,140 @@ begin
   FDqryConta.Insert;
 end;
 
-
 procedure TfrmConta.alterarRegistro;
 begin
   FDqryConta.Edit;
   configurarEnables(1);
 end;
 
-
 procedure TfrmConta.salvarRegistro;
 begin
   FDqryConta.Post;
- try
-   // FDqryConta.Transaction.StartTransaction;
+  try
+    // FDqryConta.Transaction.StartTransaction;
     FDtcConta.Commit;
-except
+  except
     FDtcConta.RollbackRetaining;
-end;
+  end;
 end;
 
-
-procedure TfrmConta.configurarEnables(status : integer);
+procedure TfrmConta.configurarEnables(status: integer);
 begin
-    if status = 0 then
-    begin
-      btnNovo.Enabled := True;
-      btnAlterar.Enabled := True;
-      btnExcluir.Enabled := True;
-      btnCancelar.Enabled := False;
-      btnSalvar.Enabled := False;
-      editContas.Enabled := False;
-    end
-   else
-    begin
-      btnNovo.Enabled := False;
-      btnAlterar.Enabled := False;
-      btnExcluir.Enabled := False;
-      btnCancelar.Enabled := True;
-      btnSalvar.Enabled := True;
-      editContas.Enabled := True;
-    end;
+  if status = 0 then
+  begin
+    btnNovo.Enabled := True;
+    btnAlterar.Enabled := True;
+    btnExcluir.Enabled := True;
+    btnCancelar.Enabled := False;
+    btnSalvar.Enabled := False;
+    editContas.Enabled := False;
+  end
+  else
+  begin
+    btnNovo.Enabled := False;
+    btnAlterar.Enabled := False;
+    btnExcluir.Enabled := False;
+    btnCancelar.Enabled := True;
+    btnSalvar.Enabled := True;
+    editContas.Enabled := True;
+  end;
 end;
-
 
 procedure TfrmConta.editContasKeyPress(Sender: TObject; var Key: Char);
 begin
- if Key = #13 then
-    begin
-      salvarRegistro;
-      novoRegistro;
-      Key := #0;
-    end;
+  if Key = #13 then
+  begin
+    salvarRegistro;
+    novoRegistro;
+    Key := #0;
+  end;
 end;
 
 procedure TfrmConta.BitBtn1Click(Sender: TObject);
 begin
-FDqryConta.Insert;
+  FDqryConta.Insert;
 end;
 
 procedure TfrmConta.btnNovoClick(Sender: TObject);
 begin
- novoRegistro;
+  novoRegistro;
 end;
 
 procedure TfrmConta.btnAlterarClick(Sender: TObject);
 begin
-alterarRegistro;
+  alterarRegistro;
 end;
 
 procedure TfrmConta.btnCancelarClick(Sender: TObject);
 begin
-FDqryConta.Cancel;
-configurarEnables(0);
+  FDqryConta.Cancel;
+  configurarEnables(0);
 end;
 
 procedure TfrmConta.btnSalvarClick(Sender: TObject);
 begin
-configurarEnables(0);
-salvarRegistro;
+  configurarEnables(0);
+  salvarRegistro;
 end;
 
 procedure TfrmConta.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-FDqryConta.Close;
-Pesquisa := 'não';
+  FDqryConta.Close;
+  Pesquisa := 'não';
 end;
 
 procedure TfrmConta.FormShow(Sender: TObject);
 begin
-FDqryConta.Open;
-configurarEnables(0);
+  FDqryConta.Open;
+  configurarEnables(0);
 end;
 
 procedure TfrmConta.gridContasCellClick(Column: TColumn);
 begin
-FDqryConta.Cancel;
-configurarEnables(0);
+  FDqryConta.Cancel;
+  configurarEnables(0);
 end;
 
 procedure TfrmConta.gridContasDblClick(Sender: TObject);
 begin
 
-    if Pesquisa = 'pesquisando' then
-    begin
+  if Pesquisa = 'pesquisando' then
+  begin
     frmLancamento.editContaPesq.Text := FDqryConta['DESCRICAO'];
     frmLancamento.editContaPesq.Enabled := False;
     Close;
-    end
-   else
-    begin
-     if MessageBox(Application.Handle,'Deseja alterar essa conta?','Confirmação',MB_YESNO + MB_ICONQUESTION) = mrYes then
-        alterarRegistro;
-    end;
+  end
+  else
+  begin
+    if MessageBox(Application.Handle, 'Deseja alterar essa conta?',
+      'Confirmação', MB_YESNO + MB_ICONQUESTION) = mrYes then
+      alterarRegistro;
+  end;
 end;
 
 procedure TfrmConta.Image1Click(Sender: TObject);
 begin
-Close;
+  Close;
 end;
 
 procedure TfrmConta.btnExcluirClick(Sender: TObject);
- var AuxErro : string;
+var
+  AuxErro: string;
 begin
   configurarEnables(0);
- if MessageBox(Application.Handle,'Deseja excluir essa conta?','Confirmação', MB_YESNO + MB_ICONQUESTION) = mrYes then
-    begin
-     try
+  if MessageBox(Application.Handle, 'Deseja excluir essa conta?', 'Confirmação',
+    MB_YESNO + MB_ICONQUESTION) = mrYes then
+  begin
+    try
       FDqryConta.Delete;
-     except
-      on E : exception do
-       begin
-        AuxErro := copy (E.Message,20,25);
+    except
+      on E: exception do
+      begin
+        AuxErro := copy(E.Message, 20, 25);
         ShowMessage(AuxErro);
-       end;
-     end;
+      end;
     end;
+  end;
 end;
+
 end.

@@ -10,11 +10,9 @@ object frmConta: TfrmConta
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poDesktopCenter
   OnClose = FormClose
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object gridContas: TDBGrid
     Left = 0
@@ -53,6 +51,7 @@ object frmConta: TfrmConta
     Height = 105
     Align = alTop
     TabOrder = 1
+    ExplicitWidth = 546
     object btnNovo: TImage
       Left = 6
       Top = 12

@@ -295,7 +295,11 @@ end;
 
 procedure TfrmPesquisaCategoria.gridSubDblClick(Sender: TObject);
 begin
-   Close;
+ // DBGrid1.Options := DBGrid1.Options - [dgIndicator];
+  if (gridSub.SelectedField.FieldName = 'CONTA') then
+  begin
+    frmConta.ShowModal;
+  end;
 end;
 
 end.

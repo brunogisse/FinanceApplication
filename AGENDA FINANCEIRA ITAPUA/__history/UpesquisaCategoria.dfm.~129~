@@ -10,11 +10,9 @@
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poDesktopCenter
   OnClose = FormClose
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object PainelPesquisaCategoria: TPanel
     Left = 0
@@ -23,6 +21,7 @@
     Height = 81
     Align = alTop
     TabOrder = 0
+    ExplicitWidth = 979
     object labelPesqCategoria: TLabel
       Left = 128
       Top = 7
@@ -42,7 +41,7 @@
       Top = 7
       Width = 105
       Height = 34
-      Caption = 'Escolher Categoria'
+      Caption = 'Escolher Despesa'
       TabOrder = 0
       OnClick = btnEscolherCategoriaClick
     end
@@ -73,7 +72,7 @@
       TabOrder = 3
     end
     object btnCategoriaOK: TBitBtn
-      Left = 511
+      Left = 480
       Top = 45
       Width = 74
       Height = 27
@@ -119,7 +118,7 @@
     Left = 0
     Top = 81
     Width = 985
-    Height = 311
+    Height = 335
     Align = alClient
     DataSource = dsPesquisaCategoria
     TabOrder = 1
@@ -180,6 +179,7 @@
       item
         Expanded = False
         FieldName = 'VALOR_PREVISTO'
+        Width = 92
         Visible = True
       end
       item
@@ -191,19 +191,19 @@
       item
         Expanded = False
         FieldName = 'DATA_VENCIMENTO'
-        Width = 109
+        Width = 78
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'DATA_PAGAMENTO'
-        Width = 104
+        Width = 73
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CONTA'
-        Width = 216
+        Width = 285
         Visible = True
       end>
   end
@@ -214,7 +214,8 @@
     Height = 49
     Align = alBottom
     TabOrder = 3
-    ExplicitTop = 661
+    ExplicitTop = 666
+    ExplicitWidth = 979
     object btnImprimirSubdetalhado: TBitBtn
       Left = 672
       Top = 6
@@ -225,16 +226,6 @@
       Visible = False
       OnClick = btnImprimirSubdetalhadoClick
     end
-  end
-  object panelSubcategoriasdetalhadas: TPanel
-    Left = 0
-    Top = 392
-    Width = 985
-    Height = 24
-    Align = alBottom
-    Caption = 'Subdespesas detalhadas:'
-    TabOrder = 4
-    ExplicitTop = 386
   end
   object fdqryPesquisaCategoria: TFDQuery
     MasterSource = frmPrincipal.dsVencimentos
@@ -295,6 +286,7 @@
       Required = True
     end
     object fdqryPesquisaCategoriaDESCRICAO: TStringField
+      DisplayLabel = 'Descri'#231#227'o'
       FieldName = 'DESCRICAO'
       Origin = 'DESCRICAO'
       Size = 100
@@ -315,6 +307,7 @@
     end
     object fdqryPesquisaCategoriaCATEGORIA: TStringField
       AutoGenerateValue = arDefault
+      DisplayLabel = 'Categoria'
       FieldName = 'CATEGORIA'
       Origin = 'CATEGORIA'
       ProviderFlags = []
@@ -330,6 +323,7 @@
     end
     object fdqryPesquisaCategoriaVALOR_PREVISTO: TFloatField
       AutoGenerateValue = arDefault
+      DisplayLabel = 'Valor Previsto'
       FieldName = 'VALOR_PREVISTO'
       Origin = 'VALOR_PREVISTO'
       ProviderFlags = []
@@ -338,6 +332,7 @@
     end
     object fdqryPesquisaCategoriaVALOR_PAGO: TFloatField
       AutoGenerateValue = arDefault
+      DisplayLabel = 'Valor Pago'
       FieldName = 'VALOR_PAGO'
       Origin = 'VALOR_PAGO'
       ProviderFlags = []
@@ -347,11 +342,12 @@
   end
   object dsPesquisaCategoria: TDataSource
     DataSet = fdqryPesquisaCategoria
+    OnDataChange = dsPesquisaCategoriaDataChange
     Left = 416
     Top = 296
   end
   object reportPesquisaCategoria: TfrxReport
-    Version = '6.7.6'
+    Version = '2022.2.7'
     DotMatrixReport = False
     IniFile = '\Software\Fast Reports'
     PreviewOptions.Buttons = [pbPrint, pbLoad, pbSave, pbExport, pbZoom, pbFind, pbOutline, pbPageSetup, pbTools, pbEdit, pbNavigator, pbExportQuick, pbCopy, pbSelection]
@@ -359,7 +355,7 @@
     PrintOptions.Printer = 'Default'
     PrintOptions.PrintOnSheet = 0
     ReportOptions.CreateDate = 44622.539484143500000000
-    ReportOptions.LastChange = 44633.737715347220000000
+    ReportOptions.LastChange = 44633.737715347200000000
     ScriptLanguage = 'PascalScript'
     ScriptText.Strings = (
       'begin'
@@ -410,6 +406,10 @@
       MirrorMode = []
       object ReportTitle1: TfrxReportTitle
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 86.929190000000000000
         Top = 18.897650000000000000
@@ -433,6 +433,10 @@
       end
       object PageHeader1: TfrxPageHeader
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 71.811070000000000000
         Top = 128.504020000000000000
@@ -590,6 +594,10 @@
       end
       object MasterData1: TfrxMasterData
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 22.677180000000000000
         Top = 260.787570000000000000
@@ -651,6 +659,10 @@
       end
       object ReportSummary1: TfrxReportSummary
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 147.401670000000000000
         Top = 343.937230000000000000
@@ -745,6 +757,7 @@
     CloseDataSource = False
     DataSet = fdqryPesquisaCategoria
     BCDToCurrency = False
+    DataSetOptions = []
     Left = 400
     Top = 200
   end
@@ -827,16 +840,19 @@
       Required = True
     end
     object qryRelatorioSubcategoriaLANCAMENTO: TStringField
+      DisplayLabel = 'Lan'#231'amento'
       FieldName = 'LANCAMENTO'
       Origin = 'DESCRICAO'
       Size = 200
     end
     object qryRelatorioSubcategoriaVALOR_PAGO: TSingleField
+      DisplayLabel = 'Valor Pago'
       FieldName = 'VALOR_PAGO'
       Origin = 'VALOR_PAGO'
       currency = True
     end
     object qryRelatorioSubcategoriaVALOR_PREVISTO: TSingleField
+      DisplayLabel = 'Valor Previsto'
       FieldName = 'VALOR_PREVISTO'
       Origin = 'VALOR_PREVISTO'
       currency = True
@@ -856,10 +872,12 @@
       Size = 1
     end
     object qryRelatorioSubcategoriaDATA_VENCIMENTO: TDateField
+      DisplayLabel = 'Data Venc.'
       FieldName = 'DATA_VENCIMENTO'
       Origin = 'DATA_VENCIMENTO'
     end
     object qryRelatorioSubcategoriaDATA_PAGAMENTO: TDateField
+      DisplayLabel = 'Data Pgto.'
       FieldName = 'DATA_PAGAMENTO'
       Origin = 'DATA_PAGAMENTO'
     end
@@ -915,6 +933,7 @@
     end
     object qryRelatorioSubcategoriaCONTA: TStringField
       AutoGenerateValue = arDefault
+      DisplayLabel = 'Conta'
       FieldName = 'CONTA'
       Origin = 'DESCRICAO'
       ProviderFlags = []
@@ -956,11 +975,12 @@
     CloseDataSource = False
     DataSet = qryRelatorioSubcategoria
     BCDToCurrency = False
+    DataSetOptions = []
     Left = 248
     Top = 608
   end
   object reportSubcategoria: TfrxReport
-    Version = '6.7.6'
+    Version = '2022.2.7'
     DotMatrixReport = False
     IniFile = '\Software\Fast Reports'
     PreviewOptions.Buttons = [pbPrint, pbLoad, pbSave, pbExport, pbZoom, pbFind, pbOutline, pbPageSetup, pbTools, pbEdit, pbNavigator, pbExportQuick, pbCopy, pbSelection]
@@ -968,7 +988,7 @@
     PrintOptions.Printer = 'Default'
     PrintOptions.PrintOnSheet = 0
     ReportOptions.CreateDate = 44633.627179976900000000
-    ReportOptions.LastChange = 44634.543618310180000000
+    ReportOptions.LastChange = 44639.361812962960000000
     ScriptLanguage = 'PascalScript'
     ScriptText.Strings = (
       'begin'
@@ -1019,6 +1039,10 @@
       MirrorMode = []
       object ReportTitle1: TfrxReportTitle
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 79.370130000000000000
         Top = 18.897650000000000000
@@ -1042,6 +1066,10 @@
       end
       object PageHeader1: TfrxPageHeader
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 83.149660000000000000
         Top = 120.944960000000000000
@@ -1187,6 +1215,10 @@
       end
       object MasterData1: TfrxMasterData
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 83.960730000000000000
         Top = 264.567100000000000000
@@ -1372,7 +1404,7 @@
         object Memo14: TfrxMemoView
           AllowVectorExport = True
           Left = 122.330860000000000000
-          Top = 28.015770000000000000
+          Top = 27.015770000000000000
           Width = 185.196970000000000000
           Height = 18.897650000000000000
           DataField = 'CONTA'
@@ -1475,6 +1507,10 @@
       end
       object ReportSummary1: TfrxReportSummary
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 98.267780000000000000
         Top = 408.189240000000000000
@@ -1550,6 +1586,10 @@
       end
       object PageFooter1: TfrxPageFooter
         FillType = ftBrush
+        FillGap.Top = 0
+        FillGap.Left = 0
+        FillGap.Bottom = 0
+        FillGap.Right = 0
         Frame.Typ = []
         Height = 30.236240000000000000
         Top = 529.134200000000000000

@@ -42,7 +42,7 @@
       Top = 7
       Width = 105
       Height = 34
-      Caption = 'Escolher Categoria'
+      Caption = 'Escolher Despesa'
       TabOrder = 0
       OnClick = btnEscolherCategoriaClick
     end
@@ -180,6 +180,7 @@
       item
         Expanded = False
         FieldName = 'VALOR_PREVISTO'
+        Width = 92
         Visible = True
       end
       item
@@ -191,19 +192,19 @@
       item
         Expanded = False
         FieldName = 'DATA_VENCIMENTO'
-        Width = 109
+        Width = 78
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'DATA_PAGAMENTO'
-        Width = 104
+        Width = 73
         Visible = True
       end
       item
         Expanded = False
         FieldName = 'CONTA'
-        Width = 216
+        Width = 285
         Visible = True
       end>
   end
@@ -214,7 +215,6 @@
     Height = 49
     Align = alBottom
     TabOrder = 3
-    ExplicitTop = 661
     object btnImprimirSubdetalhado: TBitBtn
       Left = 672
       Top = 6
@@ -285,6 +285,7 @@
       Required = True
     end
     object fdqryPesquisaCategoriaDESCRICAO: TStringField
+      DisplayLabel = 'Descri'#231#227'o'
       FieldName = 'DESCRICAO'
       Origin = 'DESCRICAO'
       Size = 100
@@ -305,6 +306,7 @@
     end
     object fdqryPesquisaCategoriaCATEGORIA: TStringField
       AutoGenerateValue = arDefault
+      DisplayLabel = 'Categoria'
       FieldName = 'CATEGORIA'
       Origin = 'CATEGORIA'
       ProviderFlags = []
@@ -320,6 +322,7 @@
     end
     object fdqryPesquisaCategoriaVALOR_PREVISTO: TFloatField
       AutoGenerateValue = arDefault
+      DisplayLabel = 'Valor Previsto'
       FieldName = 'VALOR_PREVISTO'
       Origin = 'VALOR_PREVISTO'
       ProviderFlags = []
@@ -328,6 +331,7 @@
     end
     object fdqryPesquisaCategoriaVALOR_PAGO: TFloatField
       AutoGenerateValue = arDefault
+      DisplayLabel = 'Valor Pago'
       FieldName = 'VALOR_PAGO'
       Origin = 'VALOR_PAGO'
       ProviderFlags = []
@@ -349,7 +353,7 @@
     PrintOptions.Printer = 'Default'
     PrintOptions.PrintOnSheet = 0
     ReportOptions.CreateDate = 44622.539484143500000000
-    ReportOptions.LastChange = 44633.737715347220000000
+    ReportOptions.LastChange = 44633.737715347200000000
     ScriptLanguage = 'PascalScript'
     ScriptText.Strings = (
       'begin'
@@ -817,16 +821,19 @@
       Required = True
     end
     object qryRelatorioSubcategoriaLANCAMENTO: TStringField
+      DisplayLabel = 'Lan'#231'amento'
       FieldName = 'LANCAMENTO'
       Origin = 'DESCRICAO'
       Size = 200
     end
     object qryRelatorioSubcategoriaVALOR_PAGO: TSingleField
+      DisplayLabel = 'Valor Pago'
       FieldName = 'VALOR_PAGO'
       Origin = 'VALOR_PAGO'
       currency = True
     end
     object qryRelatorioSubcategoriaVALOR_PREVISTO: TSingleField
+      DisplayLabel = 'Valor Previsto'
       FieldName = 'VALOR_PREVISTO'
       Origin = 'VALOR_PREVISTO'
       currency = True
@@ -846,10 +853,12 @@
       Size = 1
     end
     object qryRelatorioSubcategoriaDATA_VENCIMENTO: TDateField
+      DisplayLabel = 'Data Venc.'
       FieldName = 'DATA_VENCIMENTO'
       Origin = 'DATA_VENCIMENTO'
     end
     object qryRelatorioSubcategoriaDATA_PAGAMENTO: TDateField
+      DisplayLabel = 'Data Pgto.'
       FieldName = 'DATA_PAGAMENTO'
       Origin = 'DATA_PAGAMENTO'
     end
@@ -905,6 +914,7 @@
     end
     object qryRelatorioSubcategoriaCONTA: TStringField
       AutoGenerateValue = arDefault
+      DisplayLabel = 'Conta'
       FieldName = 'CONTA'
       Origin = 'DESCRICAO'
       ProviderFlags = []
@@ -958,7 +968,7 @@
     PrintOptions.Printer = 'Default'
     PrintOptions.PrintOnSheet = 0
     ReportOptions.CreateDate = 44633.627179976900000000
-    ReportOptions.LastChange = 44634.543618310180000000
+    ReportOptions.LastChange = 44639.361812962960000000
     ScriptLanguage = 'PascalScript'
     ScriptText.Strings = (
       'begin'
@@ -1362,7 +1372,7 @@
         object Memo14: TfrxMemoView
           AllowVectorExport = True
           Left = 122.330860000000000000
-          Top = 28.015770000000000000
+          Top = 27.015770000000000000
           Width = 185.196970000000000000
           Height = 18.897650000000000000
           DataField = 'CONTA'

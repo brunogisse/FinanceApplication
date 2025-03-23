@@ -278,9 +278,6 @@ end;
 procedure TfrmPesquisaCategoria.FormClose(Sender: TObject;
   var Action: TCloseAction);
 begin
-
-  frmLancamento.PesquisarCategoria(qryRelatorioSubcategoriaGASTOS_ID.AsInteger);
-
   fdqryPesquisaCategoria.Close;
   qryRelatorioSubcategoria.Close;
 end;
@@ -295,7 +292,10 @@ end;
 
 procedure TfrmPesquisaCategoria.gridSubDblClick(Sender: TObject);
 begin
-   Close;
+  if (DBGrid1.SelectedField.FieldName = 'CONTA') then
+  begin
+    frmConta.ShowModal;
+  end;
 end;
 
 end.

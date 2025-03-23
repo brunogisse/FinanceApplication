@@ -274,11 +274,14 @@ type
     procedure allowPrint(status: String);
     procedure procPermitirAlterarExcluir;
     procedure ExportarParaExcel;
+
     // function FormatarMoeda(valor : string) : string;
 
     { Private declarations }
   public
     { Public declarations }
+
+    procedure PesquisarCategoria(ID_LANCAMENTO : Integer);
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;
@@ -1691,6 +1694,38 @@ begin
     ProgressBar1.Min := 0;
     ProgressBar1.Visible := False;
   end;
+end;
+
+procedure TfrmLancamento.PesquisarCategoria(ID_LANCAMENTO : Integer);
+begin
+
+  try
+    with FDqryLcto do
+    begin
+      Close;
+      SQL.Clear;
+      SQL.Add('select '
+        + 'REG.GASTOS_ID, REG.CATEGORIA_ID as CATEGORIA_FK, REG.SUBCATEGORIA_ID as SUBCATEGORIA_FK, REG.CONTA_ID as CONTA_FK, REG.FORMA_DE_PAGAMENTO_ID as FORMA_DE_PAGAMENTO_FK,'
+        + 'REG.DESCRICAO as LANCAMENTO, REG.VALOR_PAGO, REG.VALOR_PREVISTO, REG.NOTA_FISCAL, REG.CHEQUE,'
+        + 'REG.CHEQUE_COMPENSADO, REG.DATA_VENCIMENTO, REG.DATA_PAGAMENTO, REG.PAGO, REG.ENTRADA_ID, SITUACAO_STATUS,'
+        + 'C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, S.SUBCATEGORIA_ID, S.DESCRICAO as SUBCATEGORIA, CT.CONTA_ID, CT.DESCRICAO as CONTA, FP.FORMA_DE_PAGAMENTO_ID, FP.DESCRICAO as FORMA_DE_PAGAMENTO,'
+        + 'REG.OBS, REG.DATA_CADASTRO, REG.USERID' + ' from ' +
+        ' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
+        + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
+        '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
+        '(REG.CONTA_ID = CT.CONTA_ID) and ' +
+        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) ' +
+        ' and  REG.GASTOS_ID = ' + IntToStr(ID_LANCAMENTO)
+        + 'order by REG.DATA_VENCIMENTO');
+     // showmessage(SQL.Text);
+      Open;
+    end;
+    sleep(100);
+    btnAlterarClick(Self);
+  except
+
+  end;
+
 end;
 
 end.

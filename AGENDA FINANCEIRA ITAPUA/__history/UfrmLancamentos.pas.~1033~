@@ -274,6 +274,7 @@ type
     procedure allowPrint(status: String);
     procedure procPermitirAlterarExcluir;
     procedure ExportarParaExcel;
+    procedure PesquisarCategoria(ID_LANCAMENTO : Integer);
     // function FormatarMoeda(valor : string) : string;
 
     { Private declarations }
@@ -1583,7 +1584,7 @@ begin
 
   // Mostra a mensagem de "Carregando..." durante a exportação
   Application.ProcessMessages;
-  ShowMessage('Iniciando exportação. Aguarde...');
+ // ShowMessage('Iniciando exportação. Aguarde...');
 
   // Cria uma nova planilha
   ExcelApp.Workbooks.Add;
@@ -1657,10 +1658,11 @@ begin
     Application.ProcessMessages;     // Permite que a interface seja atualizada
   end;
 
+  Inc(i);
   // Adiciona a linha com as somas
-  ExcelSheet.Cells[i, 1] := 'Total'; // Coloca o título "Total"
-  ExcelSheet.Cells[i, 2] := SomaValorPrevisto; // Soma dos valores do campo VALOR_PREVISTO
-  ExcelSheet.Cells[i, 3] := SomaValorPago;     // Soma dos valores do campo VALOR_PAGO
+  ExcelSheet.Cells[i, 1] := 'TOTAL'; // Coloca o título "Total"
+  ExcelSheet.Cells[i, 2] := SomaValorPago;     // Soma dos valores do campo VALOR_PAGO
+  ExcelSheet.Cells[i, 3] := SomaValorPrevisto; // Soma dos valores do campo VALOR_PREVISTO
 
   // Aplica a formatação de moeda nas somas
   ExcelSheet.Cells[i, 2].NumberFormat := '[$R$-416] #,##0.00';
@@ -1675,14 +1677,47 @@ begin
   ExcelApp.ScreenUpdating := True;
   ExcelApp.DisplayAlerts := True;
 
-  // Exibe o Excel para o usuário
-  ExcelApp.Visible := True;
+  try
+    // Reabilita a atualização de tela e alertas
+    ExcelApp.ScreenUpdating := True;
+    ExcelApp.DisplayAlerts := True;
+    // Exibe o Excel para o usuário
+    ExcelApp.Visible := True;
+    // Exibe a mensagem de sucesso
+    ShowMessage('Dados exportados com sucesso para o Excel!');
+  finally
+    // Libera as referências aos objetos ExcelSheet e ExcelApp
+    ExcelSheet := Unassigned; // Libera a planilha
+    ExcelApp := Unassigned;   // Libera o aplicativo Excel
+    ProgressBar1.Min := 0;
+    ProgressBar1.Visible := False;
+  end;
+end;
 
-  // Exibe a mensagem de sucesso
-  ShowMessage('Dados exportados com sucesso para o Excel!');
-
-  ProgressBar1.Min := 0;
-  ProgressBar1.Visible := False;
+procedure TfrmLancamento.PesquisarCategoria(ID_LANCAMENTO : Integer);
+begin
+    with FDqryLcto do
+    begin
+      Close;
+      SQL.Clear;
+      SQL.Add('select '
+        + 'REG.GASTOS_ID, REG.CATEGORIA_ID as CATEGORIA_FK, REG.SUBCATEGORIA_ID as SUBCATEGORIA_FK, REG.CONTA_ID as CONTA_FK, REG.FORMA_DE_PAGAMENTO_ID as FORMA_DE_PAGAMENTO_FK,'
+        + 'REG.DESCRICAO as LANCAMENTO, REG.VALOR_PAGO, REG.VALOR_PREVISTO, REG.NOTA_FISCAL, REG.CHEQUE,'
+        + 'REG.CHEQUE_COMPENSADO, REG.DATA_VENCIMENTO, REG.DATA_PAGAMENTO, REG.PAGO, REG.ENTRADA_ID, SITUACAO_STATUS,'
+        + 'C.CATEGORIA_ID, C.DESCRICAO as CATEGORIA, S.SUBCATEGORIA_ID, S.DESCRICAO as SUBCATEGORIA, CT.CONTA_ID, CT.DESCRICAO as CONTA, FP.FORMA_DE_PAGAMENTO_ID, FP.DESCRICAO as FORMA_DE_PAGAMENTO,'
+        + 'REG.OBS, REG.DATA_CADASTRO, REG.USERID' + ' from ' +
+        ' REGISTRO_DE_GASTOS REG, CATEGORIA C, SUBCATEGORIA S, CONTAS CT, FORMA_DE_PAGAMENTO FP'
+        + ' where ' + '(REG.CATEGORIA_ID = C.CATEGORIA_ID) and ' +
+        '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
+        '(REG.CONTA_ID = CT.CONTA_ID) and ' +
+        '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) ' +
+        ' and  REG.GASTOS_ID = ' + IntToStr(ID_LANCAMENTO)
+        + 'order by REG.DATA_VENCIMENTO');
+      ParamByName('INICIO').AsDate := dataChequeInicio.Date;
+      ParamByName('FIM').AsDate := dataChequeFim.Date;
+     // showmessage(SQL.Text);
+      Open;
+    end;
 end;
 
 end.
