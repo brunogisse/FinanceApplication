@@ -11,13 +11,11 @@
   Font.Name = 'Tahoma'
   Font.Style = []
   Menu = MainMenu1
-  OldCreateOrder = False
   OnCreate = FormCreate
   OnShow = FormShow
   DesignSize = (
     763
     538)
-  PixelsPerInch = 96
   TextHeight = 13
   object Image1: TImage
     Left = 0
@@ -26735,6 +26733,8 @@
     Color = 7171382
     ParentBackground = False
     TabOrder = 0
+    ExplicitLeft = 548
+    ExplicitHeight = 513
     object btnSair: TImage
       Left = 109
       Top = 17
@@ -26804,6 +26804,7 @@
       Height = 0
       Align = alBottom
       TabOrder = 0
+      ExplicitTop = 399
       object Label4: TLabel
         Left = 40
         Top = 48
@@ -26821,8 +26822,9 @@
       BevelOuter = bvNone
       TabOrder = 1
       Visible = False
+      ExplicitTop = 399
       object labelNotification: TLabel
-        Left = 16
+        Left = 7
         Top = 83
         Width = 80
         Height = 13
@@ -26872,6 +26874,8 @@
         Text = 'Hora'
         Width = 100
       end>
+    ExplicitTop = 513
+    ExplicitWidth = 757
   end
   object FDconexao: TFDConnection
     Params.Strings = (
@@ -26883,6 +26887,7 @@
         'ebug\Dados\DADOS_14032022_ZERADO.FDB'
       'DriverID=FB')
     UpdateOptions.AssignedValues = [uvGeneratorName]
+    Connected = True
     LoginPrompt = False
     Left = 33
     Top = 32
@@ -26986,6 +26991,10 @@
         Caption = 'BackUp'
         OnClick = menuBackupClick
       end
+      object backupautomtico1: TMenuItem
+        Caption = 'backup autom'#225'tico'
+        OnClick = backupautomtico1Click
+      end
     end
     object Sobre: TMenuItem
       Caption = 'Sobre'
@@ -27041,5 +27050,12 @@
         OnClick = RelatorioSaidasClick
       end
     end
+  end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 30000
+    OnTimer = Timer1Timer
+    Left = 467
+    Top = 107
   end
 end
