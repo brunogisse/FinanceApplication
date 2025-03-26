@@ -11,6 +11,7 @@
   Font.Name = 'Tahoma'
   Font.Style = []
   Position = poDesktopCenter
+  OnClose = FormClose
   OnShow = FormShow
   TextHeight = 13
   object Panel1: TPanel
@@ -831,7 +832,7 @@
               Caption = 'Status:'
             end
             object btnPesquisaPrevisto: TBitBtn
-              Left = 136
+              Left = 138
               Top = 58
               Width = 123
               Height = 40

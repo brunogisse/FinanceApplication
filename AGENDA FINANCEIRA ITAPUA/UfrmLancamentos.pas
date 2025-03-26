@@ -252,7 +252,10 @@ type
     procedure btnImprimirConsultaClick(Sender: TObject);
     procedure btnCarregarPlanilhaClick(Sender: TObject);
     procedure BitBtn1Click(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
+
+    AlteracaoPelaCategoria : Boolean;
 
     procedure refreshBanco;
     procedure configurarEnables(status: Integer);
@@ -281,7 +284,7 @@ type
   public
     { Public declarations }
 
-    procedure PesquisarCategoria(ID_LANCAMENTO : Integer);
+    procedure PesquisarCategoria(ID_LANCAMENTO : Integer; DATA_VENCIMENTO : TDate);
   var
     valorMAXIMOsubdespesa: Currency;
     CategoriaPesquisa: string;
@@ -510,6 +513,13 @@ procedure TfrmLancamento.pesquisaPeriodo(dataInicio, dataFim: TDateTime;
   condicaoPeriodo, condicaoPAGO, condicaoSubcategoria, varCondicaoSubcategoria,
   condicaoConta, varCondicaoConta: string; varCondicaoPago: Integer);
 begin
+  if AlteracaoPelaCategoria then
+  begin
+    ModalResult := mrOK; // Define um resultado para fechar o modal
+    Close;
+    Exit;
+  end;
+
   with FDqryLcto do
   begin
     Close;
@@ -851,6 +861,14 @@ begin
   dataFim := Now;
   dataBancoInicio.Date := dataInicio;
   dataBancoFim.Date := dataFim;
+
+//  if AlteracaoPelaCategoria then
+//  begin
+//    ModalResult := mrOK; // Define um resultado para fechar o modal
+//    Close;
+//    Exit;
+//  end;
+
   with FDqryLcto do
   begin
     Close;
@@ -1463,8 +1481,19 @@ begin
 
 end;
 
+procedure TfrmLancamento.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+//  if AlteracaoPelaCategoria then
+//  begin
+//    Action := caFree;
+//    Application.ProcessMessages; // Garante que o fechamento seja processado
+//    TfrmLancamento.Create(Application).ShowModal; // Reabre modal
+//  end;
+end;
+
 procedure TfrmLancamento.FormShow(Sender: TObject);
 begin
+  AlteracaoPelaCategoria := False;
 
   if (frmPrincipal.FDqryLogin.FieldByName('NIVEL').AsInteger < 3) then
   btnCarregarPlanilha.Visible := False
@@ -1696,7 +1725,7 @@ begin
   end;
 end;
 
-procedure TfrmLancamento.PesquisarCategoria(ID_LANCAMENTO : Integer);
+procedure TfrmLancamento.PesquisarCategoria(ID_LANCAMENTO : Integer; DATA_VENCIMENTO : TDate);
 begin
 
   try
@@ -1715,11 +1744,16 @@ begin
         '(REG.SUBCATEGORIA_ID = S.SUBCATEGORIA_ID) and ' +
         '(REG.CONTA_ID = CT.CONTA_ID) and ' +
         '(REG.FORMA_DE_PAGAMENTO_ID = FP.FORMA_DE_PAGAMENTO_ID) ' +
+        ' and (DATA_VENCIMENTO between :INICIO and :FIM) ' +
         ' and  REG.GASTOS_ID = ' + IntToStr(ID_LANCAMENTO)
         + 'order by REG.DATA_VENCIMENTO');
+
+      ParamByName('INICIO').AsDate := DATA_VENCIMENTO;
+      ParamByName('FIM').AsDate := DATA_VENCIMENTO;
      // showmessage(SQL.Text);
       Open;
     end;
+    AlteracaoPelaCategoria := True;
     sleep(100);
     btnAlterarClick(Self);
   except

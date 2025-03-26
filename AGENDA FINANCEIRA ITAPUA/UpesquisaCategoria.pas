@@ -84,7 +84,10 @@ type
     procedure dsPesquisaCategoriaDataChange(Sender: TObject; Field: TField);
     procedure gridSubDblClick(Sender: TObject);
   private
+
+    AplicarAlteracao : Boolean;
     procedure BuscarDados;
+
     { Private declarations }
   public
     { Public declarations }
@@ -101,7 +104,9 @@ uses UfrmLancamentos, UfrmPrincipal, uFonteParaRealCategoria, UConta;
 
 procedure TfrmPesquisaCategoria.btnCategoriaOKClick(Sender: TObject);
 begin
-  qryRelatorioSubcategoria.Close;
+  if qryRelatorioSubcategoria.Active then
+    qryRelatorioSubcategoria.Close;
+
   if rbNaoPago.Checked = True then
   begin
     with fdqryPesquisaCategoria do
@@ -138,8 +143,14 @@ end;
 
 procedure TfrmPesquisaCategoria.btnEscolherCategoriaClick(Sender: TObject);
 begin
-  editRotuloDaCategoria.Clear;
-  fdqryPesquisaCategoria.Open;
+  editRotuloDaCategoria.Text := '';
+
+  if fdqryPesquisaCategoria.Active then
+    fdqryPesquisaCategoria.Close;
+
+  if qryRelatorioSubcategoria.Active then
+    qryRelatorioSubcategoria.Close;
+
   frmFonteParaRelCategoria.ShowModal;
 end;
 
@@ -277,24 +288,35 @@ end;
 
 procedure TfrmPesquisaCategoria.FormClose(Sender: TObject;
   var Action: TCloseAction);
+  var
+    ID_GASTOS : Integer;
+    DATADOVENCIMENTO : TDate;
 begin
-
-  frmLancamento.PesquisarCategoria(qryRelatorioSubcategoriaGASTOS_ID.AsInteger);
+  ID_GASTOS := qryRelatorioSubcategoriaGASTOS_ID.AsInteger;
+  DATADOVENCIMENTO := qryRelatorioSubcategoriaDATA_VENCIMENTO.AsDateTime;
 
   fdqryPesquisaCategoria.Close;
   qryRelatorioSubcategoria.Close;
+
+  Application.ProcessMessages;
+
+  if AplicarAlteracao then
+    frmLancamento.PesquisarCategoria(ID_GASTOS, DATADOVENCIMENTO);
 end;
 
 procedure TfrmPesquisaCategoria.FormShow(Sender: TObject);
 begin
-
+  editRotuloDaCategoria.Text := '';
   dataDePesquisaCAtegoria.Date := Now;
   dataAtePesquisaCategoria.Date := Now;
   rbPago.Checked := True;
+
+  AplicarAlteracao := False;
 end;
 
 procedure TfrmPesquisaCategoria.gridSubDblClick(Sender: TObject);
 begin
+   AplicarAlteracao := True;
    Close;
 end;
 
