@@ -1,0 +1,46 @@
+<div class="tela">
+  <form class="caixa cartao" (ngSubmit)="entrar()">
+    <h1>Agenda Financeira</h1>
+    <p class="subtitulo">Grupo Juliatti de Carvalho</p>
+
+    @if (erro()) {
+      <div class="erro">{{ erro() }}</div>
+    }
+
+    <div class="campo">
+      <label for="usuario">Usuário</label>
+      <input id="usuario" #campoUsuario name="usuario" autocomplete="username"
+             [ngModel]="usuario()" (ngModelChange)="usuario.set($event)"
+             [disabled]="entrando()" />
+    </div>
+
+    <div class="campo">
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" autocomplete="current-password"
+             [ngModel]="senha()" (ngModelChange)="senha.set($event)"
+             [disabled]="entrando()" />
+    </div>
+
+    <button type="submit" class="botao botao-primario" [disabled]="entrando()">
+      {{ entrando() ? 'Entrando...' : 'Entrar' }}
+    </button>
+
+    <!-- A configuração do endereço não pode exigir login: para entrar é preciso alcançar
+         o servidor, e é justamente o endereço dele que se configura aqui. -->
+    <button type="button" class="link"
+            (click)="mostrarConfiguracao.set(!mostrarConfiguracao())">
+      {{ mostrarConfiguracao() ? 'Ocultar' : 'Configurar servidor' }}
+    </button>
+
+    @if (mostrarConfiguracao()) {
+      <div class="configuracao">
+        <div class="campo">
+          <label for="endereco">Endereço do servidor</label>
+          <input id="endereco" name="endereco"
+                 [ngModel]="endereco()" (ngModelChange)="endereco.set($event)" />
+        </div>
+        <button type="button" class="botao" (click)="salvarEndereco()">Salvar endereço</button>
+      </div>
+    }
+  </form>
+</div>

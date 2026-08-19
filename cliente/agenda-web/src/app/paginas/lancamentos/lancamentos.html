@@ -1,0 +1,157 @@
+<div class="pagina">
+
+  <header class="topo">
+    <div class="titulo">
+      <strong>Agenda Financeira</strong>
+      <span class="usuario">{{ usuario() }}</span>
+    </div>
+    <div class="acoes-topo">
+      @if (podeLancar()) {
+        <button class="botao botao-primario" (click)="novo()">Novo lançamento</button>
+      }
+      <button class="botao" (click)="sair()">Sair</button>
+    </div>
+  </header>
+
+  <section class="filtros cartao">
+    <div class="campo">
+      <label for="inicio">De</label>
+      <input id="inicio" type="date" [ngModel]="inicio()" (ngModelChange)="inicio.set($event)" />
+    </div>
+    <div class="campo">
+      <label for="fim">Até</label>
+      <input id="fim" type="date" [ngModel]="fim()" (ngModelChange)="fim.set($event)" />
+    </div>
+
+    <div class="campo">
+      <label for="porData">Período sobre</label>
+      <select id="porData" [ngModel]="porData()" (ngModelChange)="porData.set($event)">
+        <option value="vencimento">Vencimento</option>
+        <option value="pagamento">Pagamento</option>
+        <option value="cadastro">Cadastro</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="pagamento">Situação</label>
+      <select id="pagamento" [ngModel]="pagamento()" (ngModelChange)="pagamento.set($event)">
+        <option value="todos">Todos</option>
+        <option value="naopagos">A pagar</option>
+        <option value="pagos">Pagos</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="despesa">Despesa</label>
+      <select id="despesa" [ngModel]="despesa()" (ngModelChange)="despesa.set($event)">
+        <option value="">(todas)</option>
+        @for (d of despesas(); track d.id) {
+          <option [value]="d.descricao">{{ d.descricao }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="conta">Conta</label>
+      <select id="conta" [ngModel]="conta()" (ngModelChange)="conta.set($event)">
+        <option value="">(todas)</option>
+        @for (c of contas(); track c.id) {
+          <option [value]="c.descricao">{{ c.descricao }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="campo campo-busca">
+      <label for="descricao">Descrição contém</label>
+      <input id="descricao" [ngModel]="descricao()" (ngModelChange)="descricao.set($event)"
+             (keydown)="aoTeclar($event)" placeholder="Enter para pesquisar" />
+    </div>
+
+    <div class="botoes-filtro">
+      <button class="botao botao-primario" (click)="pesquisar()" [disabled]="carregando()">
+        {{ carregando() ? 'Buscando...' : 'Pesquisar' }}
+      </button>
+      <button class="botao" (click)="limparFiltros()">Limpar</button>
+    </div>
+  </section>
+
+  @if (erro()) {
+    <div class="erro">{{ erro() }}</div>
+  }
+  @if (aviso()) {
+    <div class="aviso" (click)="aviso.set(null)">{{ aviso() }}</div>
+  }
+
+  @if (temSelecao()) {
+    <div class="barra-selecao">
+      <span>
+        {{ quantidadeSelecionada() }} selecionado(s) — previsto {{ moeda(previstoSelecionado()) }}
+      </span>
+      <div>
+        <button class="botao botao-primario" (click)="pagarSelecionados()">Pagar selecionados</button>
+        <button class="botao" (click)="limparSelecao()">Limpar seleção</button>
+      </div>
+    </div>
+  }
+
+  <section class="grade-area cartao">
+    <table class="grade">
+      <thead>
+        <tr>
+          <th class="col-selecao">
+            <button class="mini" (click)="selecionarNaoPagos()" title="Selecionar os não pagos">
+              ✓
+            </button>
+          </th>
+          <th>Vencimento</th>
+          <th>Descrição</th>
+          <th>Despesa</th>
+          <th>Subdespesa</th>
+          <th>Conta</th>
+          <th class="dinheiro">Previsto</th>
+          <th class="dinheiro">Pago</th>
+          <th>Pagamento</th>
+          <th class="col-acoes">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of lancamentos(); track l.id) {
+          <tr [class]="classeDaLinha(l)" [class.selecionada]="estaSelecionado(l.id)">
+            <td class="col-selecao">
+              <input type="checkbox" [checked]="estaSelecionado(l.id)"
+                     (change)="alternarSelecao(l.id)"
+                     [attr.aria-label]="'Selecionar ' + l.descricao" />
+            </td>
+            <td class="nao-quebra">{{ data(l.dataVencimento) }}</td>
+            <td class="descricao" [title]="l.descricao">{{ l.descricao }}</td>
+            <td>{{ l.despesa }}</td>
+            <td>{{ l.subdespesa }}</td>
+            <td>{{ l.conta }}</td>
+            <td class="dinheiro">{{ moeda(l.valorPrevisto) }}</td>
+            <td class="dinheiro">{{ l.pago ? moeda(l.valorPago) : '' }}</td>
+            <td class="nao-quebra">{{ data(l.dataPagamento) }}</td>
+            <td class="col-acoes">
+              @if (podeLancar()) {
+                <button class="mini" (click)="editar(l)" title="Alterar">✎</button>
+                <button class="mini" (click)="parcelar(l)" title="Parcelar">÷</button>
+                <button class="mini perigo" (click)="excluir(l)" title="Excluir">✕</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="10" class="vazio">
+              {{ carregando() ? 'Buscando...' : 'Nenhum lançamento no período e filtros escolhidos.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="rodape cartao">
+    <span>{{ quantidade() }} lançamento(s)</span>
+    <span>Previsto: <strong class="dinheiro">{{ moeda(totalPrevisto()) }}</strong></span>
+    <span>Pago: <strong class="dinheiro">{{ moeda(totalPago()) }}</strong></span>
+  </footer>
+</div>

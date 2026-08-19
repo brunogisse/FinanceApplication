@@ -1,0 +1,136 @@
+<div class="pagina">
+  <header class="topo">
+    <strong>{{ editando() ? 'Alterar lançamento' : 'Novo lançamento' }}</strong>
+    <button class="botao" (click)="cancelar()">Voltar</button>
+  </header>
+
+  @if (erro()) {
+    <div class="erro">{{ erro() }}</div>
+  }
+
+  <form class="formulario cartao" (ngSubmit)="salvar()">
+
+    <div class="campo largo">
+      <label for="descricao">Descrição</label>
+      <input id="descricao" name="descricao" maxlength="200"
+             [ngModel]="descricao()" (ngModelChange)="descricao.set($event)"
+             (keydown)="aoTeclarNaDescricao($event)" />
+    </div>
+
+    <div class="campo largo">
+      <label for="busca">Buscar subdespesa</label>
+      <input id="busca" name="busca" placeholder="Digite parte do nome da subdespesa ou da despesa"
+             [ngModel]="buscaSubdespesa()" (ngModelChange)="buscaSubdespesa.set($event)" />
+    </div>
+
+    <div class="campo largo">
+      <label for="subdespesa">Subdespesa</label>
+      <select id="subdespesa" name="subdespesa" size="6"
+              [ngModel]="subdespesaId()" (ngModelChange)="subdespesaId.set($event)">
+        @for (s of subdespesasFiltradas(); track s.id) {
+          <option [ngValue]="s.id">{{ s.descricao }} [{{ s.despesa }}]</option>
+        }
+      </select>
+      <!-- A despesa não é escolhida: vem da subdespesa, como no legado. -->
+      <small class="dica">
+        Despesa: <strong>{{ despesaDaSubdespesa() || '—' }}</strong>
+      </small>
+    </div>
+
+    <div class="campo">
+      <label for="conta">Conta</label>
+      <select id="conta" name="conta" [ngModel]="contaId()" (ngModelChange)="contaId.set($event)">
+        <option [ngValue]="null">(escolha)</option>
+        @for (c of contas(); track c.id) {
+          <option [ngValue]="c.id">{{ c.descricao }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="forma">Forma de pagamento</label>
+      <select id="forma" name="forma"
+              [ngModel]="formaPagamentoId()" (ngModelChange)="formaPagamentoId.set($event)">
+        <option [ngValue]="null">(escolha)</option>
+        @for (f of formas(); track f.id) {
+          <option [ngValue]="f.id">{{ f.descricao }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="valorPrevisto">Valor previsto</label>
+      <input id="valorPrevisto" name="valorPrevisto" inputmode="decimal" placeholder="0,00"
+             class="dinheiro"
+             [ngModel]="valorPrevistoTexto()" (ngModelChange)="valorPrevistoTexto.set($event)" />
+    </div>
+
+    <div class="campo">
+      <label for="vencimento">Vencimento</label>
+      <input id="vencimento" name="vencimento" type="date"
+             [ngModel]="dataVencimento()" (ngModelChange)="dataVencimento.set($event)" />
+    </div>
+
+    <div class="campo">
+      <label for="situacao">Situação</label>
+      <select id="situacao" name="situacao"
+              [ngModel]="situacao()" (ngModelChange)="situacao.set($event)">
+        <option value="nenhuma">(nenhuma)</option>
+        <option value="aguardando">Aguardando</option>
+        <option value="liberada">Liberada</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="nf">Nota fiscal</label>
+      <input id="nf" name="nf" inputmode="numeric"
+             [ngModel]="notaFiscal()" (ngModelChange)="notaFiscal.set($event)" />
+    </div>
+
+    <div class="campo">
+      <label for="cheque">Cheque / documento</label>
+      <input id="cheque" name="cheque" inputmode="numeric"
+             [ngModel]="cheque()" (ngModelChange)="cheque.set($event)" />
+    </div>
+
+    <label class="marcador">
+      <input type="checkbox" name="chequeCompensado"
+             [ngModel]="chequeCompensado()" (ngModelChange)="chequeCompensado.set($event)" />
+      Cheque compensado
+    </label>
+
+    <label class="marcador destaque">
+      <input type="checkbox" name="confirmar"
+             [ngModel]="confirmarPagamento()" (ngModelChange)="confirmarPagamento.set($event)" />
+      Confirmar pagamento
+    </label>
+
+    @if (confirmarPagamento()) {
+      <div class="campo">
+        <label for="dataPagamento">Data do pagamento</label>
+        <input id="dataPagamento" name="dataPagamento" type="date"
+               [ngModel]="dataPagamento()" (ngModelChange)="dataPagamento.set($event)" />
+      </div>
+
+      <div class="campo">
+        <label for="valorPago">Valor pago</label>
+        <input id="valorPago" name="valorPago" inputmode="decimal" class="dinheiro"
+               [placeholder]="'em branco = ' + (valorPrevistoTexto() || '0,00')"
+               [ngModel]="valorPagoTexto()" (ngModelChange)="valorPagoTexto.set($event)" />
+      </div>
+    }
+
+    <div class="campo largo">
+      <label for="observacao">Observação</label>
+      <textarea id="observacao" name="observacao" rows="2" maxlength="200"
+                [ngModel]="observacao()" (ngModelChange)="observacao.set($event)"></textarea>
+    </div>
+
+    <div class="acoes">
+      <button type="submit" class="botao botao-primario" [disabled]="salvando() || carregando()">
+        {{ salvando() ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <button type="button" class="botao" (click)="cancelar()">Cancelar</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,49 @@
+.pagina {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.topo strong { font-size: 17px; }
+
+.formulario {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.largo { grid-column: 1 / -1; }
+
+.dica {
+  color: var(--cor-texto-fraco);
+  font-size: 12px;
+}
+
+.marcador {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  align-self: end;
+  padding-bottom: 6px;
+}
+
+.destaque { font-weight: 600; }
+
+.acoes {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--cor-borda);
+}
+
+select[size] { height: auto; }

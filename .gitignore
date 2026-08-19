@@ -9,3 +9,12 @@ node_modules/
 # Firebird - copias de trabalho nunca vao para o repositorio
 *.fbk
 COPIA_TRABALHO.FDB
+
+# Angular
+dist/
+.angular/
+*.tsbuildinfo
+
+# Electron empacotado
+cliente/agenda-desktop/web/
+cliente/agenda-desktop/dist/

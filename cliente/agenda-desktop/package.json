@@ -1,0 +1,14 @@
+{
+  "name": "agenda-desktop",
+  "version": "0.1.0",
+  "description": "Agenda Financeira - cliente desktop",
+  "main": "principal.js",
+  "private": true,
+  "scripts": {
+    "dev": "electron . --dev",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^34.0.0"
+  }
+}

@@ -21,6 +21,18 @@ builder.Services.AddProblemDetails();
 // Falha fechada: sem chave de assinatura, a API não sobe.
 builder.Services.AdicionarAutenticacao(ConfiguracaoAutenticacao.ExigirChave(builder.Configuration));
 
+// O cliente Angular roda noutra porta durante o desenvolvimento, e empacotado em Electron
+// tem origem própria. As origens liberadas vêm da configuração, nunca abertas para qualquer
+// uma: liberar tudo num sistema com dados financeiros é convite.
+const string PoliticaCliente = "cliente";
+var origens = builder.Configuration.GetSection("Cors:Origens").Get<string[]>()
+              ?? ["http://localhost:4200"];
+
+builder.Services.AddCors(o => o.AddPolicy(PoliticaCliente, p => p
+    .WithOrigins(origens)
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -100,6 +112,7 @@ app.UseExceptionHandler(ramo => ramo.Run(async contexto =>
     await contexto.Response.WriteAsJsonAsync(new { erro = "Falha ao processar a requisição." });
 }));
 
+app.UseCors(PoliticaCliente);
 app.UseAuthentication();
 app.UseAuthorization();
 
