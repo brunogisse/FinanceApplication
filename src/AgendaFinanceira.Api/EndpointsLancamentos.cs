@@ -49,6 +49,8 @@ public sealed record LancamentoEntradaDto
 }
 
 public sealed record SituacaoDto(string Situacao);
+public sealed record ParcelarDto(int Parcelas);
+public sealed record PagarEmLoteDto(IReadOnlyList<int> Ids);
 
 public static class EndpointsLancamentos
 {
@@ -123,5 +125,97 @@ public static class EndpointsLancamentos
         .WithSummary("Define a situação de liberação")
         .WithDescription("`aguardando`, `liberada` ou `nenhuma`. Na grade do legado, aguardando " +
                          "aparece em roxo — a cor é informação para quem opera.");
+
+        // ---------------- Operações em lote ----------------
+
+        grupo.MapPost("/{id:int}/parcelar", (RepositorioLancamentos repo, ClaimsPrincipal quem,
+                                             int id, ParcelarDto dto) =>
+        {
+            var r = repo.Parcelar(id, dto.Parcelas, Autenticado(quem));
+            return Results.Ok(new
+            {
+                parcelas = r.Parcelas.Select(LancamentoDto.De).ToList(),
+                idOriginalExcluido = r.IdOriginalExcluido,
+                valorOriginal = r.ValorOriginal.Valor,
+                somaDasParcelas = r.SomaDasParcelas.Valor,
+                fechou = r.Fechou
+            });
+        })
+        .RequireAuthorization(Politicas.PodeOperar)
+        .WithSummary("Divide um lançamento em parcelas")
+        .WithDescription(
+            "Gera N lançamentos com o sufixo `i/N` na descrição, a primeira parcela vencendo " +
+            "no mês do vencimento original, e **exclui o lançamento de origem** — como no legado.\n\n" +
+            "⚠️ **Duas divergências intencionais:**\n\n" +
+            "1. **A soma das parcelas é exatamente o valor original.** O legado divide direto e " +
+            "perde: R$ 20.000,00 em 12 vira doze parcelas de R$ 1.666,666626, somando " +
+            "R$ 19.999,9995. Há 200 parcelas nessa condição na base. Aqui o resto é distribuído " +
+            "nas primeiras parcelas, e o campo `fechou` confirma.\n" +
+            "2. **É uma transação só.** No legado cada gravação confirma sozinha, então uma " +
+            "falha no meio deixa parcelas gravadas e o original ainda presente.\n\n" +
+            "A autoria do lançamento original é preservada nas parcelas.");
+
+        grupo.MapPost("/pagar-em-lote", (RepositorioLancamentos repo, ClaimsPrincipal quem,
+                                         PagarEmLoteDto dto) =>
+        {
+            var r = repo.PagarEmLote(dto.Ids, Autenticado(quem));
+            return Results.Ok(new
+            {
+                pagos = r.Pagos,
+                jaEstavamPagos = r.JaEstavamPagos,
+                semPermissao = r.SemPermissao,
+                naoEncontrados = r.NaoEncontrados,
+                quantidade = r.Quantidade,
+                totalPago = r.TotalPago.Valor
+            });
+        })
+        .RequireAuthorization(Politicas.PodeOperar)
+        .WithSummary("Quita vários lançamentos de uma vez")
+        .WithDescription(
+            "Para cada lançamento ainda não pago: data de pagamento hoje e valor pago igual ao " +
+            "previsto, como faz o legado.\n\n" +
+            "⚠️ **Divergência intencional:** um lançamento já pago é apenas ignorado. No legado, " +
+            "o avanço para o próximo registro está dentro da condição \"se não pago\", então um " +
+            "único item já pago na lista **trava a aplicação em laço infinito**.\n\n" +
+            "A resposta discrimina o destino de cada identificador — pago, já estava pago, sem " +
+            "permissão ou inexistente — em vez de silenciar.");
+
+        grupo.MapPost("/importar", async (RepositorioLancamentos repo, ClaimsPrincipal quem,
+                                          IFormFile planilha,
+                                          int subdespesaId, int contaId, int formaPagamentoId) =>
+        {
+            if (planilha.Length == 0)
+                throw new RegraDeNegocioException("Envie uma planilha.");
+
+            await using var conteudo = planilha.OpenReadStream();
+            using var memoria = new MemoryStream();
+            await conteudo.CopyToAsync(memoria);
+            memoria.Position = 0;
+
+            var linhas = LeitorDePlanilha.Ler(memoria);
+            var r = repo.ImportarLote(linhas, subdespesaId, contaId, formaPagamentoId, Autenticado(quem));
+
+            return Results.Ok(new
+            {
+                quantidade = r.Quantidade,
+                total = r.Total.Valor,
+                lancamentos = r.Lancamentos.Select(LancamentoDto.De).ToList()
+            });
+        })
+        .RequireAuthorization(Politicas.PodeAdministrar)
+        .DisableAntiforgery()
+        .WithSummary("Importa um lote de pagamentos de uma planilha (nível 3)")
+        .WithDescription(
+            "Lê o `.xlsx` a partir da linha 2, na aba `Planilha1` — não achando, usa a primeira. " +
+            "Coluna 1 data, 2 descrição, 3 valor.\n\n" +
+            "**Linha sem data não vira registro novo:** sua descrição é anexada à do registro " +
+            "anterior, separada por \" - \". É assim que uma despesa com várias linhas de " +
+            "detalhe é consolidada.\n\n" +
+            "Todo o lote recebe a mesma subdespesa, conta e forma de pagamento, e entra **já " +
+            "quitado**, com a data histórica da planilha. É isso que explica os 10.481 " +
+            "lançamentos com pagamento anterior ao cadastro — comportamento esperado, não defeito.\n\n" +
+            "⚠️ **Divergências intencionais:** o lote é uma transação só, então uma linha " +
+            "inválida impede o lote inteiro em vez de gravar pela metade. E a leitura não " +
+            "depende de ter o Excel instalado, ao contrário do legado, que usa automação OLE.");
     }
 }

@@ -30,9 +30,11 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description =
             "Contas a pagar do grupo Juliatti de Carvalho.\n\n" +
-            "**Etapa 4 da migração.** Consultas, cadastros de apoio e lançamentos.\n\n" +
-            "Lançamentos já podem ser criados, alterados e excluídos. Parcelamento, pagamento " +
-            "em lote e importação por planilha continuam no Delphi, sobre a mesma base.\n\n" +
+            "**Etapa 5 da migração.** Consultas, cadastros e lançamentos, incluindo as " +
+            "operações em lote.\n\n" +
+            "Lançamentos completos: criar, alterar, excluir, parcelar, pagar em lote e importar " +
+            "planilha. O Delphi continua disponível sobre a mesma base, e reverter um módulo é " +
+            "voltar a usar a tela dele.\n\n" +
             "**Autenticação:** chame `POST /sessao` com usuário e senha, copie o `token` da " +
             "resposta e informe em **Authorize**, no canto superior direito.\n\n" +
             "**Níveis**, os mesmos do legado: 1 só consulta, 2 opera, 3 administra. " +
