@@ -190,6 +190,33 @@ Ver cabeçalho do banco (dialect, ODS, page size) — lê o arquivo direto, sem 
 Compilar o legado: abrir `AGENDA FINANCEIRA ITAPUA/PfrmPrincipal.dproj` no RAD Studio 11.
 Saída em `Win32\Debug` ou `Win32\Release`, junto do `config.ini` e dos `.fr3`.
 
+### Rodar o sistema novo
+
+Um comando sobe tudo — API, cliente e a janela do aplicativo:
+
+```powershell
+cd "C:\PROGRAMAS\V OFICIAL"
+.\iniciar-desenvolvimento.ps1
+```
+
+Ele confere antes o que costuma faltar (banco de desenvolvimento, serviço do Firebird, chave
+de assinatura), avisa com a solução quando algo está ausente, e só então sobe. Para encerrar:
+
+```powershell
+.\parar-desenvolvimento.ps1
+```
+
+Usuários no banco de desenvolvimento, para exercitar os três níveis:
+
+| Usuário | Senha | Nível | O que pode |
+|---|---|---|---|
+| `DEMO` | `demo123` | 3 | tudo, inclusive importar planilha |
+| `OUTROOP` | `op123` | 2 | opera, mas não administra |
+| `SOCONSULTA` | `ver123` | 1 | só consulta |
+
+São usuários de teste criados numa **cópia** do banco. As senhas reais de produção não
+aparecem em lugar nenhum do repositório.
+
 ### Configuração da API
 
 A API **não sobe sem a chave de assinatura dos tokens**, e ela nunca fica no repositório.
