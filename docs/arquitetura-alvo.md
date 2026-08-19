@@ -205,6 +205,11 @@ Precisam constar do relatório de paridade, nunca ser silenciadas:
 | Valor gravado acima de R$ 99.999,99 | perde precisão | correto até o limite da coluna |
 | Alterar lançamento de outro usuário | permitido (verificação comentada) | recusado |
 | Buscar cheque compensado maiúsculo | não acha os 9 gravados em minúscula | acha |
+| Data de vencimento vazia | grava 30/12/1899 | grava ausência de data |
+| Pago sem data de pagamento | possível (30 casos na base) | assume hoje |
+| Pago com valor zerado | possível (24 casos na base) | assume o valor previsto |
+| Descrição vazia | aceita (há uma categoria assim) | recusada |
+| Travessão vindo do Excel | grava como está | normalizado para hífen |
 
 ### Comparação de valores
 

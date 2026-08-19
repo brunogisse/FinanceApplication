@@ -13,7 +13,7 @@ namespace AgendaFinanceira.Infraestrutura;
 ///
 /// Todo filtro entra por parâmetro. O legado monta SQL por concatenação de string.
 /// </summary>
-public sealed class RepositorioLancamentos
+public sealed partial class RepositorioLancamentos
 {
     private readonly ConexaoFirebird _conexao;
 

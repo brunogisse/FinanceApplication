@@ -30,9 +30,9 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description =
             "Contas a pagar do grupo Juliatti de Carvalho.\n\n" +
-            "**Etapa 3 da migração.** Consultas e cadastros de apoio (contas, formas de " +
-            "pagamento, despesas e subdespesas). Lançamentos ainda são somente leitura — " +
-            "criar, alterar, parcelar e pagar em lote continuam no Delphi, sobre a mesma base.\n\n" +
+            "**Etapa 4 da migração.** Consultas, cadastros de apoio e lançamentos.\n\n" +
+            "Lançamentos já podem ser criados, alterados e excluídos. Parcelamento, pagamento " +
+            "em lote e importação por planilha continuam no Delphi, sobre a mesma base.\n\n" +
             "**Autenticação:** chame `POST /sessao` com usuário e senha, copie o `token` da " +
             "resposta e informe em **Authorize**, no canto superior direito.\n\n" +
             "**Níveis**, os mesmos do legado: 1 só consulta, 2 opera, 3 administra. " +
@@ -105,6 +105,7 @@ app.UseAuthorization();
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 app.MapearCadastros();
+app.MapearLancamentos();
 
 app.MapGet("/saude", () => Results.Ok(new { situacao = "no ar", banco = Path.GetFileName(caminhoBanco) }))
    .WithTags("Diagnóstico")

@@ -61,6 +61,49 @@ public sealed class ConexaoFirebird
     };
 
     /// <summary>
+    /// Substitui pontuação tipográfica por equivalentes que cabem no banco, antes de gravar.
+    ///
+    /// A conexão usa ISO8859_1, onde travessões, aspas curvas e reticências não existem. Sem
+    /// isso, a conversão aconteceria assim mesmo, mas de forma implícita e a mercê do
+    /// provider — e o que é implícito não se pode garantir nem testar. Aqui é explícito.
+    ///
+    /// Word e Excel produzem esses caracteres sozinhos, e o fluxo de importação por planilha
+    /// lê do Excel; é por ali que eles entram. Ver ADR 0009.
+    /// </summary>
+    public static string? NormalizarParaGravar(string? texto)
+    {
+        if (string.IsNullOrEmpty(texto)) return texto;
+
+        var saida = new StringBuilder(texto.Length);
+        foreach (var c in texto)
+        {
+            switch (c)
+            {
+                case '‐': case '‑': case '‒':
+                case '–': case '—': case '―':
+                    saida.Append('-'); break;              // hifens e travessões
+                case '‘': case '’': case '‚': case '′':
+                    saida.Append('\''); break;             // aspas simples curvas
+                case '“': case '”': case '„': case '″':
+                    saida.Append('"'); break;              // aspas duplas curvas
+                case '…':
+                    saida.Append("..."); break;            // reticências
+                case '•': case '·':
+                    saida.Append('*'); break;              // marcadores
+                case ' ': case ' ': case ' ':
+                    saida.Append(' '); break;              // espaços especiais
+                case '™':
+                    saida.Append("(TM)"); break;
+                case '€':
+                    saida.Append("EUR"); break;
+                default:
+                    saida.Append(c); break;
+            }
+        }
+        return saida.ToString();
+    }
+
+    /// <summary>
     /// O legado grava 30/12/1899 — o zero do TDateTime do Delphi — quando a data fica vazia.
     /// São 11 registros. Aqui isso vira ausência de data, que é o que significa.
     /// </summary>
