@@ -16,6 +16,7 @@ depender da memória de quem estava na sala.
 | [0006](0006-dinheiro-em-decimal.md) | Valores monetários em decimal | Aceita |
 | [0007](0007-backend-dotnet.md) | Backend em .NET com C# | Aceita |
 | [0008](0008-frontend-angular-electron.md) | Frontend em Angular com Electron | Aceita |
+| [0009](0009-acesso-a-dados-dapper-e-charset.md) | Acesso a dados com Dapper e leitura do charset | Aceita |
 
 A proposta que amarra as decisões da Fase 4 está em
 [arquitetura-alvo.md](../arquitetura-alvo.md).
@@ -24,8 +25,6 @@ A proposta que amarra as decisões da Fase 4 está em
 
 Adiadas de propósito, cada uma aguardando um fato que ainda não temos:
 
-- **Dapper ou EF Core** para acesso ao Firebird. Aguarda o spike de acesso a dados descrito em
-  [0007](0007-backend-dotnet.md) — a dúvida é quão bem o provider EF Core lida com um banco 2.5.
 - **Atualizar Firebird 2.5 para a série 5** (Etapa 2 de [0005](0005-estrategia-de-banco.md)).
   Momento a definir; não bloqueia a migração da aplicação.
 - **Migrar para PostgreSQL** (Etapa 3 de [0005](0005-estrategia-de-banco.md)). Só faz sentido
