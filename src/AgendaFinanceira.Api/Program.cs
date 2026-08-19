@@ -15,12 +15,44 @@ builder.Services.AddSingleton(new ConexaoFirebird(caminhoBanco));
 builder.Services.AddSingleton<RepositorioLancamentos>();
 builder.Services.AddProblemDetails();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new()
+    {
+        Title = "Agenda Financeira — API",
+        Version = "v1",
+        Description =
+            "Contas a pagar do grupo Juliatti de Carvalho.\n\n" +
+            "**Etapa 2 da migração: somente leitura.** Nenhum endpoint escreve no banco. " +
+            "O legado Delphi continua sendo o sistema de gravação, sobre a mesma base.\n\n" +
+            "Valores monetários viajam como decimal. Datas de vencimento e pagamento são datas " +
+            "de calendário (aaaa-mm-dd), nunca instantes com fuso."
+    });
+});
+
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Agenda Financeira v1");
+    c.DocumentTitle = "Agenda Financeira — API";
+    // Abre direto na documentação, sem precisar navegar até /swagger.
+    c.RoutePrefix = "swagger";
+});
 
 // O erro que chega ao cliente é a razão real da recusa, não uma mensagem genérica.
 app.UseExceptionHandler();
 
-app.MapGet("/saude", () => Results.Ok(new { situacao = "no ar", banco = Path.GetFileName(caminhoBanco) }));
+// Quem abrir a raiz vai para a documentação.
+app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+
+app.MapGet("/saude", () => Results.Ok(new { situacao = "no ar", banco = Path.GetFileName(caminhoBanco) }))
+   .WithTags("Diagnóstico")
+   .WithSummary("Verifica se a API está no ar")
+   .WithDescription("Informa também qual arquivo de banco está em uso — útil para conferir " +
+                    "que a API não está apontando para produção por engano.");
 
 // ---- Consulta de lançamentos ----
 // Reproduz os filtros das duas abas do legado. Ver docs/fluxos.md, item 6.
@@ -74,7 +106,22 @@ app.MapGet("/lancamentos", (
 
     return Results.Ok(ResultadoDto.De(repo.Consultar(consulta)));
 })
-.WithName("ConsultarLancamentos");
+.WithName("ConsultarLancamentos")
+.WithTags("Lançamentos")
+.WithSummary("Consulta lançamentos com filtros")
+.WithDescription(
+    "Equivale às duas abas de pesquisa da tela de lançamentos do legado.\n\n" +
+    "**Período**: sem `inicio` e `fim`, usa os últimos seis meses até hoje — o mesmo padrão " +
+    "da tela atual.\n\n" +
+    "**porData**: `vencimento` (padrão), `pagamento` ou `cadastro`. Define qual coluna o " +
+    "período filtra. No legado, a busca por nota fiscal e por status filtra por cadastro, e " +
+    "as demais por vencimento.\n\n" +
+    "**pagamento**: `todos` (padrão), `pagos` ou `naopagos`.\n\n" +
+    "**situacao**: `aguardando`, `liberada` ou `nenhuma`.\n\n" +
+    "**chequeCompensado**: diferente do legado, encontra também os 9 registros gravados com " +
+    "`s` minúsculo, que a busca atual não acha por ser sensível a caixa.\n\n" +
+    "**valorMinimo / valorMaximo**: aplicam-se ao valor previsto, ou ao valor pago se " +
+    "`faixaSobreValorPago=true`.");
 
 // ---- Aviso de vencimentos da tela principal ----
 // "DATA_VENCIMENTO <= hoje AND PAGO = 0"
@@ -83,7 +130,13 @@ app.MapGet("/lancamentos/vencimentos", (RepositorioLancamentos repo, DateOnly? a
     var referencia = ate ?? DateOnly.FromDateTime(DateTime.Today);
     return Results.Ok(ResultadoDto.De(repo.Vencimentos(referencia)));
 })
-.WithName("Vencimentos");
+.WithName("Vencimentos")
+.WithTags("Lançamentos")
+.WithSummary("O que está vencido ou vence hoje e ainda não foi pago")
+.WithDescription(
+    "Alimenta o aviso \"Há N despesa(s) a pagar\" que o legado mostra ao abrir.\n\n" +
+    "Reproduz exatamente `DATA_VENCIMENTO <= hoje AND PAGO = 0`. O parâmetro `ate` permite " +
+    "usar outra data de referência em vez de hoje.");
 
 // ---- Consolidado por despesa ----
 // Atenção à regra central: 'pagos' filtra por DATA_PAGAMENTO e 'naopagos' por DATA_VENCIMENTO.
@@ -97,7 +150,17 @@ app.MapGet("/relatorios/por-despesa", (
     var linhas = repo.ConsolidarPorDespesa(despesa, new Periodo(inicio, fim), pagos ?? true);
     return Results.Ok(linhas.Select(TotalPorSubdespesaDto.De).ToList());
 })
-.WithName("ConsolidadoPorDespesa");
+.WithName("ConsolidadoPorDespesa")
+.WithTags("Relatórios")
+.WithSummary("Consolida uma despesa por subdespesa, dentro de um período")
+.WithDescription(
+    "Equivale à tela de consulta por despesa do legado.\n\n" +
+    "**A regra central deste relatório é a troca da coluna de data conforme o modo:**\n\n" +
+    "- `pagos=true` (padrão) filtra por `DATA_PAGAMENTO` e traz só o que foi pago — " +
+    "responde \"quanto gastei\", olhando quando o dinheiro saiu.\n" +
+    "- `pagos=false` filtra por `DATA_VENCIMENTO` e traz só o que está em aberto — " +
+    "responde \"quanto devo\", olhando quando vence.\n\n" +
+    "Os dois modos sobre o mesmo período dão recortes diferentes, e isso é intencional.");
 
 app.Run();
 
