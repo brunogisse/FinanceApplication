@@ -200,9 +200,14 @@ Saída em `Win32\Debug` ou `Win32\Release`, junto do `config.ini` e dos `.fr3`.
 | 2 — Descoberta do banco Firebird | **Concluída** |
 | 3 — Documentação e estrutura | **Concluída** |
 | 4 — Arquitetura alvo | **Concluída** — ver [docs/arquitetura-alvo.md](docs/arquitetura-alvo.md) |
-| 5 — Roadmap | Pendente |
+| 5 — Roadmap | **Concluída** — ver [docs/roadmap.md](docs/roadmap.md) |
 
 Nada foi migrado ainda. O legado é a única versão em produção.
+
+**Próximo passo concreto:** a Etapa 0 do [roadmap](docs/roadmap.md#etapa-0--melhorias-no-legado-não-depende-de-nada)
+não depende da migração e pode começar a qualquer momento — índices nas colunas de data,
+correção dos generators do estoque, backup por `gbak` e a correção de uma linha que resolve o
+laço infinito do pagamento em lote.
 
 ### Arquitetura decidida
 
