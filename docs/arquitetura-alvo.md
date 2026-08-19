@@ -257,14 +257,17 @@ usa, não com o que existe; recursos mortos são confirmados com o cliente antes
 
 ## Antes de escrever o primeiro código
 
-Três verificações que precisam acontecer, em ordem:
+As três verificações foram **executadas em 19/08/2026**:
 
-1. **Spike de acesso a dados.** Conectar ao banco de trabalho, ler e gravar um lançamento com
-   valor monetário, confirmar o comportamento das colunas `FLOAT` e das datas, e decidir entre
-   Dapper e EF Core. Vira ADR.
-2. **Spike de convivência.** Adicionar `SENHA_HASH` numa cópia, abrir o legado contra ela e
-   confirmar que ele não sente a coluna nova.
-3. **Base de paridade.** Congelar uma cópia da produção como referência fixa dos testes, para
-   que os números do oráculo não mudem debaixo dos testes.
+1. ~~**Spike de acesso a dados.**~~ **Feito.** O caminho .NET → Firebird 2.5 está provado, e a
+   decisão por Dapper está em [0009](decisoes/0009-acesso-a-dados-dapper-e-charset.md). Revelou
+   também que o provider não aceita `WIN1252`. Código em `src/AgendaFinanceira.SpikeFirebird`.
+2. ~~**Spike de convivência.**~~ **Feito.** `SENHA_HASH` adicionada numa cópia e o legado
+   aberto contra ela chegou à tela de login sem exceção. Registrado em
+   [0010](decisoes/0010-autenticacao-durante-a-convivencia.md).
+3. ~~**Base de paridade.**~~ **Feita.** Congelada fora do repositório, com os números de
+   referência em [paridade-referencia.md](paridade-referencia.md).
+
+O caminho para a Etapa 2 do [roadmap](roadmap.md) está liberado.
 
 O roadmap com ordem de módulos, critérios de pronto e validação por etapa é a Fase 5.
