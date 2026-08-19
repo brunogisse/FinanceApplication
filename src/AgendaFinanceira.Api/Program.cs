@@ -13,6 +13,9 @@ var caminhoBanco = builder.Configuration["Banco:Caminho"]
 
 builder.Services.AddSingleton(new ConexaoFirebird(caminhoBanco));
 builder.Services.AddSingleton<RepositorioLancamentos>();
+builder.Services.AddSingleton<RepositorioCadastros>();
+builder.Services.AddSingleton<IServicoSenha, ServicoSenhaBCrypt>();
+builder.Services.AddSingleton<RepositorioUsuarios>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -24,8 +27,12 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description =
             "Contas a pagar do grupo Juliatti de Carvalho.\n\n" +
-            "**Etapa 2 da migração: somente leitura.** Nenhum endpoint escreve no banco. " +
-            "O legado Delphi continua sendo o sistema de gravação, sobre a mesma base.\n\n" +
+            "**Etapa 3 da migração.** Consultas e cadastros de apoio (contas, formas de " +
+            "pagamento, despesas e subdespesas). Lançamentos ainda são somente leitura — " +
+            "criar, alterar, parcelar e pagar em lote continuam no Delphi, sobre a mesma base.\n\n" +
+            "⚠️ **Os endpoints de escrita ainda não exigem autenticação.** O `/sessao` valida " +
+            "credenciais, mas nada impede uma chamada direta aos cadastros. Isso precisa ser " +
+            "resolvido antes de qualquer uso fora da máquina de desenvolvimento.\n\n" +
             "Valores monetários viajam como decimal. Datas de vencimento e pagamento são datas " +
             "de calendário (aaaa-mm-dd), nunca instantes com fuso."
     });
@@ -43,10 +50,28 @@ app.UseSwaggerUI(c =>
 });
 
 // O erro que chega ao cliente é a razão real da recusa, não uma mensagem genérica.
-app.UseExceptionHandler();
+// Uma recusa por regra de negócio vira 400 com a mensagem que o operador precisa ler;
+// qualquer outra coisa é falha técnica e vira 500 sem vazar detalhe interno.
+app.UseExceptionHandler(ramo => ramo.Run(async contexto =>
+{
+    var erro = contexto.Features
+        .Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+
+    if (erro is RegraDeNegocioException regra)
+    {
+        contexto.Response.StatusCode = StatusCodes.Status400BadRequest;
+        await contexto.Response.WriteAsJsonAsync(new { erro = regra.Message });
+        return;
+    }
+
+    contexto.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await contexto.Response.WriteAsJsonAsync(new { erro = "Falha ao processar a requisição." });
+}));
 
 // Quem abrir a raiz vai para a documentação.
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+
+app.MapearCadastros();
 
 app.MapGet("/saude", () => Results.Ok(new { situacao = "no ar", banco = Path.GetFileName(caminhoBanco) }))
    .WithTags("Diagnóstico")

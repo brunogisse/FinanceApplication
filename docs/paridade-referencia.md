@@ -5,12 +5,24 @@ resultado acumulado de três anos de operação do legado.
 
 Qualquer implementação nova rodada sobre a mesma base precisa reproduzi-los exatamente.
 
-## Onde fica a base
+## Onde ficam as bases
 
 ```
 C:\PROGRAMAS\AgendaFinanceira-paridade\
-    base-paridade-2026-08-19.fbk    backup lógico, a fonte
-    BASE_PARIDADE.FDB               restaurado, é contra este que os testes rodam
+    base-paridade-2026-08-19.fbk    backup lógico, a fonte de tudo
+    BASE_PARIDADE.FDB               referência IMUTÁVEL dos testes de leitura
+    MOLDE_ESCRITA.FDB               igual, mais a coluna SENHA_HASH; molde dos testes de escrita
+    DESENVOLVIMENTO.FDB             onde a API roda no dia a dia; pode ser sujada à vontade
+```
+
+**`BASE_PARIDADE.FDB` nunca é escrita.** Os testes que gravam copiam o `MOLDE_ESCRITA.FDB`
+para um arquivo temporário próprio, que é apagado ao final — ver `BaseDescartavel` nos testes.
+Assim um teste nunca enxerga o que outro gravou, e a referência não se move.
+
+Para recriar o molde depois de restaurar a base:
+
+```sql
+ALTER TABLE LOGIN ADD SENHA_HASH VARCHAR(200);
 ```
 
 **Fora do repositório de propósito.** Contém dados financeiros reais, 157 CNPJs e senhas em
