@@ -18,6 +18,7 @@ depender da memória de quem estava na sala.
 | [0008](0008-frontend-angular-electron.md) | Frontend em Angular com Electron | Aceita |
 | [0009](0009-acesso-a-dados-dapper-e-charset.md) | Acesso a dados com Dapper e leitura do charset | Aceita |
 | [0010](0010-autenticacao-durante-a-convivencia.md) | Autenticação durante a convivência | Aceita |
+| [0011](0011-autorizacao-verificada-no-servidor.md) | Autorização verificada no servidor, com token | Aceita |
 
 A proposta que amarra as decisões da Fase 4 está em
 [arquitetura-alvo.md](../arquitetura-alvo.md).

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AgendaFinanceira.Dominio;
 using AgendaFinanceira.Infraestrutura;
 
@@ -14,15 +15,19 @@ public static class EndpointsCadastros
     {
         // ---------------- Sessão ----------------
 
-        app.MapPost("/sessao", (RepositorioUsuarios repo, CredenciaisDto dto) =>
+        app.MapPost("/sessao", (RepositorioUsuarios repo, ServicoToken tokens, CredenciaisDto dto) =>
         {
             var r = repo.Autenticar(dto.Usuario, dto.Senha);
             if (!r.Autenticado)
                 return Results.Json(new { erro = r.Motivo }, statusCode: StatusCodes.Status401Unauthorized);
 
             var u = r.Usuario!;
+            var (token, expira) = tokens.Emitir(u);
+
             return Results.Ok(new
             {
+                token,
+                expiraEm = expira,
                 u.Id,
                 u.Nome,
                 Nivel = u.Nivel.ToString(),
@@ -32,22 +37,34 @@ public static class EndpointsCadastros
                 SenhaMigradaAgora = r.MigrouSenha
             });
         })
+        .AllowAnonymous()
         .WithTags("Sessão")
-        .WithSummary("Autentica um usuário")
+        .WithSummary("Autentica e devolve o token de acesso")
         .WithDescription(
             "Durante a convivência com o legado, quem ainda não tem hash é validado contra a " +
             "senha em texto plano e tem o hash gravado nesse momento — a base migra sozinha " +
             "conforme as pessoas entram. Ver ADR 0010.\n\n" +
-            "A recusa é sempre a mesma mensagem, para não revelar quais usuários existem.");
+            "A recusa é sempre a mesma mensagem, para não revelar quais usuários existem.\n\n" +
+            "O token vale 12 horas. Informe-o em **Authorize**, no topo desta página.");
 
-        app.MapPost("/sessao/trocar-senha", (RepositorioUsuarios repo, TrocaSenhaDto dto) =>
+        app.MapPost("/sessao/trocar-senha", (RepositorioUsuarios repo, ClaimsPrincipal quem,
+                                             TrocaSenhaDto dto) =>
         {
+            var id = quem.IdDoUsuario();
+            var ehAdministrador = int.TryParse(quem.FindFirst("nivel")?.Value, out var n) && n >= 3;
+
+            // Cada um troca a própria senha; só o administrador troca a de outro.
+            if (dto.UsuarioId != id && !ehAdministrador)
+                throw new RegraDeNegocioException("Você só pode trocar a sua própria senha.");
+
             repo.TrocarSenha(dto.UsuarioId, dto.SenhaNova);
             return Results.Ok(new { mensagem = "Senha alterada." });
         })
+        .RequireAuthorization()
         .WithTags("Sessão")
         .WithSummary("Troca a senha de um usuário")
         .WithDescription(
+            "Cada usuário troca a própria senha; o nível 3 pode trocar a de qualquer um.\n\n" +
             "Grava nas duas colunas: o hash para a API e o texto plano para o Delphi continuar " +
             "funcionando. Por isso o limite de 20 caracteres, que é o tamanho da coluna do legado.");
 
@@ -56,14 +73,15 @@ public static class EndpointsCadastros
             {
                 u.Id, u.Nome, Nivel = u.Nivel.ToString(), u.AindaSemHash
             })))
+        .RequireAuthorization(Politicas.PodeAdministrar)
         .WithTags("Sessão")
-        .WithSummary("Lista os usuários")
+        .WithSummary("Lista os usuários (nível 3)")
         .WithDescription("`aindaSemHash` mostra quem ainda não entrou pela API e portanto " +
                          "continua dependendo da senha em texto plano do legado.");
 
         // ---------------- Contas ----------------
 
-        var contas = app.MapGroup("/contas").WithTags("Cadastros");
+        var contas = app.MapGroup("/contas").WithTags("Cadastros").RequireAuthorization();
 
         contas.MapGet("/", (RepositorioCadastros repo) => Results.Ok(repo.ListarContas()))
               .WithSummary("Lista as contas");
@@ -72,22 +90,22 @@ public static class EndpointsCadastros
         {
             var c = repo.CriarConta(dto.Descricao);
             return Results.Created($"/contas/{c.Id}", c);
-        }).WithSummary("Cria uma conta");
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma conta");
 
         contas.MapPut("/{id:int}", (RepositorioCadastros repo, int id, DescricaoDto dto) =>
             Results.Ok(repo.AlterarConta(id, dto.Descricao)))
-              .WithSummary("Altera uma conta");
+              .RequireAuthorization(Politicas.PodeOperar).WithSummary("Altera uma conta");
 
         contas.MapDelete("/{id:int}", (RepositorioCadastros repo, int id) =>
         {
             repo.ExcluirConta(id);
             return Results.NoContent();
-        }).WithSummary("Exclui uma conta")
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Exclui uma conta")
           .WithDescription("Recusa com explicação em português se houver lançamentos usando a conta.");
 
         // ---------------- Formas de pagamento ----------------
 
-        var formas = app.MapGroup("/formas-pagamento").WithTags("Cadastros");
+        var formas = app.MapGroup("/formas-pagamento").WithTags("Cadastros").RequireAuthorization();
 
         formas.MapGet("/", (RepositorioCadastros repo) => Results.Ok(repo.ListarFormasPagamento()))
               .WithSummary("Lista as formas de pagamento");
@@ -96,21 +114,21 @@ public static class EndpointsCadastros
         {
             var f = repo.CriarFormaPagamento(dto.Descricao);
             return Results.Created($"/formas-pagamento/{f.Id}", f);
-        }).WithSummary("Cria uma forma de pagamento");
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma forma de pagamento");
 
         formas.MapPut("/{id:int}", (RepositorioCadastros repo, int id, DescricaoDto dto) =>
             Results.Ok(repo.AlterarFormaPagamento(id, dto.Descricao)))
-              .WithSummary("Altera uma forma de pagamento");
+              .RequireAuthorization(Politicas.PodeOperar).WithSummary("Altera uma forma de pagamento");
 
         formas.MapDelete("/{id:int}", (RepositorioCadastros repo, int id) =>
         {
             repo.ExcluirFormaPagamento(id);
             return Results.NoContent();
-        }).WithSummary("Exclui uma forma de pagamento");
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Exclui uma forma de pagamento");
 
         // ---------------- Despesas e subdespesas ----------------
 
-        var despesas = app.MapGroup("/despesas").WithTags("Cadastros");
+        var despesas = app.MapGroup("/despesas").WithTags("Cadastros").RequireAuthorization();
 
         despesas.MapGet("/", (RepositorioCadastros repo) => Results.Ok(repo.ListarDespesas()))
                 .WithSummary("Lista as despesas")
@@ -120,19 +138,19 @@ public static class EndpointsCadastros
         {
             var d = repo.CriarDespesa(dto.Descricao);
             return Results.Created($"/despesas/{d.Id}", d);
-        }).WithSummary("Cria uma despesa");
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma despesa");
 
         despesas.MapPut("/{id:int}", (RepositorioCadastros repo, int id, DescricaoDto dto) =>
             Results.Ok(repo.AlterarDespesa(id, dto.Descricao)))
-                .WithSummary("Altera uma despesa");
+                .RequireAuthorization(Politicas.PodeOperar).WithSummary("Altera uma despesa");
 
         despesas.MapDelete("/{id:int}", (RepositorioCadastros repo, int id) =>
         {
             repo.ExcluirDespesa(id);
             return Results.NoContent();
-        }).WithSummary("Exclui uma despesa");
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Exclui uma despesa");
 
-        var subs = app.MapGroup("/subdespesas").WithTags("Cadastros");
+        var subs = app.MapGroup("/subdespesas").WithTags("Cadastros").RequireAuthorization();
 
         subs.MapGet("/", (RepositorioCadastros repo, int? despesaId) =>
             Results.Ok(repo.ListarSubdespesas(despesaId)))
@@ -143,18 +161,18 @@ public static class EndpointsCadastros
         {
             var s = repo.CriarSubdespesa(dto.Descricao, dto.DespesaId);
             return Results.Created($"/subdespesas/{s.Id}", s);
-        }).WithSummary("Cria uma subdespesa")
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma subdespesa")
           .WithDescription("A subdespesa sempre nasce ligada a uma despesa. Nomes iguais em " +
                            "despesas diferentes são permitidos — o legado tem MANUTENÇÃO em mais de uma.");
 
         subs.MapPut("/{id:int}", (RepositorioCadastros repo, int id, SubdespesaDto dto) =>
             Results.Ok(repo.AlterarSubdespesa(id, dto.Descricao, dto.DespesaId)))
-            .WithSummary("Altera uma subdespesa");
+            .RequireAuthorization(Politicas.PodeOperar).WithSummary("Altera uma subdespesa");
 
         subs.MapDelete("/{id:int}", (RepositorioCadastros repo, int id) =>
         {
             repo.ExcluirSubdespesa(id);
             return Results.NoContent();
-        }).WithSummary("Exclui uma subdespesa");
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Exclui uma subdespesa");
     }
 }

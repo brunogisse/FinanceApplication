@@ -18,6 +18,9 @@ builder.Services.AddSingleton<IServicoSenha, ServicoSenhaBCrypt>();
 builder.Services.AddSingleton<RepositorioUsuarios>();
 builder.Services.AddProblemDetails();
 
+// Falha fechada: sem chave de assinatura, a API não sobe.
+builder.Services.AdicionarAutenticacao(ConfiguracaoAutenticacao.ExigirChave(builder.Configuration));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -30,11 +33,38 @@ builder.Services.AddSwaggerGen(c =>
             "**Etapa 3 da migração.** Consultas e cadastros de apoio (contas, formas de " +
             "pagamento, despesas e subdespesas). Lançamentos ainda são somente leitura — " +
             "criar, alterar, parcelar e pagar em lote continuam no Delphi, sobre a mesma base.\n\n" +
-            "⚠️ **Os endpoints de escrita ainda não exigem autenticação.** O `/sessao` valida " +
-            "credenciais, mas nada impede uma chamada direta aos cadastros. Isso precisa ser " +
-            "resolvido antes de qualquer uso fora da máquina de desenvolvimento.\n\n" +
+            "**Autenticação:** chame `POST /sessao` com usuário e senha, copie o `token` da " +
+            "resposta e informe em **Authorize**, no canto superior direito.\n\n" +
+            "**Níveis**, os mesmos do legado: 1 só consulta, 2 opera, 3 administra. " +
+            "Diferente do legado, que apenas esconde menus na tela, aqui a regra é verificada " +
+            "no servidor.\n\n" +
             "Valores monetários viajam como decimal. Datas de vencimento e pagamento são datas " +
             "de calendário (aaaa-mm-dd), nunca instantes com fuso."
+    });
+
+    // Botão "Authorize" no Swagger, para testar os endpoints protegidos.
+    c.AddSecurityDefinition("Bearer", new()
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Informe apenas o token devolvido por POST /sessao."
+    });
+    c.AddSecurityRequirement(new()
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 
@@ -67,6 +97,9 @@ app.UseExceptionHandler(ramo => ramo.Run(async contexto =>
     contexto.Response.StatusCode = StatusCodes.Status500InternalServerError;
     await contexto.Response.WriteAsJsonAsync(new { erro = "Falha ao processar a requisição." });
 }));
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Quem abrir a raiz vai para a documentação.
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
@@ -131,6 +164,7 @@ app.MapGet("/lancamentos", (
 
     return Results.Ok(ResultadoDto.De(repo.Consultar(consulta)));
 })
+.RequireAuthorization()
 .WithName("ConsultarLancamentos")
 .WithTags("Lançamentos")
 .WithSummary("Consulta lançamentos com filtros")
@@ -155,6 +189,7 @@ app.MapGet("/lancamentos/vencimentos", (RepositorioLancamentos repo, DateOnly? a
     var referencia = ate ?? DateOnly.FromDateTime(DateTime.Today);
     return Results.Ok(ResultadoDto.De(repo.Vencimentos(referencia)));
 })
+.RequireAuthorization()
 .WithName("Vencimentos")
 .WithTags("Lançamentos")
 .WithSummary("O que está vencido ou vence hoje e ainda não foi pago")
@@ -175,6 +210,7 @@ app.MapGet("/relatorios/por-despesa", (
     var linhas = repo.ConsolidarPorDespesa(despesa, new Periodo(inicio, fim), pagos ?? true);
     return Results.Ok(linhas.Select(TotalPorSubdespesaDto.De).ToList());
 })
+.RequireAuthorization()
 .WithName("ConsolidadoPorDespesa")
 .WithTags("Relatórios")
 .WithSummary("Consolida uma despesa por subdespesa, dentro de um período")

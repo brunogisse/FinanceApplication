@@ -190,6 +190,50 @@ Ver cabeçalho do banco (dialect, ODS, page size) — lê o arquivo direto, sem 
 Compilar o legado: abrir `AGENDA FINANCEIRA ITAPUA/PfrmPrincipal.dproj` no RAD Studio 11.
 Saída em `Win32\Debug` ou `Win32\Release`, junto do `config.ini` e dos `.fr3`.
 
+### Configuração da API
+
+A API **não sobe sem a chave de assinatura dos tokens**, e ela nunca fica no repositório.
+Configure uma vez por máquina:
+
+```powershell
+cd "C:\PROGRAMAS\V OFICIAL\src\AgendaFinanceira.Api"
+dotnet user-secrets set "Jwt:Chave" "<48 bytes aleatórios em base64>"
+```
+
+Se a chave faltar, a mensagem de erro já sugere uma pronta para uso. Alternativa por variável
+de ambiente: `setx Jwt__Chave "<chave>"`.
+
+Rodar a API e abrir a documentação:
+
+```powershell
+cd "C:\PROGRAMAS\V OFICIAL\src\AgendaFinanceira.Api"
+dotnet run --urls http://localhost:5199
+```
+
+Depois é só abrir `http://localhost:5199`, que redireciona para o Swagger. Para chamar os
+endpoints protegidos: `POST /sessao`, copiar o `token` e informar em **Authorize**.
+
+Rodar os testes:
+
+```powershell
+cd "C:\PROGRAMAS\V OFICIAL"
+dotnet test
+```
+
+### Bases de trabalho
+
+Nenhuma delas fica no repositório, e nenhuma é a produção:
+
+```
+C:\PROGRAMAS\AgendaFinanceira-paridade\
+    base-paridade-2026-08-19.fbk    backup lógico, a fonte de tudo
+    BASE_PARIDADE.FDB               referência IMUTÁVEL dos testes de leitura
+    MOLDE_ESCRITA.FDB               igual, mais a coluna SENHA_HASH
+    DESENVOLVIMENTO.FDB             onde a API roda; pode ser sujada à vontade
+```
+
+Detalhes e números de referência em [docs/paridade-referencia.md](docs/paridade-referencia.md).
+
 ---
 
 ## Estado da migração
