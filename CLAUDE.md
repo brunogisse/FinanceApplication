@@ -286,18 +286,23 @@ src/AgendaFinanceira.Dominio/          Dinheiro, Lancamento, regras, validaçõe
 src/AgendaFinanceira.Infraestrutura/   repositórios Dapper, leitor de planilha, BCrypt
 src/AgendaFinanceira.Api/              ASP.NET Core + Swagger + JWT
 src/AgendaFinanceira.SpikeFirebird/    spike de acesso a dados, ainda roda
-testes/AgendaFinanceira.Testes/        173 testes, 26 de paridade contra a base real
+testes/AgendaFinanceira.Testes/        176 testes, 26 de paridade contra a base real
 cliente/agenda-web/                    Angular 21 zoneless
 cliente/agenda-desktop/                Electron
 ```
 
 **Telas prontas:** login, grade de lançamentos (com aviso de vencimentos, seleção, pagamento
-em lote, parcelamento), formulário de lançamento e consolidado por despesa.
+em lote, parcelamento), formulário de lançamento, consolidado por despesa, cadastros (contas,
+formas de pagamento, despesas e subdespesas) e importação de planilha.
 
-**Falta no cliente:** telas de cadastro (contas, formas de pagamento, despesas/subdespesas),
-importação de planilha, exportação para Excel e o empacotamento em instalador.
+**Falta no cliente:** exportação para Excel e o empacotamento em instalador.
 
 **Falta no servidor:** exportação para Excel. O resto do módulo financeiro está completo.
+
+**`prompt()` não existe no Electron.** Ele lança `prompt() is not supported.` e a ação morre
+sem aviso — funciona no navegador e falha no aplicativo, que é o pior tipo de defeito.
+`alert()` e `confirm()` funcionam normalmente. Onde for preciso pedir um valor, use um
+`<dialog>`, como faz o parcelamento em `lancamentos.html`. Verificado na janela real.
 
 ### Pendências que valem lembrar
 

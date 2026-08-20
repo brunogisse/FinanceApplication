@@ -174,6 +174,59 @@ public class ImportacaoApiTeste : IClassFixture<ImportacaoApiTeste.Api>
         Assert.Contains(".xlsx", await r.Content.ReadAsStringAsync());
     }
 
+    [Fact]
+    public async Task Previa_mostra_o_que_seria_gravado_sem_gravar()
+    {
+        var cliente = await ClienteAutenticado(3);
+        var antes = Total();
+
+        var xlsx = PlanilhaXlsx(
+            ("15/03/2026", "COMBUSTIVEL", 150.00m),
+            ("", "POSTO CENTRAL", null),
+            ("16/03/2026", "MANUTENCAO", 250.50m));
+
+        var r = await cliente.PostAsync("/lancamentos/importar/previa", Upload(xlsx));
+
+        Assert.Equal(HttpStatusCode.OK, r.StatusCode);
+        var corpo = await r.Content.ReadAsStringAsync();
+
+        // A prévia lê com as mesmas regras da importação, inclusive a linha sem data.
+        Assert.Contains("\"quantidade\":2", corpo);
+        Assert.Contains("\"total\":400.5", corpo);
+        Assert.Contains("COMBUSTIVEL - POSTO CENTRAL", corpo);
+        // O número da linha física é o que permite achar o problema na planilha.
+        Assert.Contains("\"numeroDaLinha\":2", corpo);
+
+        // O ponto da prévia: nada foi gravado.
+        Assert.Equal(antes, Total());
+    }
+
+    [Fact]
+    public async Task Previa_recusa_planilha_invalida_antes_de_qualquer_escrita()
+    {
+        var cliente = await ClienteAutenticado(3);
+        var antes = Total();
+
+        var r = await cliente.PostAsync("/lancamentos/importar/previa",
+                                        Upload(PlanilhaXlsx(("data invalida", "RUIM", 100.00m))));
+
+        Assert.Equal(HttpStatusCode.BadRequest, r.StatusCode);
+        Assert.Contains("linha 2", await r.Content.ReadAsStringAsync());
+        Assert.Equal(antes, Total());
+    }
+
+    [Fact]
+    public async Task Previa_tambem_e_restrita_ao_nivel_3()
+    {
+        // Ver a planilha inteira é ver dados financeiros; segue a mesma porta da importação.
+        var cliente = await ClienteAutenticado(2);
+
+        var r = await cliente.PostAsync("/lancamentos/importar/previa",
+                                        Upload(PlanilhaXlsx(("15/03/2026", "QUALQUER", 10.00m))));
+
+        Assert.Equal(HttpStatusCode.Forbidden, r.StatusCode);
+    }
+
     private int Total()
     {
         using var con = _api.Banco.Conexao.Abrir();

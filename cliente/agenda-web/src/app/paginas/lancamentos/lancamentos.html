@@ -11,6 +11,9 @@
       }
       <button class="botao" (click)="relatorio()">Consolidado por despesa</button>
       <button class="botao" (click)="cadastros()">Cadastros</button>
+      @if (podeImportar()) {
+        <button class="botao" (click)="importar()">Importar planilha</button>
+      }
       <button class="botao" (click)="sair()">Sair</button>
     </div>
   </header>
@@ -171,4 +174,45 @@
     <span>Previsto: <strong class="dinheiro">{{ moeda(totalPrevisto()) }}</strong></span>
     <span>Pago: <strong class="dinheiro">{{ moeda(totalPago()) }}</strong></span>
   </footer>
+
+  <!-- Diálogo próprio porque o Electron não implementa prompt(): ele lança
+       "prompt() is not supported." e a ação morre sem aviso nenhum.
+       De quebra, aqui dá para mostrar a divisão antes de confirmar. -->
+  <dialog #dialogoParcelar class="dialogo" (close)="parcelando.set(null)">
+    @if (parcelando(); as l) {
+      <h2>Parcelar lançamento</h2>
+
+      <p class="alvo">
+        <strong>{{ l.descricao }}</strong><br />
+        {{ moeda(l.valorPrevisto) }} — vencimento {{ data(l.dataVencimento) }}
+      </p>
+
+      <div class="campo">
+        <label for="qtdParcelas">Em quantas vezes</label>
+        <input id="qtdParcelas" type="number" min="2" step="1" autofocus
+               [ngModel]="parcelas()" (ngModelChange)="parcelas.set($event)" />
+      </div>
+
+      @if (previaParcelas(); as p) {
+        <div class="previa">
+          <div>{{ p.texto }}</div>
+          <small>Somam exatamente {{ p.soma }}.</small>
+        </div>
+      } @else {
+        <div class="previa invalida">Informe um número inteiro de parcelas, a partir de 2.</div>
+      }
+
+      <p class="alerta">
+        As parcelas nascem uma por mês a partir do vencimento, e este lançamento é excluído.
+      </p>
+
+      <div class="acoes-dialogo">
+        <button class="botao" (click)="fecharParcelamento()">Cancelar</button>
+        <button class="botao botao-primario" (click)="confirmarParcelamento()"
+                [disabled]="!previaParcelas()">
+          Parcelar
+        </button>
+      </div>
+    }
+  </dialog>
 </div>

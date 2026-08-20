@@ -4,8 +4,8 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import {
   Conta, Despesa, EntradaLancamento, FiltroConsulta, FormaPagamento, Lancamento,
-  ResultadoConsulta, ResultadoPagamentoEmLote, ResultadoParcelamento, Sessao,
-  Subdespesa, TotalPorSubdespesa,
+  PreviaImportacao, ResultadoConsulta, ResultadoImportacao, ResultadoPagamentoEmLote,
+  ResultadoParcelamento, Sessao, Subdespesa, TotalPorSubdespesa,
 } from './modelos';
 
 /** Endereço da API. Numa instalação real, isto vem da tela de configuração. */
@@ -119,6 +119,33 @@ export class Api {
   pagarEmLote(ids: number[]): Observable<ResultadoPagamentoEmLote> {
     return this.http
       .post<ResultadoPagamentoEmLote>(`${this.endereco()}/lancamentos/pagar-em-lote`, { ids })
+      .pipe(catchError(traduzirErro));
+  }
+
+  // ---------------- Importação de planilha ----------------
+
+  /** Lê a planilha e devolve o que sairia dela, sem gravar nada. */
+  previaImportacao(planilha: File): Observable<PreviaImportacao> {
+    const corpo = new FormData();
+    corpo.append('planilha', planilha);
+    return this.http
+      .post<PreviaImportacao>(`${this.endereco()}/lancamentos/importar/previa`, corpo)
+      .pipe(catchError(traduzirErro));
+  }
+
+  importarPlanilha(
+    planilha: File, subdespesaId: number, contaId: number, formaPagamentoId: number,
+  ): Observable<ResultadoImportacao> {
+    const corpo = new FormData();
+    corpo.append('planilha', planilha);
+
+    const params = new HttpParams()
+      .set('subdespesaId', subdespesaId)
+      .set('contaId', contaId)
+      .set('formaPagamentoId', formaPagamentoId);
+
+    return this.http
+      .post<ResultadoImportacao>(`${this.endereco()}/lancamentos/importar`, corpo, { params })
       .pipe(catchError(traduzirErro));
   }
 

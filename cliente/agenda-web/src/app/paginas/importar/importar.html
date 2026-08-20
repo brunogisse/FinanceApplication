@@ -1,0 +1,160 @@
+<div class="pagina">
+
+  <header class="topo">
+    <div class="titulo">
+      <strong>Importar planilha de pagamentos</strong>
+      <span class="usuario">{{ usuario() }}</span>
+    </div>
+    <button class="botao" (click)="voltar()">Voltar aos lançamentos</button>
+  </header>
+
+  @if (!podeImportar()) {
+    <div class="aviso">
+      A importação é restrita ao nível 3, como no sistema atual. Seu acesso não permite importar.
+    </div>
+  }
+
+  @if (erro()) {
+    <div class="erro">{{ erro() }}</div>
+  }
+
+  <!-- ---------- Depois de importar, só o resultado importa ---------- -->
+  @if (resultado(); as r) {
+    <section class="cartao concluido">
+      <h2>Importação concluída</h2>
+      <p>
+        <strong>{{ inteiro(r.quantidade) }}</strong> lançamento(s) gravados, somando
+        <strong>{{ moeda(r.total) }}</strong>.
+      </p>
+      <div class="acoes">
+        <button class="botao botao-primario" (click)="voltar()">Ver nos lançamentos</button>
+        <button class="botao" (click)="recomecar()">Importar outra planilha</button>
+      </div>
+    </section>
+  } @else {
+
+    <section class="cartao passo">
+      <h2>1. A planilha</h2>
+      <p class="explicacao">
+        Os dados começam na linha 2, na aba <code>Planilha1</code>. Coluna 1 data, coluna 2
+        descrição, coluna 3 valor. Linha sem data não vira lançamento novo: sua descrição é
+        anexada à do lançamento anterior.
+      </p>
+
+      <div class="escolha-arquivo">
+        <input type="file" accept=".xlsx,.xls" (change)="escolherArquivo($event)"
+               [disabled]="!podeImportar() || carregando()" />
+        @if (nomeDoArquivo()) {
+          <span class="nome-arquivo">{{ nomeDoArquivo() }}</span>
+        }
+      </div>
+    </section>
+
+    @if (previa(); as p) {
+      <section class="cartao passo">
+        <h2>2. Confira o que a planilha produz</h2>
+        <p class="resumo">
+          <strong>{{ inteiro(p.quantidade) }}</strong> lançamento(s), somando
+          <strong class="dinheiro">{{ moeda(p.total) }}</strong>. Nada foi gravado ainda.
+        </p>
+
+        <div class="grade-area">
+          <table class="grade">
+            <thead>
+              <tr>
+                <th class="col-linha">Linha</th>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th class="dinheiro">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (l of p.linhas; track l.numeroDaLinha) {
+                <tr>
+                  <td class="col-linha">{{ l.numeroDaLinha }}</td>
+                  <td class="nao-quebra">{{ data(l.data) }}</td>
+                  <td>{{ l.descricao }}</td>
+                  <td class="dinheiro">{{ moeda(l.valor) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="cartao passo">
+        <h2>3. Onde tudo isso vai entrar</h2>
+        <p class="explicacao">
+          O lote inteiro recebe a mesma classificação, e entra <strong>já quitado</strong>, com a
+          data de pagamento que está na planilha.
+        </p>
+
+        <div class="campos">
+          <div class="campo">
+            <label for="despesa">Despesa</label>
+            <select id="despesa" [ngModel]="despesaId()" (ngModelChange)="trocarDespesa($event)">
+              <option [value]="0">(escolha)</option>
+              @for (d of despesas(); track d.id) {
+                <option [value]="d.id">{{ d.descricao }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="subdespesa">Subdespesa</label>
+            <select id="subdespesa" [ngModel]="subdespesaId()"
+                    (ngModelChange)="subdespesaId.set($event)" [disabled]="!despesaId()">
+              <option [value]="0">
+                {{ despesaId() ? '(escolha)' : '(escolha a despesa primeiro)' }}
+              </option>
+              @for (s of subdespesas(); track s.id) {
+                <option [value]="s.id">{{ s.descricao }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="conta">Conta</label>
+            <select id="conta" [ngModel]="contaId()" (ngModelChange)="contaId.set($event)">
+              <option [value]="0">(escolha)</option>
+              @for (c of contas(); track c.id) {
+                <option [value]="c.id">{{ c.descricao }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="forma">Forma de pagamento</label>
+            <select id="forma" [ngModel]="formaPagamentoId()"
+                    (ngModelChange)="formaPagamentoId.set($event)">
+              <option [value]="0">(escolha)</option>
+              @for (f of formas(); track f.id) {
+                <option [value]="f.id">{{ f.descricao }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        @if (destino(); as d) {
+          <div class="destino">
+            Os {{ inteiro(p.quantidade) }} lançamentos entram como
+            <strong>{{ d.subdespesa }}</strong>, na conta <strong>{{ d.conta }}</strong>,
+            pagos por <strong>{{ d.forma }}</strong>.
+          </div>
+        }
+
+        <div class="acoes">
+          <button class="botao botao-primario" (click)="importar()"
+                  [disabled]="!podeGravar() || carregando()">
+            {{ carregando() ? 'Importando...' : 'Importar ' + inteiro(p.quantidade) + ' lançamentos' }}
+          </button>
+          <button class="botao" (click)="recomecar()" [disabled]="carregando()">Cancelar</button>
+        </div>
+      </section>
+    } @else if (carregando()) {
+      <section class="cartao passo">
+        <p>Lendo a planilha...</p>
+      </section>
+    }
+  }
+</div>

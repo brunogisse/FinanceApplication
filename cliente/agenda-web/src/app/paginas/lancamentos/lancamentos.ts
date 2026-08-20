@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
@@ -42,6 +44,40 @@ export class Lancamentos {
   readonly despesas = signal<Despesa[]>([]);
   readonly contas = signal<Conta[]>([]);
 
+  // ---- Parcelamento ----
+  readonly dialogoParcelar = viewChild<ElementRef<HTMLDialogElement>>('dialogoParcelar');
+  readonly parcelando = signal<Lancamento | null>(null);
+  readonly parcelas = signal('2');
+
+  /**
+   * Prévia da divisão, antes de confirmar.
+   *
+   * O legado divide e arredonda cada parcela, e a soma não fecha o valor original. Aqui a
+   * conta é a mesma do servidor: divisão em centavos inteiros, com o resto distribuído nas
+   * primeiras parcelas. Mostrar isso antes é o que permite conferir.
+   *
+   * A aritmética é em centavos inteiros justamente para não repetir em JavaScript o defeito
+   * que motivou a migração — ver o comentário em modelos.ts.
+   */
+  readonly previaParcelas = computed(() => {
+    const l = this.parcelando();
+    const n = Number(this.parcelas());
+    if (!l || !Number.isInteger(n) || n < 2) return null;
+
+    const centavos = Math.round(l.valorPrevisto * 100);
+    const base = Math.floor(centavos / n);
+    const resto = centavos - base * n;
+
+    const maior = formatarMoeda((base + 1) / 100);
+    const menor = formatarMoeda(base / 100);
+
+    const texto = resto === 0
+      ? `${n} parcelas de ${menor}`
+      : `${resto} parcela(s) de ${maior} e ${n - resto} de ${menor}`;
+
+    return { texto, soma: formatarMoeda(centavos / 100) };
+  });
+
   /**
    * Aviso de vencimentos, equivalente ao "Há N despesa(s) a pagar" que o legado mostra ao
    * abrir. É a primeira coisa que a operadora vê no sistema atual.
@@ -52,6 +88,7 @@ export class Lancamentos {
 
   readonly usuario = this.api.usuario;
   readonly podeLancar = this.api.podeLancar;
+  readonly podeImportar = this.api.podeImportar;
 
   readonly quantidade = computed(() => this.lancamentos().length);
   readonly temSelecao = computed(() => this.selecionados().size > 0);
@@ -196,22 +233,36 @@ export class Lancamentos {
     });
   }
 
+  /**
+   * Abre o diálogo de parcelamento.
+   *
+   * Não use prompt() aqui: o Electron não implementa window.prompt — ele lança
+   * "prompt() is not supported." e o parcelamento simplesmente não acontece no aplicativo
+   * desktop, embora funcione no navegador. Verificado na janela real.
+   */
   parcelar(l: Lancamento): void {
-    const resposta = prompt(
-      `Parcelar "${l.descricao}" de ${this.moeda(l.valorPrevisto)} em quantas vezes?`, '2');
-    if (!resposta) return;
+    this.parcelando.set(l);
+    this.parcelas.set('2');
+    this.erro.set(null);
+    this.dialogoParcelar()?.nativeElement.showModal();
+  }
 
-    const parcelas = Number(resposta);
+  fecharParcelamento(): void {
+    this.dialogoParcelar()?.nativeElement.close();
+    this.parcelando.set(null);
+  }
+
+  confirmarParcelamento(): void {
+    const l = this.parcelando();
+    if (!l) return;
+
+    const parcelas = Number(this.parcelas());
     if (!Number.isInteger(parcelas) || parcelas < 2) {
       this.erro.set('Informe um número inteiro de parcelas, a partir de 2.');
       return;
     }
 
-    if (!confirm(
-      `Serão geradas ${parcelas} parcelas e o lançamento original será excluído.\n\n` +
-      `A soma das parcelas será exatamente ${this.moeda(l.valorPrevisto)}.`,
-    )) return;
-
+    this.fecharParcelamento();
     this.carregando.set(true);
     this.api.parcelar(l.id, parcelas).subscribe({
       next: (r) => {
@@ -238,6 +289,7 @@ export class Lancamentos {
   editar(l: Lancamento): void { this.router.navigate(['/lancamentos', l.id]); }
   relatorio(): void { this.router.navigate(['/relatorios/por-despesa']); }
   cadastros(): void { this.router.navigate(['/cadastros']); }
+  importar(): void { this.router.navigate(['/importar']); }
 
   sair(): void {
     this.api.sair();

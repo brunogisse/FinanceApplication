@@ -1,0 +1,81 @@
+.pagina {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 14px 14px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  overflow: auto;
+}
+
+.topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.topo strong { font-size: 17px; }
+.usuario { color: var(--cor-texto-fraco); margin-left: 10px; }
+
+.passo { padding: 12px 14px; }
+.passo h2 { margin: 0 0 8px; font-size: 15px; color: var(--cor-primaria-escura); }
+
+.explicacao { margin: 0 0 12px; color: var(--cor-texto-fraco); line-height: 1.5; }
+.explicacao code {
+  background: #eef1f6;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.escolha-arquivo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.nome-arquivo { color: var(--cor-texto-fraco); }
+
+.resumo { margin: 0 0 10px; }
+
+/* A prévia inteira fica visível e rolável: conferir é o motivo desta tela existir. */
+.grade-area {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+.grade { width: 100%; border-collapse: collapse; font-size: 13px; }
+.grade thead th {
+  position: sticky;
+  top: 0;
+  background: #eef1f6;
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 7px 8px;
+  text-align: left;
+}
+.grade tbody td { padding: 5px 8px; border-bottom: 1px solid #eceef2; }
+.grade tbody tr:hover { background: #f6f8fc; }
+
+.col-linha { width: 60px; color: var(--cor-texto-fraco); text-align: right; }
+.nao-quebra { white-space: nowrap; }
+
+.campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* A frase que descreve o destino em português: ler isso é mais seguro do que reler
+   quatro caixas de seleção. */
+.destino {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: var(--raio);
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.acoes { display: flex; gap: 8px; }
+
+.concluido { padding: 20px; }
+.concluido h2 { margin: 0 0 10px; color: var(--cor-sucesso); }
+.concluido p { margin: 0 0 16px; font-size: 15px; }

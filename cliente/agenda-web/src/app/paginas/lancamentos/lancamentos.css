@@ -145,3 +145,41 @@
   border-radius: var(--raio);
 }
 .aviso-vencimento div { display: flex; gap: 8px; }
+
+/* ---------- Diálogo de parcelamento ---------- */
+
+.dialogo {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+  padding: 18px 20px;
+  min-width: 340px;
+  max-width: 440px;
+  color: var(--cor-texto);
+}
+.dialogo::backdrop { background: rgba(15, 20, 35, .45); }
+
+.dialogo h2 { margin: 0 0 10px; font-size: 17px; }
+.dialogo .alvo { margin: 0 0 14px; line-height: 1.5; }
+.dialogo .campo { margin-bottom: 12px; }
+.dialogo .campo input { width: 100%; }
+
+/* A prévia é o motivo de existir este diálogo: a divisão fecha o valor, e dá para conferir
+   antes de confirmar. O legado divide, arredonda cada parcela e não fecha. */
+.previa {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: var(--raio);
+  padding: 9px 12px;
+  margin-bottom: 12px;
+}
+.previa small { display: block; margin-top: 3px; color: var(--cor-texto-fraco); }
+.previa.invalida {
+  background: var(--cor-erro-fundo);
+  border-color: #f5c2c2;
+  color: var(--cor-erro);
+}
+
+.dialogo .alerta { margin: 0 0 16px; font-size: 13px; color: var(--cor-texto-fraco); }
+
+.acoes-dialogo { display: flex; justify-content: flex-end; gap: 8px; }

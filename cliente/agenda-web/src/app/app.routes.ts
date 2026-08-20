@@ -44,5 +44,10 @@ export const routes: Routes = [
     canActivate: [exigirSessao],
     loadComponent: () => import('./paginas/cadastros/cadastros').then((m) => m.Cadastros),
   },
+  {
+    path: 'importar',
+    canActivate: [exigirSessao],
+    loadComponent: () => import('./paginas/importar/importar').then((m) => m.Importar),
+  },
   { path: '**', redirectTo: 'lancamentos' },
 ];

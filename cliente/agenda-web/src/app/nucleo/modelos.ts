@@ -139,3 +139,30 @@ export interface TotalPorSubdespesa {
   totalPrevisto: Valor;
   totalPago: Valor;
 }
+
+/** Uma linha da planilha, como o servidor a entendeu. */
+export interface LinhaDaPlanilha {
+  /** Linha física no arquivo, para a pessoa achar o problema na planilha dela. */
+  numeroDaLinha: number;
+  data: string;
+  descricao: string;
+  valor: Valor;
+}
+
+/**
+ * O que a planilha produziria, sem nada gravado ainda.
+ *
+ * A importação grava um lote inteiro de lançamentos já quitados e não tem desfazer.
+ * Conferir antes é a única defesa.
+ */
+export interface PreviaImportacao {
+  quantidade: number;
+  total: Valor;
+  linhas: LinhaDaPlanilha[];
+}
+
+export interface ResultadoImportacao {
+  quantidade: number;
+  total: Valor;
+  lancamentos: Lancamento[];
+}

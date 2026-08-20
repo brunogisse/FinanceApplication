@@ -180,6 +180,42 @@ public static class EndpointsLancamentos
             "A resposta discrimina o destino de cada identificador — pago, já estava pago, sem " +
             "permissão ou inexistente — em vez de silenciar.");
 
+        grupo.MapPost("/importar/previa", async (IFormFile planilha) =>
+        {
+            if (planilha.Length == 0)
+                throw new RegraDeNegocioException("Envie uma planilha.");
+
+            await using var conteudo = planilha.OpenReadStream();
+            using var memoria = new MemoryStream();
+            await conteudo.CopyToAsync(memoria);
+            memoria.Position = 0;
+
+            var linhas = LeitorDePlanilha.Ler(memoria);
+
+            return Results.Ok(new
+            {
+                quantidade = linhas.Count,
+                // Soma em decimal, nunca em ponto flutuante — é dinheiro.
+                total = linhas.Sum(l => l.Valor.Valor),
+                linhas = linhas.Select(l => new
+                {
+                    numeroDaLinha = l.NumeroDaLinha,
+                    data = l.Data.ToString("yyyy-MM-dd"),
+                    descricao = l.Descricao,
+                    valor = l.Valor.Valor
+                }).ToList()
+            });
+        })
+        .RequireAuthorization(Politicas.PodeAdministrar)
+        .DisableAntiforgery()
+        .WithSummary("Mostra o que a planilha vai gravar, sem gravar nada (nível 3)")
+        .WithDescription(
+            "Lê a planilha exatamente como a importação lê — mesma aba, mesmas colunas, mesma " +
+            "consolidação de linhas sem data — e devolve o que sairia disso, sem tocar no banco.\n\n" +
+            "Existe porque a importação grava um lote inteiro de lançamentos **já quitados** e " +
+            "não tem desfazer: conferir antes é a única defesa. Também é aqui que erros de " +
+            "formato aparecem, antes de qualquer escrita.");
+
         grupo.MapPost("/importar", async (RepositorioLancamentos repo, ClaimsPrincipal quem,
                                           IFormFile planilha,
                                           int subdespesaId, int contaId, int formaPagamentoId) =>
