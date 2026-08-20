@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{06DA3606-EC2C-44C9-8262-818D8D7BCD91}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaFinanceira.SpikeFirebird", "src\AgendaFinanceira.SpikeFirebird\AgendaFinanceira.SpikeFirebird.csproj", "{F731D9DD-3FBD-460B-91B1-6813449FC9DC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaFinanceira.Dominio", "src\AgendaFinanceira.Dominio\AgendaFinanceira.Dominio.csproj", "{67A3F2DE-B2DD-49A2-9B80-50391AC56E92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaFinanceira.Infraestrutura", "src\AgendaFinanceira.Infraestrutura\AgendaFinanceira.Infraestrutura.csproj", "{55319F71-6E0D-4DCC-839D-02A566A425DE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testes", "testes", "{65B71FF6-AFF6-4398-A307-B61F8F880648}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaFinanceira.Testes", "testes\AgendaFinanceira.Testes\AgendaFinanceira.Testes.csproj", "{B49674CB-7C4E-49AC-A4F5-EA641A1F0523}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaFinanceira.Api", "src\AgendaFinanceira.Api\AgendaFinanceira.Api.csproj", "{ED96F452-F630-4115-A534-737AE02606A1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F731D9DD-3FBD-460B-91B1-6813449FC9DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F731D9DD-3FBD-460B-91B1-6813449FC9DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F731D9DD-3FBD-460B-91B1-6813449FC9DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F731D9DD-3FBD-460B-91B1-6813449FC9DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67A3F2DE-B2DD-49A2-9B80-50391AC56E92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67A3F2DE-B2DD-49A2-9B80-50391AC56E92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67A3F2DE-B2DD-49A2-9B80-50391AC56E92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67A3F2DE-B2DD-49A2-9B80-50391AC56E92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55319F71-6E0D-4DCC-839D-02A566A425DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55319F71-6E0D-4DCC-839D-02A566A425DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55319F71-6E0D-4DCC-839D-02A566A425DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55319F71-6E0D-4DCC-839D-02A566A425DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B49674CB-7C4E-49AC-A4F5-EA641A1F0523}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B49674CB-7C4E-49AC-A4F5-EA641A1F0523}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B49674CB-7C4E-49AC-A4F5-EA641A1F0523}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B49674CB-7C4E-49AC-A4F5-EA641A1F0523}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED96F452-F630-4115-A534-737AE02606A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED96F452-F630-4115-A534-737AE02606A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED96F452-F630-4115-A534-737AE02606A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED96F452-F630-4115-A534-737AE02606A1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F731D9DD-3FBD-460B-91B1-6813449FC9DC} = {06DA3606-EC2C-44C9-8262-818D8D7BCD91}
+		{67A3F2DE-B2DD-49A2-9B80-50391AC56E92} = {06DA3606-EC2C-44C9-8262-818D8D7BCD91}
+		{55319F71-6E0D-4DCC-839D-02A566A425DE} = {06DA3606-EC2C-44C9-8262-818D8D7BCD91}
+		{B49674CB-7C4E-49AC-A4F5-EA641A1F0523} = {65B71FF6-AFF6-4398-A307-B61F8F880648}
+		{ED96F452-F630-4115-A534-737AE02606A1} = {06DA3606-EC2C-44C9-8262-818D8D7BCD91}
+	EndGlobalSection
+EndGlobal

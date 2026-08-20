@@ -1,0 +1,119 @@
+/*
+ * Estilo do sistema.
+ *
+ * A tela do legado é uma grade densa com muitas colunas, e isso é funcionalidade, não
+ * descuido: a operadora quer ver muitas linhas de uma vez. As cores também são informação —
+ * pago em cinza, aguardando liberação em roxo — e ela lê a grade pela cor antes do texto.
+ */
+
+:root {
+  /* Cores herdadas do legado, para a leitura da grade continuar a mesma. */
+  --cor-pago: #616161;
+  --cor-pago-texto: #ffffff;
+  --cor-aguardando: #5300a6;
+  --cor-aguardando-texto: #ffffff;
+  --cor-selecao: #ffccce;
+  --cor-selecao-texto: #555555;
+
+  --cor-fundo: #f4f5f7;
+  --cor-superficie: #ffffff;
+  --cor-borda: #d6d8dd;
+  --cor-texto: #1f2430;
+  --cor-texto-fraco: #6b7280;
+  --cor-primaria: #1d4ed8;
+  --cor-primaria-escura: #1e3a8a;
+  --cor-erro: #b91c1c;
+  --cor-erro-fundo: #fee2e2;
+  --cor-sucesso: #15803d;
+  --cor-atencao-fundo: #fef3c7;
+
+  --raio: 6px;
+  --sombra: 0 1px 3px rgba(0, 0, 0, .12);
+}
+
+/* box-sizing não é global por padrão: sem isto, altura 100vh mais padding estoura a janela
+   e aparece uma rolagem que desloca o conteúdo. */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-size: 14px;
+  color: var(--cor-texto);
+  background: var(--cor-fundo);
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* ---------- Botões ---------- */
+
+.botao {
+  padding: 7px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.botao:hover:not(:disabled) { background: #eef1f6; }
+.botao:disabled { opacity: .5; cursor: not-allowed; }
+
+.botao-primario {
+  background: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: #fff;
+}
+.botao-primario:hover:not(:disabled) { background: var(--cor-primaria-escura); }
+
+.botao-perigo { color: var(--cor-erro); border-color: #f0b4b4; }
+.botao-perigo:hover:not(:disabled) { background: var(--cor-erro-fundo); }
+
+/* ---------- Campos ---------- */
+
+.campo { display: flex; flex-direction: column; gap: 3px; }
+.campo label { font-size: 12px; color: var(--cor-texto-fraco); }
+
+.campo input, .campo select, .campo textarea {
+  padding: 6px 8px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+}
+.campo input:focus, .campo select:focus, .campo textarea:focus {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: -1px;
+}
+
+/* Dinheiro alinhado à direita e em fonte tabular: as casas decimais ficam sob as casas
+   decimais, e a coluna vira legível de relance. */
+.dinheiro {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- Mensagens ---------- */
+
+.erro {
+  background: var(--cor-erro-fundo);
+  color: var(--cor-erro);
+  border: 1px solid #f5c2c2;
+  border-radius: var(--raio);
+  padding: 9px 12px;
+}
+
+.aviso {
+  background: var(--cor-atencao-fundo);
+  border: 1px solid #fcd34d;
+  border-radius: var(--raio);
+  padding: 9px 12px;
+}
+
+.cartao {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
