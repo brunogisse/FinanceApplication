@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
 import { Conta, Despesa, FiltroConsulta, Lancamento } from '../../nucleo/modelos';
-import { formatarData, formatarMoeda, hojeIso, somarMeses } from '../../nucleo/moeda';
+import { formatarData, formatarInteiro, formatarMoeda, hojeIso, somarMeses } from '../../nucleo/moeda';
 
 @Component({
   selector: 'app-lancamentos',
@@ -19,6 +19,7 @@ export class Lancamentos {
 
   readonly moeda = formatarMoeda;
   readonly data = formatarData;
+  readonly inteiro = formatarInteiro;
 
   // ---- Filtros. O período padrão é o mesmo da tela do legado: últimos seis meses. ----
   readonly inicio = signal(somarMeses(hojeIso(), -6));
@@ -41,6 +42,14 @@ export class Lancamentos {
   readonly despesas = signal<Despesa[]>([]);
   readonly contas = signal<Conta[]>([]);
 
+  /**
+   * Aviso de vencimentos, equivalente ao "Há N despesa(s) a pagar" que o legado mostra ao
+   * abrir. É a primeira coisa que a operadora vê no sistema atual.
+   */
+  readonly vencidos = signal(0);
+  readonly totalVencido = signal(0);
+  readonly avisoDispensado = signal(false);
+
   readonly usuario = this.api.usuario;
   readonly podeLancar = this.api.podeLancar;
 
@@ -60,12 +69,36 @@ export class Lancamentos {
 
   constructor() {
     this.carregarCadastros();
+    this.carregarVencimentos();
     this.pesquisar();
   }
 
   private carregarCadastros(): void {
     this.api.despesas().subscribe({ next: (d) => this.despesas.set(d), error: () => {} });
     this.api.contas().subscribe({ next: (c) => this.contas.set(c), error: () => {} });
+  }
+
+  private carregarVencimentos(): void {
+    this.api.vencimentos().subscribe({
+      next: (r) => {
+        this.vencidos.set(r.quantidade);
+        this.totalVencido.set(r.totalPrevisto);
+      },
+      error: () => {},
+    });
+  }
+
+  /** Deixa na tela apenas o que está vencido ou vence hoje e ainda não foi pago. */
+  verVencimentos(): void {
+    this.porData.set('vencimento');
+    this.pagamento.set('naopagos');
+    this.descricao.set('');
+    this.despesa.set('');
+    this.conta.set('');
+    // Começo bem atrás para não esconder atraso antigo — o legado não limita o início.
+    this.inicio.set(somarMeses(hojeIso(), -120));
+    this.fim.set(hojeIso());
+    this.pesquisar();
   }
 
   pesquisar(): void {
@@ -203,6 +236,7 @@ export class Lancamentos {
 
   novo(): void { this.router.navigate(['/lancamentos/novo']); }
   editar(l: Lancamento): void { this.router.navigate(['/lancamentos', l.id]); }
+  relatorio(): void { this.router.navigate(['/relatorios/por-despesa']); }
 
   sair(): void {
     this.api.sair();

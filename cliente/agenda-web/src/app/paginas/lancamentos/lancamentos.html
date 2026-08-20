@@ -9,9 +9,25 @@
       @if (podeLancar()) {
         <button class="botao botao-primario" (click)="novo()">Novo lançamento</button>
       }
+      <button class="botao" (click)="relatorio()">Consolidado por despesa</button>
       <button class="botao" (click)="sair()">Sair</button>
     </div>
   </header>
+
+  <!-- Equivale ao "Há N despesa(s) a pagar" que o legado exibe ao abrir. -->
+  @if (vencidos() > 0 && !avisoDispensado()) {
+    <div class="aviso-vencimento">
+      <span>
+        <strong>{{ inteiro(vencidos()) }}</strong> despesa(s) a pagar,
+        somando <strong>{{ moeda(totalVencido()) }}</strong>
+        — vencidas ou vencendo hoje.
+      </span>
+      <div>
+        <button class="botao botao-primario" (click)="verVencimentos()">Ver na tela</button>
+        <button class="botao" (click)="avisoDispensado.set(true)">Dispensar</button>
+      </div>
+    </div>
+  }
 
   <section class="filtros cartao">
     <div class="campo">
@@ -150,7 +166,7 @@
   </section>
 
   <footer class="rodape cartao">
-    <span>{{ quantidade() }} lançamento(s)</span>
+    <span>{{ inteiro(quantidade()) }} lançamento(s)</span>
     <span>Previsto: <strong class="dinheiro">{{ moeda(totalPrevisto()) }}</strong></span>
     <span>Pago: <strong class="dinheiro">{{ moeda(totalPago()) }}</strong></span>
   </footer>

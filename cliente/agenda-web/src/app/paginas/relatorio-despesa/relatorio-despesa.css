@@ -1,0 +1,79 @@
+.pagina {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 14px 14px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.topo strong { font-size: 17px; }
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.filtros .campo { min-width: 150px; }
+.botoes-filtro { display: flex; gap: 8px; }
+
+/* Os dois modos como escolha visível, não como caixa de seleção escondida:
+   trocar o modo troca a coluna de data e portanto o resultado. */
+.modos { display: flex; padding: 0; overflow: hidden; }
+
+.modo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 3px solid transparent;
+}
+.modo:hover { background: #f2f5fa; }
+.modo small { color: var(--cor-texto-fraco); font-size: 12px; }
+.modo.ativo {
+  background: #eef2ff;
+  border-bottom-color: var(--cor-primaria);
+}
+.modo.ativo strong { color: var(--cor-primaria-escura); }
+
+.grade-area { flex: 1; overflow: auto; min-height: 0; }
+
+.grade { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.grade thead th {
+  position: sticky;
+  top: 0;
+  background: #eef1f6;
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 8px;
+  text-align: left;
+}
+
+.grade tbody td { padding: 6px 8px; border-bottom: 1px solid #eceef2; }
+.grade tbody tr:hover { background: #f6f8fc; }
+
+.grade tfoot th {
+  position: sticky;
+  bottom: 0;
+  background: #eef1f6;
+  border-top: 2px solid var(--cor-borda);
+  padding: 9px 8px;
+  text-align: left;
+}
+
+.col-qtd { text-align: right; width: 110px; }
+.vazio { text-align: center; padding: 24px; color: var(--cor-texto-fraco); }

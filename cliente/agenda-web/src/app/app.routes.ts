@@ -22,6 +22,12 @@ export const routes: Routes = [
     loadComponent: () => import('./paginas/lancamentos/lancamentos').then((m) => m.Lancamentos),
   },
   {
+    path: 'relatorios/por-despesa',
+    canActivate: [exigirSessao],
+    loadComponent: () =>
+      import('./paginas/relatorio-despesa/relatorio-despesa').then((m) => m.RelatorioDespesa),
+  },
+  {
     path: 'lancamentos/novo',
     canActivate: [exigirSessao],
     loadComponent: () =>

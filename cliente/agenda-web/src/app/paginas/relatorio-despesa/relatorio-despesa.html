@@ -1,0 +1,89 @@
+<div class="pagina">
+  <header class="topo">
+    <strong>Consolidado por despesa</strong>
+    <button class="botao" (click)="voltar()">Voltar</button>
+  </header>
+
+  <section class="filtros cartao">
+    <div class="campo">
+      <label for="despesa">Despesa</label>
+      <select id="despesa" [ngModel]="despesa()" (ngModelChange)="despesa.set($event)">
+        <option value="">(escolha)</option>
+        @for (d of despesas(); track d.id) {
+          <option [value]="d.descricao">{{ d.descricao }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="inicio">De</label>
+      <input id="inicio" type="date" [ngModel]="inicio()" (ngModelChange)="inicio.set($event)" />
+    </div>
+
+    <div class="campo">
+      <label for="fim">Até</label>
+      <input id="fim" type="date" [ngModel]="fim()" (ngModelChange)="fim.set($event)" />
+    </div>
+
+    <div class="botoes-filtro">
+      <button class="botao botao-primario" (click)="consultar()" [disabled]="carregando()">
+        {{ carregando() ? 'Buscando...' : 'Consultar' }}
+      </button>
+    </div>
+  </section>
+
+  <!-- Os dois modos usam colunas de data diferentes, e é a regra central deste relatório.
+       Deixar isso explícito na tela evita a pergunta "por que os números não batem?". -->
+  <div class="modos cartao">
+    <button class="modo" [class.ativo]="pagos()" (click)="trocarModo(true)">
+      <strong>Quanto gastei</strong>
+      <small>o que foi pago, pela data do pagamento</small>
+    </button>
+    <button class="modo" [class.ativo]="!pagos()" (click)="trocarModo(false)">
+      <strong>Quanto devo</strong>
+      <small>o que está em aberto, pela data de vencimento</small>
+    </button>
+  </div>
+
+  @if (erro()) {
+    <div class="erro">{{ erro() }}</div>
+  }
+
+  @if (consultou()) {
+    <section class="grade-area cartao">
+      <table class="grade">
+        <thead>
+          <tr>
+            <th>Subdespesa</th>
+            <th class="col-qtd">Lançamentos</th>
+            <th class="dinheiro">{{ pagos() ? 'Total pago' : 'Total previsto' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of linhas(); track l.subdespesaId) {
+            <tr>
+              <td>{{ l.subdespesa }}</td>
+              <td class="col-qtd">{{ l.quantidade }}</td>
+              <td class="dinheiro">{{ moeda(pagos() ? l.totalPago : l.totalPrevisto) }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="vazio">
+                Nada encontrado para {{ despesa() }} no período, neste modo.
+              </td>
+            </tr>
+          }
+        </tbody>
+        @if (linhas().length > 0) {
+          <tfoot>
+            <tr>
+              <th>Total de {{ despesa() }}</th>
+              <th class="col-qtd">{{ quantidade() }}</th>
+              <th class="dinheiro">{{ moeda(total()) }}</th>
+            </tr>
+          </tfoot>
+        }
+      </table>
+    </section>
+  }
+</div>

@@ -29,6 +29,14 @@ export function formatarNumero(valor: number | null | undefined): string {
   return FORMATO_NUMERO.format(valor);
 }
 
+const FORMATO_INTEIRO = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+
+/** 1.492 — contagens grandes com separador de milhar, para serem lidas de relance. */
+export function formatarInteiro(valor: number | null | undefined): string {
+  if (valor === null || valor === undefined) return '';
+  return FORMATO_INTEIRO.format(valor);
+}
+
 /**
  * Converte "1.234,56" digitado pela operadora em 1234.56.
  *

@@ -132,3 +132,16 @@
   padding: 9px 14px;
 }
 .rodape strong { margin-left: 6px; }
+
+/* Aviso de vencimentos — o "Há N despesa(s) a pagar" do legado. */
+.aviso-vencimento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--cor-atencao-fundo);
+  border: 1px solid #fcd34d;
+  border-radius: var(--raio);
+}
+.aviso-vencimento div { display: flex; gap: 8px; }
