@@ -3,9 +3,11 @@
 Plano por etapas, com critérios de pronto, validação e riscos. A arquitetura que sustenta este
 plano está em [arquitetura-alvo.md](arquitetura-alvo.md).
 
-> **Situação em 20/08/2026.** As etapas 1 a 5 estão concluídas e a 6 está parcial: o
-> consolidado por despesa e a exportação para planilha existem, mas os três relatórios
-> impressos do FastReport, que esta etapa também prevê, ainda não. O legado
+> **Situação em 20/08/2026.** As etapas 1 a 6 estão concluídas **no código**, incluindo os
+> três relatórios impressos. Falta a metade do critério de pronto da etapa 6 que diz "os
+> números batem com os relatórios do legado": os números batem com a grade, e a paridade da
+> grade está provada por teste, mas ninguém comparou ainda com a folha que o Delphi imprime.
+> O legado
 > continua sendo a única versão em produção — o sistema novo roda só em desenvolvimento, sobre
 > uma cópia. Nenhum módulo foi cortado, e portanto o critério de pronto nº 2 (uso real por
 > duas semanas com o legado ao lado) **ainda não foi cumprido por nenhuma etapa**.

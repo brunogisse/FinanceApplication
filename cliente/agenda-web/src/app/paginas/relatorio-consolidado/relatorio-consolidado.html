@@ -1,0 +1,66 @@
+<app-barra-impressao
+  [quantidade]="carregando() ? null : linhas().length"
+  unidade="subdespesa(s)"
+  [nomeDoPdf]="nomeDoPdf()"
+  [ocupado]="carregando()"
+  voltarPara="/relatorios/por-despesa" />
+
+@if (erro()) {
+  <div class="erro nao-imprime">{{ erro() }}</div>
+}
+
+<div class="folha">
+  <h1>Relatório de Despesa/Subdespesa</h1>
+
+  <p class="periodo">Despesa: <strong>{{ despesa() }}</strong></p>
+  <p class="periodo">
+    Relatório gerado entre as datas
+    <strong>{{ data(inicio()) }}</strong> e <strong>{{ data(fim()) }}</strong>,
+    <!-- Qual coluna de data valeu é a regra central deste relatório; no papel não dá para
+         perguntar depois. -->
+    @if (pagos()) {
+      considerando o que foi <strong>pago</strong>, pela data do pagamento
+    } @else {
+      considerando o que está <strong>em aberto</strong>, pela data de vencimento
+    }
+  </p>
+  <p class="gerado">Relatório gerado em {{ geradoEm }}</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Subdespesa</th>
+        <th class="col-qtd">Lançamentos</th>
+        <th class="dinheiro">R$ Previsto</th>
+        <th class="dinheiro">R$ Pago</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (l of linhas(); track l.subdespesaId) {
+        <tr>
+          <td>{{ l.subdespesa }}</td>
+          <td class="col-qtd">{{ inteiro(l.quantidade) }}</td>
+          <td class="dinheiro">{{ moeda(l.totalPrevisto) }}</td>
+          <td class="dinheiro">{{ moeda(l.totalPago) }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="4">
+            {{ carregando() ? 'Buscando...' : 'Nada encontrado para esta despesa no período.' }}
+          </td>
+        </tr>
+      }
+    </tbody>
+    @if (linhas().length > 0) {
+      <tfoot>
+        <tr>
+          <th>Total de {{ despesa() }}</th>
+          <th class="col-qtd">{{ inteiro(quantidade()) }}</th>
+          <th class="dinheiro" colspan="2">
+            {{ pagos() ? 'Total pago: ' : 'Total previsto: ' }}{{ moeda(total()) }}
+          </th>
+        </tr>
+      </tfoot>
+    }
+  </table>
+</div>

@@ -77,3 +77,6 @@
 
 .col-qtd { text-align: right; width: 110px; }
 .vazio { text-align: center; padding: 24px; color: var(--cor-texto-fraco); }
+
+.col-detalhe { width: 1%; white-space: nowrap; text-align: right; }
+.mini-detalhe { padding: 2px 10px; font-size: 12px; }

@@ -76,5 +76,34 @@ export class RelatorioDespesa {
     if (this.consultou()) this.consultar();
   }
 
+  /** Abre a versão impressa deste mesmo consolidado. */
+  imprimir(): void {
+    this.router.navigate(['/relatorios/consolidado'], {
+      queryParams: {
+        despesa: this.despesa(),
+        inicio: this.inicio(),
+        fim: this.fim(),
+        pagos: this.pagos(),
+      },
+    });
+  }
+
+  /**
+   * Abre o detalhado de uma subdespesa.
+   *
+   * É o passo seguinte natural: olhar um total do consolidado e querer ver de onde ele veio.
+   */
+  detalhar(l: TotalPorSubdespesa): void {
+    this.router.navigate(['/relatorios/subdespesa'], {
+      queryParams: {
+        despesa: this.despesa(),
+        subdespesa: l.subdespesa,
+        inicio: this.inicio(),
+        fim: this.fim(),
+        pagos: this.pagos(),
+      },
+    });
+  }
+
   voltar(): void { this.router.navigate(['/lancamentos']); }
 }

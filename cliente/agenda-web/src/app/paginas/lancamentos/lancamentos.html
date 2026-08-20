@@ -97,6 +97,10 @@
               title="Gera uma planilha com o que está na grade">
         {{ exportando() ? 'Gerando...' : 'Exportar' }}
       </button>
+      <button class="botao" (click)="imprimirLista()" [disabled]="quantidade() === 0"
+              title="Abre o relatório impresso do que está na grade">
+        Imprimir
+      </button>
       <button class="botao alternar-avancada"
               (click)="buscaAvancadaAberta.set(!buscaAvancadaAberta())">
         {{ buscaAvancadaAberta() ? 'Menos filtros ▴' : 'Mais filtros ▾' }}

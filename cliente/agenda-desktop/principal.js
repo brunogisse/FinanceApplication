@@ -1,4 +1,5 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { writeFile } = require('node:fs/promises');
 const path = require('node:path');
 
 /**
@@ -25,6 +26,9 @@ function criarJanela() {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      // Mesmo com sandbox ligado, o preload pode expor uma ponte pelo contextBridge. É por
+      // ela que a impressão acontece — ver o comentário em preload.js.
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
 
@@ -57,7 +61,55 @@ function criarJanela() {
   return janela;
 }
 
+/**
+ * Impressão e geração de PDF.
+ *
+ * Ambas rodam aqui, no processo principal, porque `window.print()` não funciona no Electron —
+ * ver preload.js. As duas devolvem o que aconteceu de verdade, para a tela poder dizer à
+ * pessoa em vez de supor que deu certo.
+ */
+function registrarImpressao() {
+  ipcMain.handle('imprimir', async (evento) => {
+    const conteudo = evento.sender;
+    return new Promise((resolve) => {
+      conteudo.print({ silent: false, printBackground: true }, (sucesso, motivo) => {
+        // Fechar a caixa sem imprimir chega aqui como "cancelled". Não é erro.
+        if (sucesso) resolve({ situacao: 'impresso' });
+        else if (motivo === 'cancelled') resolve({ situacao: 'cancelado' });
+        else resolve({ situacao: 'falhou', motivo });
+      });
+    });
+  });
+
+  ipcMain.handle('salvar-pdf', async (evento, nomeSugerido) => {
+    const conteudo = evento.sender;
+
+    // preferCSSPageSize deixa o `@page` da folha mandar no tamanho e na orientação. Sem
+    // isto, o que está aqui vence, e o relatório detalhado de subdespesas — que precisa
+    // sair deitado, senão perde colunas — sairia em pé e cortado.
+    const pdf = await conteudo.printToPDF({
+      pageSize: 'A4',
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+
+    const escolha = await dialog.showSaveDialog({
+      title: 'Salvar relatório em PDF',
+      defaultPath: path.join(app.getPath('documents'), nomeSugerido || 'relatorio.pdf'),
+      filters: [{ name: 'PDF', extensions: ['pdf'] }],
+    });
+
+    if (escolha.canceled || !escolha.filePath) return { situacao: 'cancelado' };
+
+    await writeFile(escolha.filePath, pdf);
+    // Abrir o arquivo é o que fecha o ciclo: a pessoa vê o resultado, não uma mensagem.
+    shell.openPath(escolha.filePath);
+    return { situacao: 'salvo', caminho: escolha.filePath };
+  });
+}
+
 app.whenReady().then(() => {
+  registrarImpressao();
   criarJanela();
 
   app.on('activate', () => {

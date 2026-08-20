@@ -29,6 +29,9 @@
       <button class="botao botao-primario" (click)="consultar()" [disabled]="carregando()">
         {{ carregando() ? 'Buscando...' : 'Consultar' }}
       </button>
+      <button class="botao" (click)="imprimir()" [disabled]="!consultou() || linhas().length === 0">
+        Imprimir
+      </button>
     </div>
   </section>
 
@@ -57,6 +60,7 @@
             <th>Subdespesa</th>
             <th class="col-qtd">Lançamentos</th>
             <th class="dinheiro">{{ pagos() ? 'Total pago' : 'Total previsto' }}</th>
+            <th class="col-detalhe"></th>
           </tr>
         </thead>
         <tbody>
@@ -65,10 +69,16 @@
               <td>{{ l.subdespesa }}</td>
               <td class="col-qtd">{{ l.quantidade }}</td>
               <td class="dinheiro">{{ moeda(pagos() ? l.totalPago : l.totalPrevisto) }}</td>
+              <td class="col-detalhe">
+                <button class="botao mini-detalhe" (click)="detalhar(l)"
+                        title="Ver os lançamentos desta subdespesa">
+                  Detalhar
+                </button>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="3" class="vazio">
+              <td colspan="4" class="vazio">
                 Nada encontrado para {{ despesa() }} no período, neste modo.
               </td>
             </tr>
@@ -80,6 +90,7 @@
               <th>Total de {{ despesa() }}</th>
               <th class="col-qtd">{{ quantidade() }}</th>
               <th class="dinheiro">{{ moeda(total()) }}</th>
+              <th class="col-detalhe"></th>
             </tr>
           </tfoot>
         }

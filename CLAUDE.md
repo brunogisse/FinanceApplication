@@ -276,7 +276,7 @@ desenvolvimento, sobre uma cópia do banco. Nada foi cortado ainda.
 | 3 — Cadastros e autenticação | **Concluída** — convivência com o Delphi verificada |
 | 4 — Lançamento individual | **Concluída** |
 | 5 — Operações em lote | **Concluída** — parcelamento, pagamento em lote, importação |
-| 6 — Relatórios e exportação | **Parcial** — consolidado em tela e exportação prontos; faltam os três relatórios impressos |
+| 6 — Relatórios e exportação | **Concluída no código** — três relatórios impressos e exportação; falta conferir contra a folha do legado |
 | 7 — Corte final | Não iniciada |
 
 ### O que existe hoje
@@ -301,16 +301,36 @@ compensado, situação e faixa de valor sobre previsto ou pago. **Busca por nota
 cheque ignora o período e varre a base inteira** — é um documento que se procura, não um mês.
 O legado tem a mesma intenção quando força o início em 01/01/2018 na busca por NF.
 
-**Falta no cliente:** os três relatórios impressos, o cadastro de usuários, marcar a situação
-direto pela grade (a API já tem o endpoint, ninguém chama) e o empacotamento em instalador.
+**Relatórios impressos:** os três do legado existem, como páginas de impressão em
+`paginas/relatorio-lancamentos`, `relatorio-consolidado` e `relatorio-subdespesa`. Os números
+são os mesmos da grade, e a paridade da grade está provada por teste — mas **a conferência
+final contra a folha impressa do legado ainda não foi feita**, e ela depende de rodar o Delphi.
+
+**Falta no cliente:** o cadastro de usuários, marcar a situação direto pela grade (a API já
+tem o endpoint, ninguém chama) e o empacotamento em instalador.
 
 **Falta no servidor:** os relatórios impressos e a criação/alteração de usuários. O resto do
 módulo financeiro está completo.
 
-**`prompt()` não existe no Electron.** Ele lança `prompt() is not supported.` e a ação morre
-sem aviso — funciona no navegador e falha no aplicativo, que é o pior tipo de defeito.
-`alert()` e `confirm()` funcionam normalmente. Onde for preciso pedir um valor, use um
-`<dialog>`, como faz o parcelamento em `lancamentos.html`. Verificado na janela real.
+**Duas funções do navegador não funcionam no Electron**, e as duas falham do jeito pior:
+funcionam no navegador durante o desenvolvimento e morrem caladas no aplicativo empacotado.
+Ambas verificadas na janela real, por CDP.
+
+| Função | O que acontece | O que usar |
+|---|---|---|
+| `window.prompt()` | lança `prompt() is not supported.` | um `<dialog>` — ver o parcelamento em `lancamentos.html` |
+| `window.print()` | **retorna sem erro, sem abrir caixa e sem imprimir** | a ponte do preload — ver `nucleo/impressao.ts` |
+
+`alert()` e `confirm()` funcionam normalmente.
+
+O caso do `print()` é o mais traiçoeiro: não lança nada. Numa máquina com sete impressoras e
+uma delas padrão, o clique simplesmente não produz efeito. Imprimir e gerar PDF só são
+confiáveis a partir do processo principal, por `webContents.print()` e `printToPDF()`, que é
+o que a ponte do `preload.js` expõe.
+
+**No `printToPDF`, use `preferCSSPageSize: true`.** Sem isso, o tamanho passado por parâmetro
+vence o `@page` da folha, e o relatório detalhado de subdespesas — que precisa sair deitado,
+senão perde colunas — sairia em pé e cortado.
 
 ### Pendências que valem lembrar
 

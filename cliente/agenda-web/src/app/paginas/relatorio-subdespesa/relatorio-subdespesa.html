@@ -1,0 +1,72 @@
+<app-barra-impressao
+  [quantidade]="carregando() ? null : quantidade()"
+  [nomeDoPdf]="nomeDoPdf()"
+  [ocupado]="carregando()"
+  [voltarPara]="voltarPara()" />
+
+@if (erro()) {
+  <div class="erro nao-imprime">{{ erro() }}</div>
+}
+
+<div class="folha">
+  <h1>Relatório detalhado de subdespesas</h1>
+
+  <p class="periodo">
+    Despesa: <strong>{{ despesa() }}</strong> —
+    Subdespesa: <strong>{{ subdespesa() }}</strong>
+  </p>
+  <p class="periodo">
+    Relatório gerado entre as datas
+    <strong>{{ data(inicio()) }}</strong> e <strong>{{ data(fim()) }}</strong>,
+    @if (pagos()) {
+      considerando o que foi <strong>pago</strong>, pela data do pagamento
+    } @else {
+      considerando o que está <strong>em aberto</strong>, pela data de vencimento
+    }
+  </p>
+  <p class="gerado">Relatório gerado em {{ geradoEm }}</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Lançamento</th>
+        <th>Conta</th>
+        <th>NF</th>
+        <th>Cheque</th>
+        <th>Compensação</th>
+        <th class="nao-quebra">Vencimento</th>
+        <th class="nao-quebra">Pagamento</th>
+        <th class="dinheiro">Previsto</th>
+        <th class="dinheiro">Pago</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (l of lancamentos(); track l.id) {
+        <tr>
+          <td>{{ l.descricao }}</td>
+          <td>{{ l.conta }}</td>
+          <td>{{ l.notaFiscal }}</td>
+          <td>{{ l.cheque }}</td>
+          <td>{{ l.chequeCompensado ? 'Compensado' : '' }}</td>
+          <td class="nao-quebra">{{ data(l.dataVencimento) }}</td>
+          <td class="nao-quebra">{{ data(l.dataPagamento) }}</td>
+          <td class="dinheiro">{{ moeda(l.valorPrevisto) }}</td>
+          <td class="dinheiro">{{ l.pago ? moeda(l.valorPago) : '' }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="9">
+            {{ carregando() ? 'Buscando...' : 'Nenhum lançamento nesta subdespesa, no período e modo escolhidos.' }}
+          </td>
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="7">Lançamentos: {{ inteiro(quantidade()) }}</th>
+        <th class="dinheiro">{{ moeda(totalPrevisto()) }}</th>
+        <th class="dinheiro">{{ moeda(totalPago()) }}</th>
+      </tr>
+    </tfoot>
+  </table>
+</div>

@@ -1,0 +1,68 @@
+<app-barra-impressao
+  [quantidade]="carregando() ? null : quantidade()"
+  [nomeDoPdf]="nomeDoPdf"
+  [ocupado]="carregando()" />
+
+@if (erro()) {
+  <div class="erro nao-imprime">{{ erro() }}</div>
+}
+
+<div class="folha">
+  <h1>Relatório de Lançamentos</h1>
+
+  @if (filtro().inicio) {
+    <p class="periodo">
+      Data de {{ descricaoDoRecorte().coluna }} entre
+      <strong>{{ data(filtro().inicio) }}</strong> e <strong>{{ data(filtro().fim) }}</strong>
+    </p>
+  }
+
+  @if (descricaoDoRecorte().filtros.length > 0) {
+    <p class="periodo">Filtros: {{ descricaoDoRecorte().filtros.join('; ') }}</p>
+  }
+
+  <p class="gerado">Relatório gerado em {{ geradoEm }}</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Vencimento</th>
+        <th>Despesa</th>
+        <th>Conta</th>
+        <th>NF</th>
+        <th>Cheq | Doc</th>
+        <th class="dinheiro">Previsto</th>
+        <th>Pago em</th>
+        <th class="dinheiro">Pago</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (l of lancamentos(); track l.id) {
+        <tr>
+          <td class="nao-quebra">{{ data(l.dataVencimento) }}</td>
+          <td>{{ l.descricao }}</td>
+          <td>{{ l.conta }}</td>
+          <td>{{ l.notaFiscal }}</td>
+          <td>{{ l.cheque }}</td>
+          <td class="dinheiro">{{ moeda(l.valorPrevisto) }}</td>
+          <td class="nao-quebra">{{ data(l.dataPagamento) }}</td>
+          <td class="dinheiro">{{ l.pago ? moeda(l.valorPago) : '' }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="8">
+            {{ carregando() ? 'Buscando...' : 'Nenhum lançamento no período e filtros escolhidos.' }}
+          </td>
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="5">Total de lançamentos: {{ inteiro(quantidade()) }}</th>
+        <th class="dinheiro">{{ moeda(totalPrevisto()) }}</th>
+        <th></th>
+        <th class="dinheiro">{{ moeda(totalPago()) }}</th>
+      </tr>
+    </tfoot>
+  </table>
+</div>

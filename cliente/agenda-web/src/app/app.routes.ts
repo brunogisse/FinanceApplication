@@ -49,5 +49,26 @@ export const routes: Routes = [
     canActivate: [exigirSessao],
     loadComponent: () => import('./paginas/importar/importar').then((m) => m.Importar),
   },
+  {
+    path: 'relatorios/lancamentos',
+    canActivate: [exigirSessao],
+    loadComponent: () =>
+      import('./paginas/relatorio-lancamentos/relatorio-lancamentos')
+        .then((m) => m.RelatorioLancamentos),
+  },
+  {
+    path: 'relatorios/consolidado',
+    canActivate: [exigirSessao],
+    loadComponent: () =>
+      import('./paginas/relatorio-consolidado/relatorio-consolidado')
+        .then((m) => m.RelatorioConsolidado),
+  },
+  {
+    path: 'relatorios/subdespesa',
+    canActivate: [exigirSessao],
+    loadComponent: () =>
+      import('./paginas/relatorio-subdespesa/relatorio-subdespesa')
+        .then((m) => m.RelatorioSubdespesa),
+  },
   { path: '**', redirectTo: 'lancamentos' },
 ];

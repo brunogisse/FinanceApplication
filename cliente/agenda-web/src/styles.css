@@ -117,3 +117,77 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--raio);
   box-shadow: var(--sombra);
 }
+
+/* ---------- Folha de relatório ---------- */
+/*
+ * Layout compartilhado pelos relatórios impressos. Na tela aparece como uma folha branca
+ * centralizada, para a pessoa ver antes o que vai sair; na impressora, só o conteúdo.
+ */
+
+.folha {
+  background: #fff;
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 12mm 14mm;
+  box-shadow: var(--sombra);
+  color: #000;
+}
+
+.folha h1 { font-size: 17px; margin: 0 0 4px; }
+.folha .periodo { margin: 0; color: #444; }
+.folha .gerado { margin: 2px 0 14px; color: #666; font-size: 12px; }
+
+.folha table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.folha .nao-quebra { white-space: nowrap; }
+.folha thead th {
+  background: #eef1f6;
+  border-bottom: 1px solid #999;
+  padding: 5px 6px;
+  text-align: left;
+}
+.folha tbody td { padding: 4px 6px; border-bottom: 1px solid #ddd; }
+.folha tfoot th {
+  border-top: 2px solid #333;
+  padding: 6px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.barra-impressao {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  max-width: 210mm;
+  margin: 0 auto 10px;
+}
+.barra-impressao .espaco { flex: 1; }
+
+/* Relatorio longo: o numero de folhas precisa saltar aos olhos antes do clique. */
+.alerta-paginas {
+  background: var(--cor-atencao-fundo);
+  border: 1px solid #fcd34d;
+  border-radius: var(--raio);
+  padding: 4px 10px;
+  font-weight: 600;
+}
+
+@media print {
+  /* Na impressora só vai a folha: barra de ações, menus e fundo ficam de fora. */
+  body { background: #fff; }
+  .barra-impressao, .nao-imprime { display: none !important; }
+  .folha {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  /* Cabeçalho repetido em toda página é o que torna um relatório longo legível, e uma
+     linha partida ao meio da folha é o que o torna ilegível. */
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  tr { break-inside: avoid; }
+
+  @page { size: A4 portrait; margin: 15mm; }
+}

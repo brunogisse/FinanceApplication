@@ -414,6 +414,25 @@ export class Lancamentos {
     });
   }
 
+  /**
+   * Abre o relatório impresso do que está na grade.
+   *
+   * Os filtros vão pela URL para o relatório ser uma página por si só: recarregar, voltar e
+   * imprimir de novo não dependem do estado desta tela.
+   */
+  imprimirLista(): void {
+    const filtro = this.filtroAtual();
+    const params: Record<string, string> = {};
+
+    for (const [chave, valor] of Object.entries(filtro)) {
+      if (valor !== undefined && valor !== null && valor !== '') {
+        params[chave] = String(valor);
+      }
+    }
+
+    this.router.navigate(['/relatorios/lancamentos'], { queryParams: params });
+  }
+
   novo(): void { this.router.navigate(['/lancamentos/novo']); }
   editar(l: Lancamento): void { this.router.navigate(['/lancamentos', l.id]); }
   relatorio(): void { this.router.navigate(['/relatorios/por-despesa']); }
