@@ -265,20 +265,48 @@ Detalhes e números de referência em [docs/paridade-referencia.md](docs/paridad
 
 ## Estado da migração
 
-| Fase | Situação |
+**O legado continua sendo a única versão em produção.** O sistema novo roda apenas em
+desenvolvimento, sobre uma cópia do banco. Nada foi cortado ainda.
+
+| Etapa do [roadmap](docs/roadmap.md) | Situação |
 |---|---|
-| 1 — Descoberta do código Delphi | **Concluída** |
-| 2 — Descoberta do banco Firebird | **Concluída** |
-| 3 — Documentação e estrutura | **Concluída** |
-| 4 — Arquitetura alvo | **Concluída** — ver [docs/arquitetura-alvo.md](docs/arquitetura-alvo.md) |
-| 5 — Roadmap | **Concluída** — ver [docs/roadmap.md](docs/roadmap.md) |
+| 0 — Melhorias no legado | **Pendente** — não depende de nada, pode começar quando quiser |
+| 1 — Fundação e spikes | **Concluída** |
+| 2 — Leitura | **Concluída** — paridade provada contra a base real |
+| 3 — Cadastros e autenticação | **Concluída** — convivência com o Delphi verificada |
+| 4 — Lançamento individual | **Concluída** |
+| 5 — Operações em lote | **Concluída** — parcelamento, pagamento em lote, importação |
+| 6 — Relatórios e exportação | **Parcial** — consolidado por despesa feito; falta exportar |
+| 7 — Corte final | Não iniciada |
 
-Nada foi migrado ainda. O legado é a única versão em produção.
+### O que existe hoje
 
-**Próximo passo concreto:** a Etapa 0 do [roadmap](docs/roadmap.md#etapa-0--melhorias-no-legado-não-depende-de-nada)
-não depende da migração e pode começar a qualquer momento — índices nas colunas de data,
-correção dos generators do estoque, backup por `gbak` e a correção de uma linha que resolve o
-laço infinito do pagamento em lote.
+```
+src/AgendaFinanceira.Dominio/          Dinheiro, Lancamento, regras, validações
+src/AgendaFinanceira.Infraestrutura/   repositórios Dapper, leitor de planilha, BCrypt
+src/AgendaFinanceira.Api/              ASP.NET Core + Swagger + JWT
+src/AgendaFinanceira.SpikeFirebird/    spike de acesso a dados, ainda roda
+testes/AgendaFinanceira.Testes/        173 testes, 26 de paridade contra a base real
+cliente/agenda-web/                    Angular 21 zoneless
+cliente/agenda-desktop/                Electron
+```
+
+**Telas prontas:** login, grade de lançamentos (com aviso de vencimentos, seleção, pagamento
+em lote, parcelamento), formulário de lançamento e consolidado por despesa.
+
+**Falta no cliente:** telas de cadastro (contas, formas de pagamento, despesas/subdespesas),
+importação de planilha, exportação para Excel e o empacotamento em instalador.
+
+**Falta no servidor:** exportação para Excel. O resto do módulo financeiro está completo.
+
+### Pendências que valem lembrar
+
+- **Etapa 0 do roadmap** continua sem dono e não depende da migração. A correção de uma linha
+  que resolve o laço infinito do pagamento em lote está em `UfrmLancamentos.pas:436`.
+- **Repositório é público no GitHub** e carrega no histórico os `.FDB` com dados reais e o
+  `config.ini` com `SYSDBA`/`masterkey`. Ver [Pendências de segurança](#pendências-de-segurança-do-repositório).
+- **Endpoints de escrita exigem token**, mas não há revogação: trocar a senha de alguém não
+  invalida os tokens já emitidos até expirarem (12 h).
 
 ### Arquitetura decidida
 

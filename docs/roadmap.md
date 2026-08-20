@@ -3,6 +3,14 @@
 Plano por etapas, com critérios de pronto, validação e riscos. A arquitetura que sustenta este
 plano está em [arquitetura-alvo.md](arquitetura-alvo.md).
 
+> **Situação em 20/08/2026.** As etapas 1 a 5 estão concluídas e a 6 está parcial. O legado
+> continua sendo a única versão em produção — o sistema novo roda só em desenvolvimento, sobre
+> uma cópia. Nenhum módulo foi cortado, e portanto o critério de pronto nº 2 (uso real por
+> duas semanas com o legado ao lado) **ainda não foi cumprido por nenhuma etapa**.
+>
+> Traduzindo: o código está pronto e provado por teste, mas ninguém usou de verdade ainda.
+> Esse é o próximo passo que importa, e ele depende da operadora, não de mais código.
+
 Duas ideias governam a ordem:
 
 **Risco crescente.** Começa por leitura, que não pode corromper nada, e termina em parcelamento
