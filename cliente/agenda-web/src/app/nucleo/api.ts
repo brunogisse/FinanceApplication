@@ -154,6 +154,78 @@ export class Api {
       .get<TotalPorSubdespesa[]>(`${this.endereco()}/relatorios/por-despesa`, { params })
       .pipe(catchError(traduzirErro));
   }
+
+  // ---------------- Cadastros: escrita ----------------
+  //
+  // As quatro famílias falam o mesmo formato de endpoint, então três funções privadas dão
+  // conta de todas. A subdespesa é a única diferente: carrega no corpo a despesa a que
+  // pertence, porque ela nunca existe solta.
+
+  criarConta(descricao: string): Observable<Conta> {
+    return this.criar<Conta>('contas', { descricao });
+  }
+
+  alterarConta(id: number, descricao: string): Observable<Conta> {
+    return this.alterarCadastro<Conta>('contas', id, { descricao });
+  }
+
+  excluirConta(id: number): Observable<unknown> {
+    return this.excluirCadastro('contas', id);
+  }
+
+  criarFormaPagamento(descricao: string): Observable<FormaPagamento> {
+    return this.criar<FormaPagamento>('formas-pagamento', { descricao });
+  }
+
+  alterarFormaPagamento(id: number, descricao: string): Observable<FormaPagamento> {
+    return this.alterarCadastro<FormaPagamento>('formas-pagamento', id, { descricao });
+  }
+
+  excluirFormaPagamento(id: number): Observable<unknown> {
+    return this.excluirCadastro('formas-pagamento', id);
+  }
+
+  criarDespesa(descricao: string): Observable<Despesa> {
+    return this.criar<Despesa>('despesas', { descricao });
+  }
+
+  alterarDespesa(id: number, descricao: string): Observable<Despesa> {
+    return this.alterarCadastro<Despesa>('despesas', id, { descricao });
+  }
+
+  excluirDespesa(id: number): Observable<unknown> {
+    return this.excluirCadastro('despesas', id);
+  }
+
+  criarSubdespesa(descricao: string, despesaId: number): Observable<Subdespesa> {
+    return this.criar<Subdespesa>('subdespesas', { descricao, despesaId });
+  }
+
+  alterarSubdespesa(id: number, descricao: string, despesaId: number): Observable<Subdespesa> {
+    return this.alterarCadastro<Subdespesa>('subdespesas', id, { descricao, despesaId });
+  }
+
+  excluirSubdespesa(id: number): Observable<unknown> {
+    return this.excluirCadastro('subdespesas', id);
+  }
+
+  private criar<T>(recurso: string, corpo: unknown): Observable<T> {
+    return this.http
+      .post<T>(`${this.endereco()}/${recurso}`, corpo)
+      .pipe(catchError(traduzirErro));
+  }
+
+  private alterarCadastro<T>(recurso: string, id: number, corpo: unknown): Observable<T> {
+    return this.http
+      .put<T>(`${this.endereco()}/${recurso}/${id}`, corpo)
+      .pipe(catchError(traduzirErro));
+  }
+
+  private excluirCadastro(recurso: string, id: number): Observable<unknown> {
+    return this.http
+      .delete(`${this.endereco()}/${recurso}/${id}`)
+      .pipe(catchError(traduzirErro));
+  }
 }
 
 function lerSessaoGuardada(): Sessao | null {

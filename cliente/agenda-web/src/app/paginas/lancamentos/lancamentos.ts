@@ -237,6 +237,7 @@ export class Lancamentos {
   novo(): void { this.router.navigate(['/lancamentos/novo']); }
   editar(l: Lancamento): void { this.router.navigate(['/lancamentos', l.id]); }
   relatorio(): void { this.router.navigate(['/relatorios/por-despesa']); }
+  cadastros(): void { this.router.navigate(['/cadastros']); }
 
   sair(): void {
     this.api.sair();

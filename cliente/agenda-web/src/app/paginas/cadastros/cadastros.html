@@ -1,0 +1,253 @@
+<div class="pagina">
+
+  <header class="topo">
+    <div class="titulo">
+      <strong>Cadastros</strong>
+      <span class="usuario">{{ usuario() }}</span>
+    </div>
+    <button class="botao" (click)="voltar()">Voltar aos lançamentos</button>
+  </header>
+
+  <nav class="abas cartao">
+    <button class="aba" [class.ativa]="aba() === 'contas'" (click)="trocarAba('contas')">
+      <strong>Contas</strong>
+      <small>{{ inteiro(contas().length) }} cadastrada(s)</small>
+    </button>
+    <button class="aba" [class.ativa]="aba() === 'formas'" (click)="trocarAba('formas')">
+      <strong>Formas de pagamento</strong>
+      <small>{{ inteiro(formas().length) }} cadastrada(s)</small>
+    </button>
+    <button class="aba" [class.ativa]="aba() === 'despesas'" (click)="trocarAba('despesas')">
+      <strong>Despesas e subdespesas</strong>
+      <small>{{ inteiro(despesas().length) }} despesa(s)</small>
+    </button>
+  </nav>
+
+  @if (!podeEditar()) {
+    <div class="aviso">
+      Seu nível de acesso permite consultar os cadastros, mas não alterá-los.
+    </div>
+  }
+  @if (erro()) {
+    <div class="erro">{{ erro() }}</div>
+  }
+  @if (aviso()) {
+    <div class="aviso" (click)="aviso.set(null)">{{ aviso() }}</div>
+  }
+
+  <!-- ---------- Contas e formas de pagamento: lista simples ---------- -->
+  @if (aba() !== 'despesas') {
+    <section class="cartao lista-area">
+      <div class="cabecalho-lista">
+        <span>{{ inteiro(itens().length) }} registro(s)</span>
+        @if (podeEditar()) {
+          <button class="botao botao-primario" (click)="novo()" [disabled]="criando()">
+            Nova {{ nomeDoItem() }}
+          </button>
+        }
+      </div>
+
+      <table class="grade">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th class="col-acoes">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (criando()) {
+            <tr class="linha-edicao">
+              <td>
+                <input [ngModel]="texto()" (ngModelChange)="texto.set($event)"
+                       (keydown)="aoTeclar($event)" autofocus
+                       [attr.placeholder]="'Descrição da ' + nomeDoItem()" />
+              </td>
+              <td class="col-acoes">
+                <button class="botao botao-primario mini-botao" (click)="salvar()">Salvar</button>
+                <button class="botao mini-botao" (click)="cancelarEdicao()">Cancelar</button>
+              </td>
+            </tr>
+          }
+
+          @for (item of itens(); track item.id) {
+            @if (editandoId() === item.id) {
+              <tr class="linha-edicao">
+                <td>
+                  <input [ngModel]="texto()" (ngModelChange)="texto.set($event)"
+                         (keydown)="aoTeclar($event)" autofocus />
+                </td>
+                <td class="col-acoes">
+                  <button class="botao botao-primario mini-botao" (click)="salvar()">Salvar</button>
+                  <button class="botao mini-botao" (click)="cancelarEdicao()">Cancelar</button>
+                </td>
+              </tr>
+            } @else {
+              <tr>
+                <td [class.sem-nome]="semNome(item.descricao)">{{ rotulo(item.descricao) }}</td>
+                <td class="col-acoes">
+                  @if (podeEditar()) {
+                    <button class="mini" (click)="editar(item)" title="Alterar">✎</button>
+                    <button class="mini perigo" (click)="excluir(item)" title="Excluir">✕</button>
+                  }
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="2" class="vazio">
+                {{ carregando() ? 'Carregando...' : 'Nada cadastrado ainda.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+
+  <!-- ---------- Despesas e subdespesas: os dois níveis lado a lado ---------- -->
+  @if (aba() === 'despesas') {
+    <section class="dois-niveis">
+
+      <div class="cartao lista-area">
+        <div class="cabecalho-lista">
+          <span>Despesas</span>
+          @if (podeEditar()) {
+            <button class="botao botao-primario mini-botao" (click)="novo()" [disabled]="criando()">
+              Nova despesa
+            </button>
+          }
+        </div>
+
+        <table class="grade">
+          <tbody>
+            @if (criando()) {
+              <tr class="linha-edicao">
+                <td>
+                  <input [ngModel]="texto()" (ngModelChange)="texto.set($event)"
+                         (keydown)="aoTeclar($event)" placeholder="Descrição da despesa" autofocus />
+                </td>
+                <td class="col-acoes">
+                  <button class="botao botao-primario mini-botao" (click)="salvar()">Salvar</button>
+                  <button class="botao mini-botao" (click)="cancelarEdicao()">Cancelar</button>
+                </td>
+              </tr>
+            }
+
+            @for (d of despesas(); track d.id) {
+              @if (editandoId() === d.id) {
+                <tr class="linha-edicao">
+                  <td>
+                    <input [ngModel]="texto()" (ngModelChange)="texto.set($event)"
+                           (keydown)="aoTeclar($event)" autofocus />
+                  </td>
+                  <td class="col-acoes">
+                    <button class="botao botao-primario mini-botao" (click)="salvar()">Salvar</button>
+                    <button class="botao mini-botao" (click)="cancelarEdicao()">Cancelar</button>
+                  </td>
+                </tr>
+              } @else {
+                <tr [class.selecionada]="despesaSelecionada()?.id === d.id"
+                    (click)="selecionarDespesa(d)">
+                  <td [class.sem-nome]="semNome(d.descricao)">{{ rotulo(d.descricao) }}</td>
+                  <td class="col-acoes">
+                    @if (podeEditar()) {
+                      <button class="mini" (click)="editar(d); $event.stopPropagation()"
+                              title="Alterar">✎</button>
+                      <button class="mini perigo" (click)="excluir(d); $event.stopPropagation()"
+                              title="Excluir">✕</button>
+                    }
+                  </td>
+                </tr>
+              }
+            } @empty {
+              <tr>
+                <td colspan="2" class="vazio">
+                  {{ carregando() ? 'Carregando...' : 'Nenhuma despesa cadastrada.' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cartao lista-area">
+        <div class="cabecalho-lista">
+          <span>
+            @if (despesaSelecionada()) {
+              Subdespesas de <strong>{{ rotulo(despesaSelecionada()!.descricao) }}</strong>
+            } @else {
+              Subdespesas
+            }
+          </span>
+          @if (podeEditar() && despesaSelecionada()) {
+            <button class="botao botao-primario mini-botao" (click)="novaSub()"
+                    [disabled]="subCriando()">
+              Nova subdespesa
+            </button>
+          }
+        </div>
+
+        <table class="grade">
+          <tbody>
+            @if (subCriando()) {
+              <tr class="linha-edicao">
+                <td>
+                  <input [ngModel]="subTexto()" (ngModelChange)="subTexto.set($event)"
+                         (keydown)="aoTeclar($event, true)" autofocus
+                         placeholder="Descrição da subdespesa" />
+                </td>
+                <td class="col-acoes">
+                  <button class="botao botao-primario mini-botao" (click)="salvarSub()">Salvar</button>
+                  <button class="botao mini-botao" (click)="cancelarEdicaoSub()">Cancelar</button>
+                </td>
+              </tr>
+            }
+
+            @for (s of subdespesas(); track s.id) {
+              @if (subEditandoId() === s.id) {
+                <tr class="linha-edicao">
+                  <td>
+                    <input [ngModel]="subTexto()" (ngModelChange)="subTexto.set($event)"
+                           (keydown)="aoTeclar($event, true)" autofocus />
+                    <!-- Trocar a despesa aqui é o equivalente a mover a subdespesa de lugar. -->
+                    <select [ngModel]="subDespesaId()" (ngModelChange)="subDespesaId.set($event)"
+                            title="Despesa a que pertence">
+                      @for (d of despesas(); track d.id) {
+                        <option [value]="d.id">{{ rotulo(d.descricao) }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="col-acoes">
+                    <button class="botao botao-primario mini-botao" (click)="salvarSub()">Salvar</button>
+                    <button class="botao mini-botao" (click)="cancelarEdicaoSub()">Cancelar</button>
+                  </td>
+                </tr>
+              } @else {
+                <tr>
+                  <td [class.sem-nome]="semNome(s.descricao)">{{ rotulo(s.descricao) }}</td>
+                  <td class="col-acoes">
+                    @if (podeEditar()) {
+                      <button class="mini" (click)="editarSub(s)" title="Alterar">✎</button>
+                      <button class="mini perigo" (click)="excluirSub(s)" title="Excluir">✕</button>
+                    }
+                  </td>
+                </tr>
+              }
+            } @empty {
+              <tr>
+                <td colspan="2" class="vazio">
+                  @if (despesaSelecionada()) {
+                    Esta despesa ainda não tem subdespesas.
+                  } @else {
+                    Escolha uma despesa à esquerda.
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+  }
+</div>

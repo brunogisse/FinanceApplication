@@ -39,5 +39,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./paginas/lancamento-form/lancamento-form').then((m) => m.LancamentoForm),
   },
+  {
+    path: 'cadastros',
+    canActivate: [exigirSessao],
+    loadComponent: () => import('./paginas/cadastros/cadastros').then((m) => m.Cadastros),
+  },
   { path: '**', redirectTo: 'lancamentos' },
 ];

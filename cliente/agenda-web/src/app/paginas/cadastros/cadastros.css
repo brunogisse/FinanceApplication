@@ -1,0 +1,136 @@
+.pagina {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 14px 14px;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.topo strong { font-size: 17px; }
+.usuario { color: var(--cor-texto-fraco); margin-left: 10px; }
+
+/* As abas mostram a contagem: saber que há 14 contas antes de clicar evita o clique. */
+.abas { display: flex; padding: 0; overflow: hidden; }
+
+.aba {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 3px solid transparent;
+}
+.aba:hover { background: #f2f5fa; }
+.aba small { color: var(--cor-texto-fraco); font-size: 12px; }
+.aba.ativa {
+  background: #eef2ff;
+  border-bottom-color: var(--cor-primaria);
+}
+.aba.ativa strong { color: var(--cor-primaria-escura); }
+
+/* Os dois níveis lado a lado, como na tela do legado. */
+.dois-niveis {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  min-height: 0;
+}
+
+.lista-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.dois-niveis .lista-area { flex: 1; }
+.pagina > .lista-area { flex: 1; }
+
+.cabecalho-lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--cor-borda);
+  background: #f8f9fc;
+}
+
+.grade {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  display: block;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+.grade thead th {
+  position: sticky;
+  top: 0;
+  background: #eef1f6;
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 8px;
+  text-align: left;
+}
+.grade tbody { display: table; width: 100%; }
+.grade thead { display: table; width: 100%; }
+
+.grade tbody td { padding: 6px 8px; border-bottom: 1px solid #eceef2; }
+.grade tbody tr:hover { background: #f6f8fc; }
+
+/* A despesa escolhida precisa ficar óbvia: é ela que define a lista da direita. */
+.grade tbody tr.selecionada,
+.grade tbody tr.selecionada:hover {
+  background: #eef2ff;
+  box-shadow: inset 3px 0 0 var(--cor-primaria);
+}
+
+.linha-edicao, .linha-edicao:hover { background: #fffbe9; }
+.linha-edicao td { padding: 8px; }
+.linha-edicao input, .linha-edicao select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+.linha-edicao select { margin-top: 6px; }
+
+.col-acoes { width: 1%; white-space: nowrap; text-align: right; }
+
+.mini {
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  border-radius: var(--raio);
+  padding: 2px 7px;
+  margin-left: 3px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.mini:hover { background: #eef1f6; }
+.mini.perigo { color: var(--cor-erro); border-color: #f0b4b4; }
+.mini.perigo:hover { background: var(--cor-erro-fundo); }
+
+.mini-botao { padding: 4px 10px; font-size: 13px; }
+
+.vazio { text-align: center; padding: 24px; color: var(--cor-texto-fraco); }
+
+@media (max-width: 720px) {
+  .dois-niveis { grid-template-columns: 1fr; }
+}
+
+/* Registro herdado do legado com descrição vazia: fica visível e editável, mas não se
+   confunde com um nome de verdade. */
+.sem-nome { color: var(--cor-texto-fraco); font-style: italic; }
