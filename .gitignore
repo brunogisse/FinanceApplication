@@ -18,3 +18,6 @@ dist/
 # Electron empacotado
 cliente/agenda-desktop/web/
 cliente/agenda-desktop/dist/
+
+# Lock de dependencias do npm - fora do versionamento por decisao do projeto
+package-lock.json
