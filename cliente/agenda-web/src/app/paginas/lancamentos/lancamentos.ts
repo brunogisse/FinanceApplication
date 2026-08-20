@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
 import { Conta, Despesa, FiltroConsulta, Lancamento } from '../../nucleo/modelos';
 import { formatarData, formatarInteiro, formatarMoeda, hojeIso, somarMeses } from '../../nucleo/moeda';
+import { baixarArquivo } from '../../nucleo/arquivos';
 
 @Component({
   selector: 'app-lancamentos',
@@ -40,6 +41,7 @@ export class Lancamentos {
   readonly erro = signal<string | null>(null);
   readonly aviso = signal<string | null>(null);
   readonly selecionados = signal<ReadonlySet<number>>(new Set());
+  readonly exportando = signal(false);
 
   readonly despesas = signal<Despesa[]>([]);
   readonly contas = signal<Conta[]>([]);
@@ -138,12 +140,15 @@ export class Lancamentos {
     this.pesquisar();
   }
 
-  pesquisar(): void {
-    this.carregando.set(true);
-    this.erro.set(null);
-    this.selecionados.set(new Set());
-
-    const filtro: FiltroConsulta = {
+  /**
+   * O filtro como está na tela agora.
+   *
+   * Uma função só, usada pela consulta e pela exportação: a planilha precisa trazer
+   * exatamente o que está na grade, e duas montagens separadas divergiriam mais cedo ou
+   * mais tarde.
+   */
+  private filtroAtual(): FiltroConsulta {
+    return {
       inicio: this.inicio(),
       fim: this.fim(),
       porData: this.porData(),
@@ -152,8 +157,14 @@ export class Lancamentos {
       despesa: this.despesa() || undefined,
       conta: this.conta() || undefined,
     };
+  }
 
-    this.api.consultar(filtro).subscribe({
+  pesquisar(): void {
+    this.carregando.set(true);
+    this.erro.set(null);
+    this.selecionados.set(new Set());
+
+    this.api.consultar(this.filtroAtual()).subscribe({
       next: (r) => {
         this.lancamentos.set(r.lancamentos);
         this.totalPrevisto.set(r.totalPrevisto);
@@ -282,6 +293,29 @@ export class Lancamentos {
     this.api.excluir(l.id).subscribe({
       next: () => { this.aviso.set('Lançamento excluído.'); this.pesquisar(); },
       error: (e: Error) => { this.erro.set(e.message); this.carregando.set(false); },
+    });
+  }
+
+  /**
+   * Exporta o que está na grade para uma planilha.
+   *
+   * O arquivo é gerado no servidor, onde os valores são decimais de verdade. No legado a
+   * exportação abre o Excel por automação OLE e arredonda na hora de escrever, então a
+   * planilha pode não bater com o banco.
+   */
+  exportar(): void {
+    this.exportando.set(true);
+    this.erro.set(null);
+
+    this.api.exportar(this.filtroAtual()).subscribe({
+      next: (arquivo) => {
+        baixarArquivo(arquivo, `lancamentos-${hojeIso()}.xlsx`);
+        this.exportando.set(false);
+      },
+      error: (e: Error) => {
+        this.erro.set(e.message);
+        this.exportando.set(false);
+      },
     });
   }
 

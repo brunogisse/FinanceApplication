@@ -92,6 +92,11 @@
         {{ carregando() ? 'Buscando...' : 'Pesquisar' }}
       </button>
       <button class="botao" (click)="limparFiltros()">Limpar</button>
+      <button class="botao" (click)="exportar()"
+              [disabled]="exportando() || quantidade() === 0"
+              title="Gera uma planilha com o que está na grade">
+        {{ exportando() ? 'Gerando...' : 'Exportar' }}
+      </button>
     </div>
   </section>
 

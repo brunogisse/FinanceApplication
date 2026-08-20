@@ -43,6 +43,17 @@ function criarJanela() {
     return { action: 'deny' };
   });
 
+  // Exportação de planilha. O Electron abre a caixa de "Salvar como" por conta própria,
+  // mas deixar isto explícito é o que permite escolher a pasta inicial e o filtro — e, mais
+  // importante, o que torna o comportamento uma decisão nossa em vez de um padrão herdado.
+  janela.webContents.session.on('will-download', (_evento, item) => {
+    item.setSaveDialogOptions({
+      title: 'Salvar planilha',
+      defaultPath: path.join(app.getPath('downloads'), item.getFilename()),
+      filters: [{ name: 'Planilha do Excel', extensions: ['xlsx'] }],
+    });
+  });
+
   return janela;
 }
 

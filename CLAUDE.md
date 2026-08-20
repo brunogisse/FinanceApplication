@@ -276,7 +276,7 @@ desenvolvimento, sobre uma cópia do banco. Nada foi cortado ainda.
 | 3 — Cadastros e autenticação | **Concluída** — convivência com o Delphi verificada |
 | 4 — Lançamento individual | **Concluída** |
 | 5 — Operações em lote | **Concluída** — parcelamento, pagamento em lote, importação |
-| 6 — Relatórios e exportação | **Parcial** — consolidado por despesa feito; falta exportar |
+| 6 — Relatórios e exportação | **Concluída** — consolidado por despesa e exportação para planilha |
 | 7 — Corte final | Não iniciada |
 
 ### O que existe hoje
@@ -286,18 +286,19 @@ src/AgendaFinanceira.Dominio/          Dinheiro, Lancamento, regras, validaçõe
 src/AgendaFinanceira.Infraestrutura/   repositórios Dapper, leitor de planilha, BCrypt
 src/AgendaFinanceira.Api/              ASP.NET Core + Swagger + JWT
 src/AgendaFinanceira.SpikeFirebird/    spike de acesso a dados, ainda roda
-testes/AgendaFinanceira.Testes/        176 testes, 26 de paridade contra a base real
+testes/AgendaFinanceira.Testes/        181 testes, 26 de paridade contra a base real
 cliente/agenda-web/                    Angular 21 zoneless
 cliente/agenda-desktop/                Electron
 ```
 
 **Telas prontas:** login, grade de lançamentos (com aviso de vencimentos, seleção, pagamento
-em lote, parcelamento), formulário de lançamento, consolidado por despesa, cadastros (contas,
-formas de pagamento, despesas e subdespesas) e importação de planilha.
+em lote, parcelamento, exportação para planilha), formulário de lançamento, consolidado por
+despesa, cadastros (contas, formas de pagamento, despesas e subdespesas) e importação de
+planilha.
 
-**Falta no cliente:** exportação para Excel e o empacotamento em instalador.
+**Falta no cliente:** o empacotamento em instalador.
 
-**Falta no servidor:** exportação para Excel. O resto do módulo financeiro está completo.
+**O servidor está completo** para o módulo financeiro.
 
 **`prompt()` não existe no Electron.** Ele lança `prompt() is not supported.` e a ação morre
 sem aviso — funciona no navegador e falha no aplicativo, que é o pior tipo de defeito.

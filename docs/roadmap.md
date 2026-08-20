@@ -3,7 +3,7 @@
 Plano por etapas, com critérios de pronto, validação e riscos. A arquitetura que sustenta este
 plano está em [arquitetura-alvo.md](arquitetura-alvo.md).
 
-> **Situação em 20/08/2026.** As etapas 1 a 5 estão concluídas e a 6 está parcial. O legado
+> **Situação em 20/08/2026.** As etapas 1 a 6 estão concluídas; falta a 0 e a 7. O legado
 > continua sendo a única versão em produção — o sistema novo roda só em desenvolvimento, sobre
 > uma cópia. Nenhum módulo foi cortado, e portanto o critério de pronto nº 2 (uso real por
 > duas semanas com o legado ao lado) **ainda não foi cumprido por nenhuma etapa**.

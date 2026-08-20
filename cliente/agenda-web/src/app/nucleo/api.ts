@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { Observable, from, throwError } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import {
   Conta, Despesa, EntradaLancamento, FiltroConsulta, FormaPagamento, Lancamento,
   PreviaImportacao, ResultadoConsulta, ResultadoImportacao, ResultadoPagamentoEmLote,
@@ -62,15 +62,24 @@ export class Api {
   // ---------------- Lançamentos ----------------
 
   consultar(filtro: FiltroConsulta): Observable<ResultadoConsulta> {
-    let params = new HttpParams();
-    for (const [chave, valor] of Object.entries(filtro)) {
-      if (valor !== undefined && valor !== null && valor !== '') {
-        params = params.set(chave, String(valor));
-      }
-    }
     return this.http
-      .get<ResultadoConsulta>(`${this.endereco()}/lancamentos`, { params })
+      .get<ResultadoConsulta>(`${this.endereco()}/lancamentos`, { params: paraParametros(filtro) })
       .pipe(catchError(traduzirErro));
+  }
+
+  /**
+   * A mesma consulta, entregue como planilha.
+   *
+   * Os filtros são montados pela mesma função da consulta em tela, de propósito: o que sai na
+   * planilha tem de ser o que está na grade.
+   */
+  exportar(filtro: FiltroConsulta): Observable<Blob> {
+    return this.http
+      .get(`${this.endereco()}/lancamentos/exportar`, {
+        params: paraParametros(filtro),
+        responseType: 'blob',
+      })
+      .pipe(catchError(traduzirErroDeArquivo));
   }
 
   vencimentos(ate?: string): Observable<ResultadoConsulta> {
@@ -253,6 +262,41 @@ export class Api {
       .delete(`${this.endereco()}/${recurso}/${id}`)
       .pipe(catchError(traduzirErro));
   }
+}
+
+/** Filtros viram parâmetros de URL, ignorando o que está vazio. */
+function paraParametros(filtro: FiltroConsulta): HttpParams {
+  let params = new HttpParams();
+  for (const [chave, valor] of Object.entries(filtro)) {
+    if (valor !== undefined && valor !== null && valor !== '') {
+      params = params.set(chave, String(valor));
+    }
+  }
+  return params;
+}
+
+/**
+ * Erro numa resposta que pedia arquivo.
+ *
+ * Quando a resposta é `blob`, o corpo do erro **também** vem como Blob — inclusive o JSON com
+ * a explicação do servidor. Sem ler o texto, a razão real se perde e sobra uma mensagem
+ * genérica, justamente no caso em que a pessoa precisa saber o que houve.
+ */
+function traduzirErroDeArquivo(erro: HttpErrorResponse) {
+  if (!(erro.error instanceof Blob)) return traduzirErro(erro);
+
+  return from(erro.error.text()).pipe(
+    switchMap((texto) => {
+      let mensagem: string | undefined;
+      try {
+        mensagem = (JSON.parse(texto) as { erro?: string }).erro;
+      } catch {
+        // Corpo que não era JSON: cai na mensagem genérica abaixo.
+      }
+      return throwError(() => new Error(
+        mensagem ?? `Não foi possível gerar a planilha (${erro.status}).`));
+    }),
+  );
 }
 
 function lerSessaoGuardada(): Sessao | null {

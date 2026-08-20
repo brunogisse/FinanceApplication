@@ -139,44 +139,10 @@ app.MapGet("/lancamentos", (
     int? notaFiscal, int? cheque, bool? chequeCompensado, string? situacao,
     decimal? valorMinimo, decimal? valorMaximo, bool? faixaSobreValorPago) =>
 {
-    var hoje = DateOnly.FromDateTime(DateTime.Today);
-    var periodo = inicio is not null && fim is not null
-        ? new Periodo(inicio.Value, fim.Value)
-        : Periodo.UltimosSeisMeses(hoje);   // mesmo padrão da tela do legado
-
-    var consulta = new ConsultaLancamentos
-    {
-        Periodo = periodo,
-        FiltrarPorData = porData?.ToLowerInvariant() switch
-        {
-            "pagamento" => ColunaDeData.Pagamento,
-            "cadastro" => ColunaDeData.Cadastro,
-            _ => ColunaDeData.Vencimento
-        },
-        Pagamento = pagamento?.ToLowerInvariant() switch
-        {
-            "pagos" => FiltroPagamento.Pagos,
-            "naopagos" => FiltroPagamento.NaoPagos,
-            _ => FiltroPagamento.Todos
-        },
-        Descricao = descricao,
-        Despesa = despesa,
-        Subdespesa = subdespesa,
-        Conta = conta,
-        NotaFiscal = notaFiscal,
-        Cheque = cheque,
-        ChequeCompensado = chequeCompensado,
-        Situacao = situacao?.ToLowerInvariant() switch
-        {
-            "aguardando" => SituacaoStatus.Aguardando,
-            "liberada" => SituacaoStatus.Liberada,
-            "nenhuma" => SituacaoStatus.Nenhuma,
-            _ => null
-        },
-        ValorMinimo = valorMinimo is null ? null : Dinheiro.De(valorMinimo.Value),
-        ValorMaximo = valorMaximo is null ? null : Dinheiro.De(valorMaximo.Value),
-        FaixaSobreValorPago = faixaSobreValorPago ?? false
-    };
+    var consulta = FiltroDaConsulta.Montar(
+        inicio, fim, porData, pagamento, descricao, despesa, subdespesa, conta,
+        notaFiscal, cheque, chequeCompensado, situacao,
+        valorMinimo, valorMaximo, faixaSobreValorPago);
 
     return Results.Ok(ResultadoDto.De(repo.Consultar(consulta)));
 })
@@ -197,6 +163,48 @@ app.MapGet("/lancamentos", (
     "`s` minúsculo, que a busca atual não acha por ser sensível a caixa.\n\n" +
     "**valorMinimo / valorMaximo**: aplicam-se ao valor previsto, ou ao valor pago se " +
     "`faixaSobreValorPago=true`.");
+
+// ---- Exportação da consulta para planilha ----
+// Mesmos filtros da consulta acima, de propósito: é a mesma consulta, entregue em outro
+// formato. Ver docs/fluxos.md, item 11.
+app.MapGet("/lancamentos/exportar", (
+    RepositorioLancamentos repo,
+    DateOnly? inicio, DateOnly? fim,
+    string? porData, string? pagamento,
+    string? descricao, string? despesa, string? subdespesa, string? conta,
+    int? notaFiscal, int? cheque, bool? chequeCompensado, string? situacao,
+    decimal? valorMinimo, decimal? valorMaximo, bool? faixaSobreValorPago) =>
+{
+    var consulta = FiltroDaConsulta.Montar(
+        inicio, fim, porData, pagamento, descricao, despesa, subdespesa, conta,
+        notaFiscal, cheque, chequeCompensado, situacao,
+        valorMinimo, valorMaximo, faixaSobreValorPago);
+
+    var resultado = repo.Consultar(consulta);
+
+    // Planilha vazia não ajuda ninguém: o legado avisa "Não há dados para exportar!" e não
+    // abre o Excel. Aqui a recusa vem com a mesma razão, em vez de um arquivo com só o
+    // cabeçalho, que parece exportação bem-sucedida.
+    if (resultado.Lancamentos.Count == 0)
+        throw new RegraDeNegocioException(
+            "Não há lançamentos no período e filtros escolhidos para exportar.");
+
+    var planilha = ExportadorDeLancamentos.Gerar(resultado.Lancamentos);
+    var nome = $"lancamentos-{DateTime.Today:yyyy-MM-dd}.xlsx";
+
+    return Results.File(planilha, ExportadorDeLancamentos.TipoConteudo, nome);
+})
+.RequireAuthorization()
+.WithTags("Lançamentos")
+.WithSummary("Exporta a consulta para uma planilha")
+.WithDescription(
+    "Aceita exatamente os mesmos filtros de `GET /lancamentos` — é a mesma consulta, entregue " +
+    "como `.xlsx`. As colunas e a ordem são as do legado: descrição, valor pago, valor " +
+    "previsto, nota fiscal, cheque, vencimento, pagamento e conta, com a linha de totais no fim.\n\n" +
+    "⚠️ **Divergências intencionais:** não depende do Excel instalado, ao contrário do legado, " +
+    "que usa automação OLE; os valores saem exatos, porque já são decimais desde a leitura, " +
+    "enquanto lá o arredondamento acontece só na exportação e a planilha pode divergir do " +
+    "banco; e a linha de total é escrita sob as colunas certas, não em posições fixas.");
 
 // ---- Aviso de vencimentos da tela principal ----
 // "DATA_VENCIMENTO <= hoje AND PAGO = 0"
