@@ -4,9 +4,28 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
-import { Conta, Despesa, FiltroConsulta, Lancamento } from '../../nucleo/modelos';
-import { formatarData, formatarInteiro, formatarMoeda, hojeIso, somarMeses } from '../../nucleo/moeda';
+import { Conta, Despesa, FiltroConsulta, Lancamento, Subdespesa } from '../../nucleo/modelos';
+import {
+  formatarData, formatarInteiro, formatarMoeda, hojeIso, lerMoeda, somarMeses,
+} from '../../nucleo/moeda';
 import { baixarArquivo } from '../../nucleo/arquivos';
+
+/**
+ * Período que cobre a base inteira, usado na busca por documento.
+ *
+ * O fim vai longe de propósito: há financiamentos com parcelas vencendo anos à frente, e um
+ * fim em "hoje" esconderia justamente a parcela que a pessoa está procurando.
+ */
+const INICIO_DE_TUDO = '2000-01-01';
+const FIM_DE_TUDO = '2099-12-31';
+
+/** Texto de campo numérico: vazio ou não numérico vira "sem filtro", nunca zero. */
+function numeroOuNada(texto: string): number | undefined {
+  const limpo = texto.trim();
+  if (limpo === '') return undefined;
+  const valor = Number(limpo);
+  return Number.isFinite(valor) ? valor : undefined;
+}
 
 @Component({
   selector: 'app-lancamentos',
@@ -45,6 +64,53 @@ export class Lancamentos {
 
   readonly despesas = signal<Despesa[]>([]);
   readonly contas = signal<Conta[]>([]);
+  readonly todasSubdespesas = signal<Subdespesa[]>([]);
+
+  // ---- Busca avançada: é a segunda aba de pesquisa do legado ----
+  readonly buscaAvancadaAberta = signal(false);
+  readonly subdespesa = signal('');
+  readonly notaFiscal = signal('');
+  readonly cheque = signal('');
+  readonly chequeCompensado = signal<'' | 'sim' | 'nao'>('');
+  readonly situacao = signal<'' | 'aguardando' | 'liberada' | 'nenhuma'>('');
+  readonly valorMinimoTexto = signal('');
+  readonly valorMaximoTexto = signal('');
+  readonly faixaSobreValorPago = signal(false);
+
+  /** Só as subdespesas da despesa escolhida — ou todas, se não houver despesa escolhida. */
+  readonly subdespesasDisponiveis = computed(() => {
+    const despesa = this.despesa();
+    if (!despesa) return this.todasSubdespesas();
+
+    const id = this.despesas().find((d) => d.descricao === despesa)?.id;
+    return id === undefined
+      ? this.todasSubdespesas()
+      : this.todasSubdespesas().filter((s) => s.despesaId === id);
+  });
+
+  /**
+   * Quantos filtros avançados estão valendo.
+   *
+   * O painel fica fechado por padrão, e filtro ativo escondido é armadilha: a pessoa
+   * pesquisa, vê pouca coisa e não entende por quê. O número aparece ao lado do título.
+   */
+  readonly filtrosAvancadosAtivos = computed(() =>
+    [this.subdespesa(), this.notaFiscal(), this.cheque(), this.chequeCompensado(),
+     this.situacao(), this.valorMinimoTexto(), this.valorMaximoTexto()]
+      .filter((v) => v !== '').length);
+
+  /**
+   * Procurar por NF ou por número de cheque é procurar um documento: a data em que ele foi
+   * lançado não vem ao caso, e limitar aos últimos seis meses faria a busca falhar sem
+   * explicar por quê. O legado tem a mesma intenção — força o início em 01/01/2018 quando a
+   * busca é por nota fiscal.
+   *
+   * Divergência intencional: no legado, a busca por cheque compensado também ignora o
+   * período, o que devolve a base inteira. Aqui só a busca por documento amplia; as demais
+   * respeitam o período que está na tela, que é o que ela mostra.
+   */
+  readonly buscaPorDocumento = computed(() =>
+    this.notaFiscal() !== '' || this.cheque() !== '');
 
   // ---- Parcelamento ----
   readonly dialogoParcelar = viewChild<ElementRef<HTMLDialogElement>>('dialogoParcelar');
@@ -115,6 +181,9 @@ export class Lancamentos {
   private carregarCadastros(): void {
     this.api.despesas().subscribe({ next: (d) => this.despesas.set(d), error: () => {} });
     this.api.contas().subscribe({ next: (c) => this.contas.set(c), error: () => {} });
+    // São 148 subdespesas: carregar todas de uma vez sai mais barato que ir ao servidor a
+    // cada troca de despesa.
+    this.api.subdespesas().subscribe({ next: (s) => this.todasSubdespesas.set(s), error: () => {} });
   }
 
   private carregarVencimentos(): void {
@@ -148,15 +217,40 @@ export class Lancamentos {
    * mais tarde.
    */
   private filtroAtual(): FiltroConsulta {
+    const periodo = this.buscaPorDocumento()
+      ? { inicio: INICIO_DE_TUDO, fim: FIM_DE_TUDO }
+      : { inicio: this.inicio(), fim: this.fim() };
+
     return {
-      inicio: this.inicio(),
-      fim: this.fim(),
+      ...periodo,
       porData: this.porData(),
       pagamento: this.pagamento(),
       descricao: this.descricao() || undefined,
       despesa: this.despesa() || undefined,
       conta: this.conta() || undefined,
+      subdespesa: this.subdespesa() || undefined,
+      notaFiscal: numeroOuNada(this.notaFiscal()),
+      cheque: numeroOuNada(this.cheque()),
+      chequeCompensado: this.chequeCompensado() === ''
+        ? undefined
+        : this.chequeCompensado() === 'sim',
+      situacao: this.situacao() || undefined,
+      // Vírgula decimal, como a operadora digita há três anos.
+      valorMinimo: lerMoeda(this.valorMinimoTexto()) ?? undefined,
+      valorMaximo: lerMoeda(this.valorMaximoTexto()) ?? undefined,
+      faixaSobreValorPago: this.faixaSobreValorPago() || undefined,
     };
+  }
+
+  limparBuscaAvancada(): void {
+    this.subdespesa.set('');
+    this.notaFiscal.set('');
+    this.cheque.set('');
+    this.chequeCompensado.set('');
+    this.situacao.set('');
+    this.valorMinimoTexto.set('');
+    this.valorMaximoTexto.set('');
+    this.faixaSobreValorPago.set(false);
   }
 
   pesquisar(): void {
@@ -187,6 +281,7 @@ export class Lancamentos {
     this.porData.set('vencimento');
     this.inicio.set(somarMeses(hojeIso(), -6));
     this.fim.set(hojeIso());
+    this.limparBuscaAvancada();
     this.pesquisar();
   }
 

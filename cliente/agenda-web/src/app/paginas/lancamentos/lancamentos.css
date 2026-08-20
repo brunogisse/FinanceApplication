@@ -183,3 +183,33 @@
 .dialogo .alerta { margin: 0 0 16px; font-size: 13px; color: var(--cor-texto-fraco); }
 
 .acoes-dialogo { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ---------- Busca avançada ---------- */
+
+.alternar-avancada { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Filtro ativo com o painel fechado e nada em tela é armadilha: o contador conta. */
+.contador {
+  background: var(--cor-primaria);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 12px;
+  line-height: 18px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.avancada {
+  border-top: 3px solid var(--cor-primaria);
+  background: #fbfcfe;
+}
+.avancada .campo { min-width: 160px; }
+.avancada .campo-curto { min-width: 110px; max-width: 140px; }
+
+.nota-avancada {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--cor-texto-fraco);
+}

@@ -276,7 +276,7 @@ desenvolvimento, sobre uma cópia do banco. Nada foi cortado ainda.
 | 3 — Cadastros e autenticação | **Concluída** — convivência com o Delphi verificada |
 | 4 — Lançamento individual | **Concluída** |
 | 5 — Operações em lote | **Concluída** — parcelamento, pagamento em lote, importação |
-| 6 — Relatórios e exportação | **Concluída** — consolidado por despesa e exportação para planilha |
+| 6 — Relatórios e exportação | **Parcial** — consolidado em tela e exportação prontos; faltam os três relatórios impressos |
 | 7 — Corte final | Não iniciada |
 
 ### O que existe hoje
@@ -292,13 +292,20 @@ cliente/agenda-desktop/                Electron
 ```
 
 **Telas prontas:** login, grade de lançamentos (com aviso de vencimentos, seleção, pagamento
-em lote, parcelamento, exportação para planilha), formulário de lançamento, consolidado por
-despesa, cadastros (contas, formas de pagamento, despesas e subdespesas) e importação de
-planilha.
+em lote, parcelamento, exportação para planilha, busca avançada), formulário de lançamento,
+consolidado por despesa, cadastros (contas, formas de pagamento, despesas e subdespesas) e
+importação de planilha.
 
-**Falta no cliente:** o empacotamento em instalador.
+A busca avançada cobre a segunda aba do legado: subdespesa, nota fiscal, cheque, cheque
+compensado, situação e faixa de valor sobre previsto ou pago. **Busca por nota fiscal ou por
+cheque ignora o período e varre a base inteira** — é um documento que se procura, não um mês.
+O legado tem a mesma intenção quando força o início em 01/01/2018 na busca por NF.
 
-**O servidor está completo** para o módulo financeiro.
+**Falta no cliente:** os três relatórios impressos, o cadastro de usuários, marcar a situação
+direto pela grade (a API já tem o endpoint, ninguém chama) e o empacotamento em instalador.
+
+**Falta no servidor:** os relatórios impressos e a criação/alteração de usuários. O resto do
+módulo financeiro está completo.
 
 **`prompt()` não existe no Electron.** Ele lança `prompt() is not supported.` e a ação morre
 sem aviso — funciona no navegador e falha no aplicativo, que é o pior tipo de defeito.

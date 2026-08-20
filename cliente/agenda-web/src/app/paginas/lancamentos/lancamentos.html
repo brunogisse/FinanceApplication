@@ -97,8 +97,97 @@
               title="Gera uma planilha com o que está na grade">
         {{ exportando() ? 'Gerando...' : 'Exportar' }}
       </button>
+      <button class="botao alternar-avancada"
+              (click)="buscaAvancadaAberta.set(!buscaAvancadaAberta())">
+        {{ buscaAvancadaAberta() ? 'Menos filtros ▴' : 'Mais filtros ▾' }}
+        @if (filtrosAvancadosAtivos() > 0) {
+          <span class="contador">{{ filtrosAvancadosAtivos() }}</span>
+        }
+      </button>
     </div>
   </section>
+
+  <!-- A segunda aba de pesquisa do legado: NF, cheque, status e faixa de valor.
+       O servidor já aceitava todos estes filtros. -->
+  @if (buscaAvancadaAberta()) {
+    <section class="filtros cartao avancada">
+      <div class="campo">
+        <label for="subdespesa">Subdespesa</label>
+        <select id="subdespesa" [ngModel]="subdespesa()" (ngModelChange)="subdespesa.set($event)">
+          <option value="">(todas)</option>
+          @for (s of subdespesasDisponiveis(); track s.id) {
+            <option [value]="s.descricao">{{ s.descricao }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="campo campo-curto">
+        <label for="notaFiscal">Nota fiscal</label>
+        <input id="notaFiscal" inputmode="numeric" [ngModel]="notaFiscal()"
+               (ngModelChange)="notaFiscal.set($event)" (keydown)="aoTeclar($event)" />
+      </div>
+
+      <div class="campo campo-curto">
+        <label for="cheque">Cheque / documento</label>
+        <input id="cheque" inputmode="numeric" [ngModel]="cheque()"
+               (ngModelChange)="cheque.set($event)" (keydown)="aoTeclar($event)" />
+      </div>
+
+      <div class="campo">
+        <label for="compensado">Cheque compensado</label>
+        <select id="compensado" [ngModel]="chequeCompensado()"
+                (ngModelChange)="chequeCompensado.set($event)">
+          <option value="">(indiferente)</option>
+          <option value="sim">Compensado</option>
+          <option value="nao">Não compensado</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="situacao">Situação</label>
+        <select id="situacao" [ngModel]="situacao()" (ngModelChange)="situacao.set($event)">
+          <option value="">(indiferente)</option>
+          <option value="aguardando">Aguardando</option>
+          <option value="liberada">Liberada</option>
+          <option value="nenhuma">Sem situação</option>
+        </select>
+      </div>
+
+      <div class="campo campo-curto">
+        <label for="valorMin">Valor de</label>
+        <input id="valorMin" [ngModel]="valorMinimoTexto()"
+               (ngModelChange)="valorMinimoTexto.set($event)" (keydown)="aoTeclar($event)"
+               placeholder="0,00" />
+      </div>
+
+      <div class="campo campo-curto">
+        <label for="valorMax">até</label>
+        <input id="valorMax" [ngModel]="valorMaximoTexto()"
+               (ngModelChange)="valorMaximoTexto.set($event)" (keydown)="aoTeclar($event)"
+               placeholder="0,00" />
+      </div>
+
+      <div class="campo">
+        <label for="sobreValor">Faixa sobre</label>
+        <select id="sobreValor" [ngModel]="faixaSobreValorPago()"
+                (ngModelChange)="faixaSobreValorPago.set($event)">
+          <option [ngValue]="false">Valor previsto</option>
+          <option [ngValue]="true">Valor pago</option>
+        </select>
+      </div>
+
+      <div class="botoes-filtro">
+        <button class="botao" (click)="limparBuscaAvancada(); pesquisar()">Limpar estes</button>
+      </div>
+
+      @if (buscaPorDocumento()) {
+        <p class="nota-avancada">
+          Busca por nota fiscal ou cheque procura em <strong>toda a base</strong>, ignorando o
+          período — é um documento que se procura, não um mês.
+        </p>
+      }
+    </section>
+  }
 
   @if (erro()) {
     <div class="erro">{{ erro() }}</div>
