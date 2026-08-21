@@ -7,6 +7,8 @@
   /* Numa tela muito larga o conteúdo para de crescer: linha de grade comprida demais custa a
      leitura, e o olho perde a referência entre a descrição e o valor lá na ponta. */
   max-width: 1600px;
+  margin-inline: auto;
+  width: 100%;
 }
 
 /* ---------- Topo ---------- */

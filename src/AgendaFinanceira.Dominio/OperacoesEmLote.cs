@@ -34,6 +34,29 @@ public sealed record ResultadoPagamentoEmLote
     public int Quantidade => Pagos.Count;
 }
 
+/// <summary>
+/// O que saiu da leitura de uma planilha.
+///
+/// Traz mais que as linhas porque a leitura descarta coisas de propósito — preâmbulo e
+/// créditos —, e quem descarta em silêncio some com dado sem ninguém ver.
+/// </summary>
+public sealed record LeituraDaPlanilha
+{
+    public required IReadOnlyList<LinhaImportada> Linhas { get; init; }
+
+    /// <summary>Linhas de crédito que ficaram de fora. Ver a nota no leitor.</summary>
+    public required int CreditosIgnorados { get; init; }
+
+    /// <summary>
+    /// Linhas que tinham valor mas não data, e herdaram a da linha anterior — o extrato não
+    /// repete a data dentro do mesmo dia. Contado para a prévia poder dizer.
+    /// </summary>
+    public required int DatasHerdadas { get; init; }
+
+    /// <summary>Onde os dados de fato começaram — depois do título e do cabeçalho.</summary>
+    public required int PrimeiraLinhaComDados { get; init; }
+}
+
 /// <summary>Uma linha da planilha de importação, já interpretada.</summary>
 public sealed record LinhaImportada
 {

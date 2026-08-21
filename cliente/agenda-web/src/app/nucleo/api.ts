@@ -164,9 +164,17 @@ export class Api {
 
   importarPlanilha(
     planilha: File, subdespesaId: number, contaId: number, formaPagamentoId: number,
+    descricoes?: Record<number, string>,
   ): Observable<ResultadoImportacao> {
     const corpo = new FormData();
     corpo.append('planilha', planilha);
+
+    // Descrições digitadas na prévia, para as linhas que a planilha trouxe sem histórico.
+    // Só o que tem texto viaja: o servidor recusa linha que continua em branco.
+    const preenchidas = Object.entries(descricoes ?? {})
+      .filter(([, texto]) => texto.trim() !== '');
+    if (preenchidas.length > 0)
+      corpo.append('descricoes', JSON.stringify(Object.fromEntries(preenchidas)));
 
     const params = new HttpParams()
       .set('subdespesaId', subdespesaId)

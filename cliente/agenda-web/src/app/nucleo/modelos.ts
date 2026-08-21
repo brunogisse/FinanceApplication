@@ -159,6 +159,15 @@ export interface PreviaImportacao {
   quantidade: number;
   total: Valor;
   linhas: LinhaDaPlanilha[];
+
+  /** Linhas de crédito que ficaram de fora: dinheiro entrando não é despesa. */
+  creditosIgnorados: number;
+
+  /** Linhas que herdaram a data da anterior — extrato não repete a data no mesmo dia. */
+  datasHerdadas: number;
+
+  /** Onde os dados começaram, depois do título e do cabeçalho. */
+  primeiraLinhaComDados: number;
 }
 
 export interface ResultadoImportacao {

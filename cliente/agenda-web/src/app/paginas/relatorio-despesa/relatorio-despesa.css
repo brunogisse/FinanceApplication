@@ -5,9 +5,9 @@
   gap: 10px;
   padding: 10px 14px 14px;
   max-width: 1240px;
-  /* Alinhado a esquerda, junto do menu: centralizado numa tela larga o conteudo vira uma
-     ilha, com vazio dos dois lados. */
-  margin: 0;
+  /* Centralizado na area util, a direita do menu. O menu ja e a ancora visual da esquerda;
+     colar o conteudo nele deixava toda a sobra de um lado so. */
+  margin-inline: auto;
   width: 100%;
 }
 

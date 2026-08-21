@@ -188,6 +188,30 @@ E o lote inteiro é gravado com commits individuais.
 
 > `UfrmLancamentosEmLote.pas:114-190`, `UfrmLancamentosEmLote.pas:374-465`
 
+### O que o sistema novo faz diferente aqui
+
+A regra do legado — *"linha sem data anexa a descrição à anterior"* — **descarta dinheiro em
+silêncio** quando a planilha é um extrato bancário. Extrato não repete a data dentro do mesmo
+dia, então a segunda compra do dia chega sem data, com valor. Pela regra do legado essa linha
+vira apenas um pedaço de texto colado na descrição de cima, e **o valor dela some sem aviso**.
+
+Medido no extrato real de junho/2025 (`conta raul junho.xlsx`, 179 débitos, R$ 348.271,89):
+duas linhas cairiam nesse buraco, R$ 1.542,73 e R$ 90,00.
+
+O leitor novo:
+
+| Situação na planilha | Legado | Sistema novo |
+|---|---|---|
+| Título e cabeçalho no alto | erro (espera dados na linha 2) | pulados até a primeira data legível |
+| Sem data, **com** valor | valor descartado calado | herda a data da linha anterior |
+| Sem data, sem valor, só texto | anexa à descrição anterior | igual |
+| Valor terminado em `C` (crédito) | vira despesa | fica de fora, e a prévia diz quantas |
+| Sem descrição | grava em branco | a prévia pede o texto, e ele vai na gravação |
+| Data ilegível no meio dos dados | pula | recusa o lote apontando a linha |
+
+A prévia informa cada uma dessas decisões por extenso. Quem descarta em silêncio some com
+dado sem ninguém ver — e foi exatamente isso que aconteceu no legado.
+
 ---
 
 ## 6. Consultar lançamentos

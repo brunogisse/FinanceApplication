@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using AgendaFinanceira.Dominio;
 using AgendaFinanceira.Infraestrutura;
@@ -190,13 +192,17 @@ public static class EndpointsLancamentos
             await conteudo.CopyToAsync(memoria);
             memoria.Position = 0;
 
-            var linhas = LeitorDePlanilha.Ler(memoria);
+            var leitura = LeitorDePlanilha.Ler(memoria);
+            var linhas = leitura.Linhas;
 
             return Results.Ok(new
             {
                 quantidade = linhas.Count,
                 // Soma em decimal, nunca em ponto flutuante — é dinheiro.
                 total = linhas.Sum(l => l.Valor.Valor),
+                creditosIgnorados = leitura.CreditosIgnorados,
+                datasHerdadas = leitura.DatasHerdadas,
+                primeiraLinhaComDados = leitura.PrimeiraLinhaComDados,
                 linhas = linhas.Select(l => new
                 {
                     numeroDaLinha = l.NumeroDaLinha,
@@ -218,7 +224,8 @@ public static class EndpointsLancamentos
 
         grupo.MapPost("/importar", async (RepositorioLancamentos repo, ClaimsPrincipal quem,
                                           IFormFile planilha,
-                                          int subdespesaId, int contaId, int formaPagamentoId) =>
+                                          int subdespesaId, int contaId, int formaPagamentoId,
+                                          [FromForm] string? descricoes) =>
         {
             if (planilha.Length == 0)
                 throw new RegraDeNegocioException("Envie uma planilha.");
@@ -228,13 +235,18 @@ public static class EndpointsLancamentos
             await conteudo.CopyToAsync(memoria);
             memoria.Position = 0;
 
-            var linhas = LeitorDePlanilha.Ler(memoria);
-            var r = repo.ImportarLote(linhas, subdespesaId, contaId, formaPagamentoId, Autenticado(quem));
+            var leitura = LeitorDePlanilha.Ler(memoria);
+            var linhas = LeitorDePlanilha.AplicarDescricoesManuais(
+                leitura.Linhas, LerDescricoesManuais(descricoes));
+
+            var r = repo.ImportarLote(
+                linhas, subdespesaId, contaId, formaPagamentoId, Autenticado(quem));
 
             return Results.Ok(new
             {
                 quantidade = r.Quantidade,
                 total = r.Total.Valor,
+                creditosIgnorados = leitura.CreditosIgnorados,
                 lancamentos = r.Lancamentos.Select(LancamentoDto.De).ToList()
             });
         })
@@ -242,16 +254,49 @@ public static class EndpointsLancamentos
         .DisableAntiforgery()
         .WithSummary("Importa um lote de pagamentos de uma planilha (nível 3)")
         .WithDescription(
-            "Lê o `.xlsx` a partir da linha 2, na aba `Planilha1` — não achando, usa a primeira. " +
-            "Coluna 1 data, 2 descrição, 3 valor.\n\n" +
-            "**Linha sem data não vira registro novo:** sua descrição é anexada à do registro " +
-            "anterior, separada por \" - \". É assim que uma despesa com várias linhas de " +
-            "detalhe é consolidada.\n\n" +
+            "Lê o `.xlsx` na aba `Planilha1` — não achando, usa a primeira. Coluna 1 data, " +
+            "2 descrição, 3 valor. Título e cabeçalho no alto são pulados: os dados começam " +
+            "na primeira linha com data legível.\n\n" +
+            "**Serve extrato bancário direto.** Valor terminado em `C` é crédito e fica de " +
+            "fora — este sistema é contas a pagar. Linha com valor mas sem data herda a data " +
+            "da anterior, que é como o extrato marca dois lançamentos no mesmo dia.\n\n" +
+            "**Linha só com descrição — sem data e sem valor — não vira registro novo:** sua " +
+            "descrição é anexada à do registro anterior, separada por \" - \". É assim que uma " +
+            "despesa com várias linhas de detalhe é consolidada.\n\n" +
             "Todo o lote recebe a mesma subdespesa, conta e forma de pagamento, e entra **já " +
             "quitado**, com a data histórica da planilha. É isso que explica os 10.481 " +
             "lançamentos com pagamento anterior ao cadastro — comportamento esperado, não defeito.\n\n" +
             "⚠️ **Divergências intencionais:** o lote é uma transação só, então uma linha " +
             "inválida impede o lote inteiro em vez de gravar pela metade. E a leitura não " +
-            "depende de ter o Excel instalado, ao contrário do legado, que usa automação OLE.");
+            "depende de ter o Excel instalado, ao contrário do legado, que usa automação OLE.\n\n" +
+            "O campo `descricoes` é opcional: um JSON `{\"216\": \"TEXTO\"}` com o que a pessoa " +
+            "digitou para as linhas que a planilha trouxe sem histórico. Só preenche o que " +
+            "está em branco.");
+    }
+
+    /// <summary>
+    /// Lê o JSON `{"216": "TEXTO"}` das descrições digitadas na prévia.
+    ///
+    /// Recusa formato torto em vez de ignorar: a pessoa digitou algo que precisa chegar, e
+    /// engolir isso gravaria o lote com a linha em branco — que é o erro que ela corrigiu.
+    /// </summary>
+    private static IReadOnlyDictionary<int, string>? LerDescricoesManuais(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+
+        try
+        {
+            var bruto = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+            if (bruto is null) return null;
+
+            return bruto
+                .Where(p => int.TryParse(p.Key, out _))
+                .ToDictionary(p => int.Parse(p.Key), p => p.Value);
+        }
+        catch (JsonException)
+        {
+            throw new RegraDeNegocioException(
+                "As descrições digitadas não chegaram em formato válido. Confira a planilha de novo.");
+        }
     }
 }

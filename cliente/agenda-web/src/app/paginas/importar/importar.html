@@ -34,17 +34,16 @@
     <section class="cartao passo">
       <h2>1. A planilha</h2>
       <p class="explicacao">
-        Os dados começam na linha 2, na aba <code>Planilha1</code>. Coluna 1 data, coluna 2
-        descrição, coluna 3 valor. Linha sem data não vira lançamento novo: sua descrição é
-        anexada à do lançamento anterior.
+        Coluna 1 data, coluna 2 descrição, coluna 3 valor. Título e cabeçalho no alto são
+        pulados sozinhos, e extrato bancário serve direto: linha marcada com
+        <code>C</code> é crédito e fica de fora, linha sem data herda a do dia anterior.
+        Linha só com descrição, sem data e sem valor, é detalhe do lançamento de cima e é
+        anexada à descrição dele.
       </p>
 
       <div class="escolha-arquivo">
         <input type="file" accept=".xlsx,.xls" (change)="escolherArquivo($event)"
                [disabled]="!podeImportar() || carregando()" />
-        @if (nomeDoArquivo()) {
-          <span class="nome-arquivo">{{ nomeDoArquivo() }}</span>
-        }
       </div>
     </section>
 
@@ -55,6 +54,44 @@
           <strong>{{ inteiro(p.quantidade) }}</strong> lançamento(s), somando
           <strong class="dinheiro">{{ moeda(p.total) }}</strong>. Nada foi gravado ainda.
         </p>
+
+        <!-- O que a leitura decidiu por conta própria, dito por extenso: quem descarta ou
+             completa em silêncio some com dado sem ninguém ver. -->
+        @if (p.primeiraLinhaComDados > 2 || p.creditosIgnorados > 0 || p.datasHerdadas > 0) {
+          <ul class="notas-leitura">
+            @if (p.primeiraLinhaComDados > 2) {
+              <li>Título e cabeçalho pulados: os dados começam na linha {{ p.primeiraLinhaComDados }}.</li>
+            }
+            @if (p.datasHerdadas > 0) {
+              <li>
+                {{ inteiro(p.datasHerdadas) }} linha(s) sem data herdaram a data da linha
+                anterior — é assim que o extrato marca dois lançamentos no mesmo dia.
+              </li>
+            }
+            @if (p.creditosIgnorados > 0) {
+              <li>
+                {{ inteiro(p.creditosIgnorados) }} linha(s) de crédito ficaram de fora.
+                Crédito é dinheiro entrando, e este sistema é contas a pagar.
+              </li>
+            }
+          </ul>
+        }
+
+        @if (linhasSemDescricao().length > 0) {
+          <div class="aviso-descricao" [class.resolvido]="linhasPendentes().length === 0">
+            A planilha não trouxe histórico na(s) linha(s)
+            <strong>{{ linhasSemDescricao().join(', ') }}</strong> — o extrato exportou só o
+            valor. Escreva a descrição na própria grade abaixo; ela vai junto na gravação.
+            @if (linhasPendentes().length > 0) {
+              <strong> Falta(m) {{ inteiro(linhasPendentes().length) }}.</strong>
+              <button type="button" class="ir-para" (click)="irParaPendente()">
+                Ir para a linha {{ linhasPendentes()[0] }}
+              </button>
+            } @else {
+              <strong> Tudo preenchido.</strong>
+            }
+          </div>
+        }
 
         <div class="grade-area">
           <table class="grade">
@@ -68,10 +105,20 @@
             </thead>
             <tbody>
               @for (l of p.linhas; track l.numeroDaLinha) {
-                <tr>
+                <tr [class.sem-descricao]="!l.descricao.trim()">
                   <td class="col-linha">{{ l.numeroDaLinha }}</td>
                   <td class="nao-quebra">{{ data(l.data) }}</td>
-                  <td>{{ l.descricao }}</td>
+                  <td>
+                    @if (l.descricao.trim()) {
+                      {{ l.descricao }}
+                    } @else {
+                      <input class="campo-descricao" type="text" maxlength="60"
+                             [attr.data-linha]="l.numeroDaLinha"
+                             placeholder="Sem histórico na planilha — escreva aqui"
+                             [value]="descricaoManual(l.numeroDaLinha)"
+                             (input)="anotarDescricao(l.numeroDaLinha, $any($event.target).value)" />
+                    }
+                  </td>
                   <td class="dinheiro">{{ moeda(l.valor) }}</td>
                 </tr>
               }

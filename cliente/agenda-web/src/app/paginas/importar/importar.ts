@@ -55,9 +55,55 @@ export class Importar {
 
   readonly nomeDoArquivo = computed(() => this.arquivo()?.name ?? '');
 
+  /**
+   * Descrições digitadas aqui, por número de linha da planilha.
+   *
+   * Extrato bancário às vezes exporta a linha só com o valor, sem histórico. Recusar o lote
+   * inteiro obrigaria a editar o `.xlsx`; completar sozinho seria inventar dado. Então quem
+   * opera escreve, na prévia, e o texto vai junto na gravação.
+   */
+  readonly descricoesManuais = signal<Record<number, string>>({});
+
+  /** Linhas que a planilha trouxe sem descrição — as únicas que aceitam texto digitado. */
+  readonly linhasSemDescricao = computed(() =>
+    (this.previa()?.linhas ?? []).filter((l) => !l.descricao.trim()).map((l) => l.numeroDaLinha));
+
+  /** Das que faltavam, as que continuam em branco. É o que ainda impede de gravar. */
+  readonly linhasPendentes = computed(() => {
+    const digitadas = this.descricoesManuais();
+    return this.linhasSemDescricao().filter((n) => !(digitadas[n] ?? '').trim());
+  });
+
+  descricaoManual(numeroDaLinha: number): string {
+    return this.descricoesManuais()[numeroDaLinha] ?? '';
+  }
+
+  anotarDescricao(numeroDaLinha: number, texto: string): void {
+    this.descricoesManuais.update((atual) => ({ ...atual, [numeroDaLinha]: texto }));
+  }
+
+  /**
+   * Leva a grade até a primeira linha que falta preencher.
+   *
+   * Num extrato de 179 linhas, dizer "linha 216" sem levar até lá é mandar a pessoa rolar
+   * procurando.
+   */
+  irParaPendente(): void {
+    const linha = this.linhasPendentes()[0];
+    if (linha === undefined) return;
+
+    const campo = document.querySelector<HTMLInputElement>(
+      `.campo-descricao[data-linha="${linha}"]`);
+    if (!campo) return;
+
+    campo.scrollIntoView({ block: 'center' });
+    campo.focus();
+  }
+
   /** Tudo escolhido e planilha conferida: só então dá para gravar. */
   readonly podeGravar = computed(() =>
     this.previa() !== null &&
+    this.linhasPendentes().length === 0 &&
     Number(this.subdespesaId()) > 0 &&
     Number(this.contaId()) > 0 &&
     Number(this.formaPagamentoId()) > 0);
@@ -156,6 +202,7 @@ export class Importar {
 
     this.api.importarPlanilha(
       arquivo, Number(this.subdespesaId()), Number(this.contaId()), Number(this.formaPagamentoId()),
+      this.descricoesManuais(),
     ).subscribe({
       next: (r) => {
         this.resultado.set(r);

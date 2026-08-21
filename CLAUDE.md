@@ -307,6 +307,13 @@ parcelamento, exportação para planilha, busca avançada), formulário de lanç
 por despesa, cadastros (contas, formas de pagamento, despesas e subdespesas) e importação de
 planilha.
 
+**A importação lê extrato bancário direto**, sem preparar a planilha: pula título e cabeçalho,
+deixa crédito de fora, e a linha que vem só com valor herda a data da anterior — que é onde o
+legado perde dinheiro (defeito 8 abaixo). A prévia diz por extenso cada decisão dessas, e
+quando o extrato não trouxe histórico, quem opera digita a descrição na própria grade antes de
+gravar. Exercitada ponta a ponta com `conta raul junho.xlsx`: 179 débitos, R$ 348.271,89,
+conferido contra a soma do arquivo por caminho independente.
+
 A busca avançada cobre a segunda aba do legado: subdespesa, nota fiscal, cheque, cheque
 compensado, situação e faixa de valor sobre previsto ou pago. **Busca por nota fiscal ou por
 cheque ignora o período e varre a base inteira** — é um documento que se procura, não um mês.
@@ -370,8 +377,14 @@ operadora quer muitas linhas de uma vez, e isso é funcionalidade.
 
 O resto do visual sai de tokens compartilhados em `styles.css` — `--raio`, `--raio-grande`,
 `--sombra`, `--borda-sutil` —, então mudar a linguagem visual de todas as telas é mexer neles,
-não em cada arquivo. As páginas de conteúdo são alinhadas à esquerda, junto do menu: numa tela
-larga, conteúdo centralizado vira uma ilha com vazio dos dois lados.
+não em cada arquivo.
+
+**Cada página limita a própria largura e se centraliza na área à direita do menu**, com
+`max-width` + `margin-inline: auto`: 1720px no painel, 1600px na grade de lançamentos, 1240px
+nos cadastros e no consolidado, 980px na importação, 900px no formulário. O limite existe
+porque linha comprida demais custa a leitura — o olho perde a referência entre a descrição e o
+valor lá na ponta. A centralização é decisão do Bruno (21/08/2026), depois de ver o conteúdo
+colado no menu com toda a sobra de um lado só.
 
 ### Pendências que valem lembrar
 
@@ -419,3 +432,8 @@ Levantamento completo em [docs/dominio.md](docs/dominio.md) e
    caminhos fixos no código.
 6. **Senhas em texto plano**, comparadas no cliente após trazer a tabela `LOGIN` inteira.
 7. **Sem índice em coluna de data**, embora toda consulta filtre por data.
+8. **A importação de planilha descarta dinheiro em silêncio.** A regra "linha sem data anexa a
+   descrição à anterior" trata como texto uma linha que traz valor — e extrato bancário não
+   repete a data dentro do mesmo dia. No extrato real de junho/2025 são duas linhas, R$ 1.632,73
+   somados, que entrariam como pedaço de descrição e nunca como lançamento. Ver a tabela de
+   divergências em [docs/fluxos.md](docs/fluxos.md#5-importar-pagamentos-de-planilha).
