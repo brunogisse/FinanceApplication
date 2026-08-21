@@ -20,15 +20,63 @@
   --cor-borda: #d6d8dd;
   --cor-texto: #1f2430;
   --cor-texto-fraco: #6b7280;
-  --cor-primaria: #1d4ed8;
-  --cor-primaria-escura: #1e3a8a;
+  --cor-primaria: #15803d;
+  --cor-primaria-escura: #166534;
+  --cor-primaria-clara: #eaf6ee;
   --cor-erro: #b91c1c;
   --cor-erro-fundo: #fee2e2;
   --cor-sucesso: #15803d;
   --cor-atencao-fundo: #fef3c7;
 
+  /*
+   * Cards do painel.
+   *
+   * Os quatro contam uma história de contas a pagar: o que venceu, o que está chegando, o
+   * que já saiu e o compromisso do mês.
+   *
+   * Os gradientes são os mesmos do Fechamento Petrotorque, copiados de
+   * `petrotorque-desktop/src/styles.scss`, não estimados de imagem. Lá eles vestem entradas,
+   * saídas, resultado e saldo; aqui vestem as quatro situações que este sistema tem.
+   *
+   * Como lá, o gradiente **identifica a métrica, não codifica grandeza** — por isso os
+   * gráficos seguem com a paleta validada à parte.
+   */
+  --card-laranja: linear-gradient(135deg, #fb7d8a 0%, #f9a45c 100%);
+  --card-magenta: linear-gradient(135deg, #a45deb 0%, #e355d8 100%);
+  --card-verde: linear-gradient(135deg, #5ec26a 0%, #b4e04a 100%);
+  --card-azul: linear-gradient(135deg, #5b7cf0 0%, #7f9cf5 100%);
+
+  /* Qual cor cada situação veste. Trocar aqui muda o painel inteiro. */
+  --card-vencido: var(--card-laranja);
+  --card-proximos: var(--card-magenta);
+  --card-pago: var(--card-verde);
+  --card-previsto: var(--card-azul);
+
+  /* Verde da marca, no menu lateral. */
+  --marca: linear-gradient(165deg, #5ec26a 0%, #3d9950 100%);
+
+  --sombra-realce: 0 10px 24px -6px rgba(0, 0, 0, .28);
+
+  /*
+   * Cores de série dos gráficos, as mesmas do Fechamento Petrotorque.
+   *
+   * O roxo é o do cartão de resultado; lá está anotado que ele separa do tom de alerta com
+   * ΔE 27,5 na simulação de daltonismo e 28,2 em visão normal, com contraste acima de 3:1.
+   *
+   * **A cor segue a grandeza, não o rank:** pago é o roxo em qualquer gráfico, previsto é o
+   * tom de alerta. O laranja fica em 2,64:1 contra o branco — abaixo do piso —, e por isso
+   * os dois gráficos vêm sempre com os valores por escrito ao lado.
+   */
+  --serie-pago: #a45deb;
+  --serie-previsto: #ec835a;
+  --serie-pago-lavagem: rgba(164, 93, 235, .10);
+  --serie-previsto-lavagem: rgba(236, 131, 90, .10);
+  --grade-grafico: #e6e8ef;
+
   --raio: 6px;
+  --raio-grande: 14px;
   --sombra: 0 1px 3px rgba(0, 0, 0, .12);
+  --sombra-card: 0 6px 18px rgba(15, 23, 42, .10);
 }
 
 /* box-sizing não é global por padrão: sem isto, altura 100vh mais padding estoura a janela

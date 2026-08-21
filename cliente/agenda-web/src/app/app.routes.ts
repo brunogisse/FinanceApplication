@@ -11,44 +11,13 @@ const exigirSessao = () => {
 };
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'lancamentos' },
   {
     path: 'login',
     loadComponent: () => import('./paginas/login/login').then((m) => m.Login),
   },
-  {
-    path: 'lancamentos',
-    canActivate: [exigirSessao],
-    loadComponent: () => import('./paginas/lancamentos/lancamentos').then((m) => m.Lancamentos),
-  },
-  {
-    path: 'relatorios/por-despesa',
-    canActivate: [exigirSessao],
-    loadComponent: () =>
-      import('./paginas/relatorio-despesa/relatorio-despesa').then((m) => m.RelatorioDespesa),
-  },
-  {
-    path: 'lancamentos/novo',
-    canActivate: [exigirSessao],
-    loadComponent: () =>
-      import('./paginas/lancamento-form/lancamento-form').then((m) => m.LancamentoForm),
-  },
-  {
-    path: 'lancamentos/:id',
-    canActivate: [exigirSessao],
-    loadComponent: () =>
-      import('./paginas/lancamento-form/lancamento-form').then((m) => m.LancamentoForm),
-  },
-  {
-    path: 'cadastros',
-    canActivate: [exigirSessao],
-    loadComponent: () => import('./paginas/cadastros/cadastros').then((m) => m.Cadastros),
-  },
-  {
-    path: 'importar',
-    canActivate: [exigirSessao],
-    loadComponent: () => import('./paginas/importar/importar').then((m) => m.Importar),
-  },
+
+  // Os relatórios ficam fora da casca de propósito: são páginas de impressão, e uma folha
+  // não tem menu lateral.
   {
     path: 'relatorios/lancamentos',
     canActivate: [exigirSessao],
@@ -70,5 +39,47 @@ export const routes: Routes = [
       import('./paginas/relatorio-subdespesa/relatorio-subdespesa')
         .then((m) => m.RelatorioSubdespesa),
   },
-  { path: '**', redirectTo: 'lancamentos' },
+
+  // Tudo o mais vive dentro da casca, com o menu à esquerda.
+  {
+    path: '',
+    canActivate: [exigirSessao],
+    loadComponent: () => import('./layout/casca').then((m) => m.Casca),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'painel' },
+      {
+        path: 'painel',
+        loadComponent: () => import('./paginas/painel/painel').then((m) => m.Painel),
+      },
+      {
+        path: 'lancamentos',
+        loadComponent: () => import('./paginas/lancamentos/lancamentos').then((m) => m.Lancamentos),
+      },
+      {
+        path: 'lancamentos/novo',
+        loadComponent: () =>
+          import('./paginas/lancamento-form/lancamento-form').then((m) => m.LancamentoForm),
+      },
+      {
+        path: 'lancamentos/:id',
+        loadComponent: () =>
+          import('./paginas/lancamento-form/lancamento-form').then((m) => m.LancamentoForm),
+      },
+      {
+        path: 'relatorios/por-despesa',
+        loadComponent: () =>
+          import('./paginas/relatorio-despesa/relatorio-despesa').then((m) => m.RelatorioDespesa),
+      },
+      {
+        path: 'cadastros',
+        loadComponent: () => import('./paginas/cadastros/cadastros').then((m) => m.Cadastros),
+      },
+      {
+        path: 'importar',
+        loadComponent: () => import('./paginas/importar/importar').then((m) => m.Importar),
+      },
+    ],
+  },
+
+  { path: '**', redirectTo: 'painel' },
 ];

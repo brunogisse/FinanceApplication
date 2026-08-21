@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
 import { Conta, Despesa, FiltroConsulta, Lancamento, Subdespesa } from '../../nucleo/modelos';
 import {
@@ -38,6 +38,7 @@ function numeroOuNada(texto: string): number | undefined {
 export class Lancamentos {
   private readonly api = inject(Api);
   private readonly router = inject(Router);
+  private readonly rota = inject(ActivatedRoute);
 
   readonly moeda = formatarMoeda;
   readonly data = formatarData;
@@ -147,12 +148,13 @@ export class Lancamentos {
   });
 
   /**
-   * Aviso de vencimentos, equivalente ao "Há N despesa(s) a pagar" que o legado mostra ao
-   * abrir. É a primeira coisa que a operadora vê no sistema atual.
+   * De onde a pessoa veio, quando chegou por um card do painel.
+   *
+   * O aviso "Há N despesa(s) a pagar" que o legado dá ao abrir virou o primeiro card do
+   * painel, e é ele que traz para cá já filtrado. Repetir o aviso nesta tela seria dizer duas
+   * vezes a mesma coisa.
    */
-  readonly vencidos = signal(0);
-  readonly totalVencido = signal(0);
-  readonly avisoDispensado = signal(false);
+  readonly descricaoDoAtalho = signal<string | null>(null);
 
   readonly usuario = this.api.usuario;
   readonly podeLancar = this.api.podeLancar;
@@ -174,8 +176,64 @@ export class Lancamentos {
 
   constructor() {
     this.carregarCadastros();
-    this.carregarVencimentos();
+    this.aplicarAtalho();
     this.pesquisar();
+  }
+
+  /**
+   * Aplica o filtro que veio do painel, pela URL.
+   *
+   * Vem pela URL e não por estado compartilhado para a tela continuar sendo uma página por si
+   * só: recarregar mantém o mesmo recorte, e o endereço descreve o que está em tela.
+   */
+  private aplicarAtalho(): void {
+    const p = this.rota.snapshot.queryParamMap;
+    const atalho = p.get('atalho');
+    if (!atalho) return;
+
+    switch (atalho) {
+      case 'vencidos':
+        this.porData.set('vencimento');
+        this.pagamento.set('naopagos');
+        // Começo bem atrás para não esconder atraso antigo — o legado não limita o início.
+        this.inicio.set(somarMeses(hojeIso(), -120));
+        this.fim.set(hojeIso());
+        this.descricaoDoAtalho.set('vencidos ou vencendo hoje');
+        break;
+
+      case 'dia': {
+        const dia = p.get('dia');
+        if (!dia) return;
+        this.porData.set('vencimento');
+        this.pagamento.set('todos');
+        this.inicio.set(dia);
+        this.fim.set(dia);
+        this.descricaoDoAtalho.set(`vencendo em ${formatarData(dia)}`);
+        break;
+      }
+
+      case 'periodo':
+      case 'despesa': {
+        const inicio = p.get('inicio');
+        const fim = p.get('fim');
+        if (inicio) this.inicio.set(inicio);
+        if (fim) this.fim.set(fim);
+        this.porData.set('vencimento');
+        this.pagamento.set('todos');
+
+        if (atalho === 'despesa') {
+          const despesa = p.get('despesa') ?? '';
+          this.despesa.set(despesa);
+          // O card mostra o que foi pago no mês; o recorte aqui precisa ser o mesmo.
+          this.porData.set('pagamento');
+          this.pagamento.set('pagos');
+          this.descricaoDoAtalho.set(`pagos em ${despesa}`);
+        } else {
+          this.descricaoDoAtalho.set('vencimentos do mês');
+        }
+        break;
+      }
+    }
   }
 
   private carregarCadastros(): void {
@@ -184,29 +242,6 @@ export class Lancamentos {
     // São 148 subdespesas: carregar todas de uma vez sai mais barato que ir ao servidor a
     // cada troca de despesa.
     this.api.subdespesas().subscribe({ next: (s) => this.todasSubdespesas.set(s), error: () => {} });
-  }
-
-  private carregarVencimentos(): void {
-    this.api.vencimentos().subscribe({
-      next: (r) => {
-        this.vencidos.set(r.quantidade);
-        this.totalVencido.set(r.totalPrevisto);
-      },
-      error: () => {},
-    });
-  }
-
-  /** Deixa na tela apenas o que está vencido ou vence hoje e ainda não foi pago. */
-  verVencimentos(): void {
-    this.porData.set('vencimento');
-    this.pagamento.set('naopagos');
-    this.descricao.set('');
-    this.despesa.set('');
-    this.conta.set('');
-    // Começo bem atrás para não esconder atraso antigo — o legado não limita o início.
-    this.inicio.set(somarMeses(hojeIso(), -120));
-    this.fim.set(hojeIso());
-    this.pesquisar();
   }
 
   /**
@@ -435,15 +470,6 @@ export class Lancamentos {
 
   novo(): void { this.router.navigate(['/lancamentos/novo']); }
   editar(l: Lancamento): void { this.router.navigate(['/lancamentos', l.id]); }
-  relatorio(): void { this.router.navigate(['/relatorios/por-despesa']); }
-  cadastros(): void { this.router.navigate(['/cadastros']); }
-  importar(): void { this.router.navigate(['/importar']); }
-
-  sair(): void {
-    this.api.sair();
-    this.router.navigate(['/login']);
-  }
-
   /** Classe da linha. A cor é informação: a operadora lê a grade por ela antes do texto. */
   classeDaLinha(l: Lancamento): string {
     if (l.situacao === 'Aguardando') return 'linha-aguardando';

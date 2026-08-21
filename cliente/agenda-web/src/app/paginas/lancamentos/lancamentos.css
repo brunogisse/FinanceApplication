@@ -1,5 +1,5 @@
 .pagina {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -133,18 +133,6 @@
 }
 .rodape strong { margin-left: 6px; }
 
-/* Aviso de vencimentos — o "Há N despesa(s) a pagar" do legado. */
-.aviso-vencimento {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--cor-atencao-fundo);
-  border: 1px solid #fcd34d;
-  border-radius: var(--raio);
-}
-.aviso-vencimento div { display: flex; gap: 8px; }
 
 /* ---------- Diálogo de parcelamento ---------- */
 
@@ -212,4 +200,14 @@
   margin: 2px 0 0;
   font-size: 13px;
   color: var(--cor-texto-fraco);
+}
+
+/* De onde a pessoa veio, quando chegou por um card do painel. */
+.atalho {
+  margin-left: 10px;
+  background: var(--cor-primaria-clara);
+  color: var(--cor-primaria-escura);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12.5px;
 }

@@ -286,15 +286,26 @@ src/AgendaFinanceira.Dominio/          Dinheiro, Lancamento, regras, validaçõe
 src/AgendaFinanceira.Infraestrutura/   repositórios Dapper, leitor de planilha, BCrypt
 src/AgendaFinanceira.Api/              ASP.NET Core + Swagger + JWT
 src/AgendaFinanceira.SpikeFirebird/    spike de acesso a dados, ainda roda
-testes/AgendaFinanceira.Testes/        181 testes, 26 de paridade contra a base real
+testes/AgendaFinanceira.Testes/        188 testes, 26 de paridade contra a base real
 cliente/agenda-web/                    Angular 21 zoneless
 cliente/agenda-desktop/                Electron
 ```
 
-**Telas prontas:** login, grade de lançamentos (com aviso de vencimentos, seleção, pagamento
-em lote, parcelamento, exportação para planilha, busca avançada), formulário de lançamento,
-consolidado por despesa, cadastros (contas, formas de pagamento, despesas e subdespesas) e
-importação de planilha.
+**A interface tem uma casca:** menu lateral fixo em `layout/casca`, conteúdo à direita. As
+opções que antes eram botões no topo de cada tela moram no menu. Os relatórios ficam **fora**
+da casca de propósito — são páginas de impressão, e uma folha não tem menu.
+
+**O painel é a tela inicial** (`paginas/painel`). Quatro cards — vencido, vence em 7 dias, pago
+no mês, previsto no mês —, dois gráficos e um calendário do mês que abre os lançamentos do dia
+escolhido. Tudo vem de `GET /painel?mes=aaaa-mm`.
+
+> **Não há entrada, sobra nem saldo, e não é esquecimento:** não existe receita em lugar nenhum
+> do banco. Este sistema é contas a pagar. Um card de "saldo" teria de inventar número.
+
+**Telas prontas:** login, painel, grade de lançamentos (seleção, pagamento em lote,
+parcelamento, exportação para planilha, busca avançada), formulário de lançamento, consolidado
+por despesa, cadastros (contas, formas de pagamento, despesas e subdespesas) e importação de
+planilha.
 
 A busca avançada cobre a segunda aba do legado: subdespesa, nota fiscal, cheque, cheque
 compensado, situação e faixa de valor sobre previsto ou pago. **Busca por nota fiscal ou por
@@ -331,6 +342,27 @@ o que a ponte do `preload.js` expõe.
 **No `printToPDF`, use `preferCSSPageSize: true`.** Sem isso, o tamanho passado por parâmetro
 vence o `@page` da folha, e o relatório detalhado de subdespesas — que precisa sair deitado,
 senão perde colunas — sairia em pé e cortado.
+
+### Cores e gráficos
+
+A paleta está em `cliente/agenda-web/src/styles.css`, e cada escolha foi **medida**, não
+julgada no olho:
+
+- **Cards do painel:** gradientes cujos dois extremos ficam acima de 4,5:1 com texto branco,
+  inclusive no texto pequeno. Os tons claros óbvios (`#16a34a`, `#ea580c`) **falham** nesse
+  limite e por isso não estão lá.
+- **Séries dos gráficos:** azul `#2a78d6` para pago, laranja `#eb6834` para previsto. Passaram
+  no validador de paleta com ΔE 24,7 na simulação de daltonismo. **A cor segue a grandeza, não
+  o rank:** pago é azul em qualquer gráfico.
+- **Cores da grade herdadas do legado** — pago em cinza, aguardando em roxo — continuam. A
+  operadora lê a grade pela cor antes do texto.
+
+Os gráficos são **SVG escrito à mão**, sem biblioteca: o app empacotado roda de `file://` e não
+alcança CDN. O `viewBox` é de 640 e o cartão tem cerca de 390px, então tudo encolhe uns 40% —
+os tamanhos de fonte dentro do SVG já contam com isso.
+
+**A grade de lançamentos continua densa.** O painel é arejado; a grade não pode ser. A
+operadora quer muitas linhas de uma vez, e isso é funcionalidade.
 
 ### Pendências que valem lembrar
 

@@ -41,7 +41,7 @@ export class Login {
     this.api.entrar(usuario, this.senha()).subscribe({
       next: () => {
         this.entrando.set(false);
-        this.router.navigate(['/lancamentos']);
+        this.router.navigate(['/painel']);
       },
       error: (e: Error) => {
         this.entrando.set(false);

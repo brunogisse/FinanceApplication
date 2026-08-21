@@ -4,7 +4,7 @@ import { Observable, from, throwError } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import {
   Conta, Despesa, EntradaLancamento, FiltroConsulta, FormaPagamento, Lancamento,
-  PreviaImportacao, ResultadoConsulta, ResultadoImportacao, ResultadoPagamentoEmLote,
+  Painel, PreviaImportacao, ResultadoConsulta, ResultadoImportacao, ResultadoPagamentoEmLote,
   ResultadoParcelamento, Sessao, Subdespesa, TotalPorSubdespesa,
 } from './modelos';
 
@@ -25,6 +25,16 @@ export class Api {
   readonly usuario = computed(() => this._sessao()?.nome ?? '');
   readonly podeLancar = computed(() => this._sessao()?.podeLancar ?? false);
   readonly podeImportar = computed(() => this._sessao()?.podeImportarPlanilha ?? false);
+
+  /** Nome do nível como a pessoa entende, não o número da coluna NIVEL. */
+  readonly nivel = computed(() => {
+    switch (this._sessao()?.nivel) {
+      case 'Administracao': return 'Administração';
+      case 'Operacao': return 'Operação';
+      case 'Consulta': return 'Consulta';
+      default: return '';
+    }
+  });
 
   readonly endereco = signal(localStorage.getItem('agenda.endereco') ?? ENDERECO_PADRAO);
 
@@ -56,6 +66,16 @@ export class Api {
   trocarSenha(usuarioId: number, senhaNova: string): Observable<unknown> {
     return this.http
       .post(`${this.endereco()}/sessao/trocar-senha`, { usuarioId, senhaNova })
+      .pipe(catchError(traduzirErro));
+  }
+
+  // ---------------- Painel ----------------
+
+  /** Os números da tela inicial, para o mês informado como `aaaa-mm`. */
+  painel(mes?: string): Observable<Painel> {
+    const params = mes ? new HttpParams().set('mes', mes) : undefined;
+    return this.http
+      .get<Painel>(`${this.endereco()}/painel`, { params })
       .pipe(catchError(traduzirErro));
   }
 

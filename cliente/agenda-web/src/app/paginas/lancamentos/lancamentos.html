@@ -2,36 +2,17 @@
 
   <header class="topo">
     <div class="titulo">
-      <strong>Agenda Financeira</strong>
-      <span class="usuario">{{ usuario() }}</span>
+      <strong>Lançamentos</strong>
+      @if (descricaoDoAtalho(); as a) {
+        <span class="atalho">{{ a }}</span>
+      }
     </div>
     <div class="acoes-topo">
       @if (podeLancar()) {
         <button class="botao botao-primario" (click)="novo()">Novo lançamento</button>
       }
-      <button class="botao" (click)="relatorio()">Consolidado por despesa</button>
-      <button class="botao" (click)="cadastros()">Cadastros</button>
-      @if (podeImportar()) {
-        <button class="botao" (click)="importar()">Importar planilha</button>
-      }
-      <button class="botao" (click)="sair()">Sair</button>
     </div>
   </header>
-
-  <!-- Equivale ao "Há N despesa(s) a pagar" que o legado exibe ao abrir. -->
-  @if (vencidos() > 0 && !avisoDispensado()) {
-    <div class="aviso-vencimento">
-      <span>
-        <strong>{{ inteiro(vencidos()) }}</strong> despesa(s) a pagar,
-        somando <strong>{{ moeda(totalVencido()) }}</strong>
-        — vencidas ou vencendo hoje.
-      </span>
-      <div>
-        <button class="botao botao-primario" (click)="verVencimentos()">Ver na tela</button>
-        <button class="botao" (click)="avisoDispensado.set(true)">Dispensar</button>
-      </div>
-    </div>
-  }
 
   <section class="filtros cartao">
     <div class="campo">

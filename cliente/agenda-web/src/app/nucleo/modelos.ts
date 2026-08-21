@@ -166,3 +166,49 @@ export interface ResultadoImportacao {
   total: Valor;
   lancamentos: Lancamento[];
 }
+
+/** Uma contagem com o dinheiro que ela representa. */
+export interface Montante {
+  quantidade: number;
+  total: Valor;
+}
+
+export interface TotalPorDespesa {
+  despesa: string;
+  quantidade: number;
+  total: Valor;
+}
+
+export interface MesDaSerie {
+  /** aaaa-mm */
+  mes: string;
+  previsto: Valor;
+  pago: Valor;
+}
+
+export interface DiaDoMes {
+  /** aaaa-mm-dd */
+  data: string;
+  quantidade: number;
+  total: Valor;
+  /** Quantos ainda não foram pagos. É o que pinta o dia no calendário. */
+  aPagar: number;
+}
+
+/**
+ * Os números da tela inicial.
+ *
+ * Não há entrada, sobra nem saldo: este sistema é contas a pagar e não existe receita em
+ * lugar nenhum do banco. O que existe é compromisso.
+ */
+export interface Painel {
+  mes: string;
+  vencido: Montante;
+  venceEmSeteDias: Montante;
+  pagoNoMes: Montante;
+  pagoNoMesAnterior: Montante;
+  previstoNoMes: Montante;
+  porDespesa: TotalPorDespesa[];
+  serie: MesDaSerie[];
+  dias: DiaDoMes[];
+}

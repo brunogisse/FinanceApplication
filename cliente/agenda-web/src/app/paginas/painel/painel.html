@@ -1,0 +1,286 @@
+<div class="painel">
+
+  <header class="cabecalho">
+    <div>
+      <h1>Painel</h1>
+      <p class="subtitulo">
+        Contas a pagar — {{ tituloDoMes() }}
+      </p>
+    </div>
+
+    <div class="controle-mes">
+      <button class="botao" (click)="trocarMes(-1)" title="Mês anterior" aria-label="Mês anterior">‹</button>
+      <span class="mes-atual">{{ tituloDoMes() }}</span>
+      <button class="botao" (click)="trocarMes(1)" title="Próximo mês" aria-label="Próximo mês">›</button>
+      @if (!ehMesCorrente()) {
+        <button class="botao" (click)="voltarParaHoje()">Hoje</button>
+      }
+    </div>
+  </header>
+
+  @if (erro()) {
+    <div class="erro">{{ erro() }}</div>
+  }
+
+  <div class="corpo">
+    <div class="principal">
+
+      <!-- Os quatro cards: o que venceu, o que vem, o que saiu, o compromisso do mês.
+           Estrutura e medidas do cartão de indicador do Fechamento Petrotorque: texto à
+           esquerda, ícone translúcido à direita. -->
+      <section class="cards">
+        <!-- Estes dois falam de hoje, não do mês em tela. Quando o mês não é o corrente,
+             a etiqueta diz isso: sem ela, dois cards falariam de junho e dois de agosto
+             lado a lado, sem nada avisando. -->
+        <button class="card card-vencido" (click)="verVencidos()">
+          <span class="card-texto">
+            <span class="card-titulo">
+              A pagar vencido
+              @if (!ehMesCorrente()) { <span class="etiqueta">hoje</span> }
+            </span>
+            <strong class="card-valor">{{ moeda(dados()?.vencido?.total ?? 0) }}</strong>
+            <span class="card-nota">
+              {{ inteiro(dados()?.vencido?.quantidade ?? 0) }} vencidos ou vencendo hoje
+            </span>
+          </span>
+          <span class="card-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+          </span>
+        </button>
+
+        <div class="card card-proximos">
+          <span class="card-texto">
+            <span class="card-titulo">
+              Vence em 7 dias
+              @if (!ehMesCorrente()) { <span class="etiqueta">hoje</span> }
+            </span>
+            <strong class="card-valor">{{ moeda(dados()?.venceEmSeteDias?.total ?? 0) }}</strong>
+            <span class="card-nota">
+              {{ inteiro(dados()?.venceEmSeteDias?.quantidade ?? 0) }} lançamento(s) a pagar
+            </span>
+          </span>
+          <span class="card-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M3 10h18M8 3v4M16 3v4" />
+            </svg>
+          </span>
+        </div>
+
+        <div class="card card-pago">
+          <span class="card-texto">
+            <span class="card-titulo">Pago no mês</span>
+            <strong class="card-valor">{{ moeda(dados()?.pagoNoMes?.total ?? 0) }}</strong>
+            <span class="card-nota">
+              @if (variacaoDoPago(); as v) {
+                {{ v.subiu ? '▲' : '▼' }} {{ v.percentual }}% em relação ao mês anterior
+              } @else {
+                {{ inteiro(dados()?.pagoNoMes?.quantidade ?? 0) }} lançamento(s) quitado(s)
+              }
+            </span>
+          </span>
+          <span class="card-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="m8 12 3 3 5-6" />
+            </svg>
+          </span>
+        </div>
+
+        <button class="card card-previsto" (click)="verMes()">
+          <span class="card-texto">
+            <span class="card-titulo">Previsto no mês</span>
+            <strong class="card-valor">{{ moeda(dados()?.previstoNoMes?.total ?? 0) }}</strong>
+            <span class="card-nota">
+              {{ inteiro(dados()?.previstoNoMes?.quantidade ?? 0) }} vencimento(s) no mês
+            </span>
+          </span>
+          <span class="card-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19V9M10 19V5M16 19v-6M21 21H3" />
+            </svg>
+          </span>
+        </button>
+      </section>
+
+      <section class="graficos">
+
+        <!-- Uma cor só: o assunto é magnitude, não identidade. -->
+        <div class="cartao grafico">
+          <h2>Para onde o dinheiro foi</h2>
+          <p class="explicacao">Pago no mês, por despesa</p>
+
+          @if (despesas().length === 0) {
+            <p class="vazio">{{ carregando() ? 'Carregando...' : 'Nada foi pago neste mês.' }}</p>
+          } @else {
+            <svg class="desenho" [attr.viewBox]="'0 0 640 ' + barras().altura" role="img"
+                 aria-label="Total pago por despesa no mês">
+              @for (b of barras().marcas; track b.rotulo) {
+                <text class="rotulo-eixo" [attr.x]="eixoDasBarras" [attr.y]="b.y + 13"
+                      text-anchor="end">
+                  {{ b.curto }}
+                  <title>{{ b.rotulo }}</title>
+                </text>
+                <path [attr.d]="b.caminho" class="barra"
+                      (mouseenter)="mostrarDica($event, b.rotulo, [b.valor, b.quantidade + ' lançamento(s)', b.percentual + ' do mês'])"
+                      (mouseleave)="esconderDica()" />
+              }
+            </svg>
+
+            <!-- A lista abaixo é a versão em tabela do gráfico: quem não lê a barra, lê o número. -->
+            <ul class="legenda">
+              @for (b of barras().marcas; track b.rotulo) {
+                <li>
+                  <span class="marca-cor" aria-hidden="true"></span>
+                  <span class="legenda-nome">{{ b.rotulo }}</span>
+                  <span class="legenda-valor dinheiro">{{ b.valor }}</span>
+                  <span class="legenda-percentual">{{ b.percentual }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="cartao grafico">
+          <h2>Previsto e pago, mês a mês</h2>
+          <p class="explicacao">Doze meses até {{ tituloDoMes() }}</p>
+
+          <div class="legenda-series">
+            <span><i class="ponto previsto" aria-hidden="true"></i> Previsto, por vencimento</span>
+            <span><i class="ponto pago" aria-hidden="true"></i> Pago, por pagamento</span>
+          </div>
+
+          @if (serie(); as s) {
+            <svg class="desenho" [attr.viewBox]="'0 0 ' + s.largura + ' ' + s.altura"
+                 role="img" aria-label="Previsto e pago mês a mês nos últimos doze meses">
+              @for (r of s.referencias; track r.y) {
+                <line class="referencia" [attr.x1]="inicioDoPlot" [attr.y1]="r.y"
+                      [attr.x2]="s.largura - 14" [attr.y2]="r.y" />
+                <text class="rotulo-eixo" [attr.x]="eixoDaLinha" [attr.y]="r.y + 6"
+                      text-anchor="end">{{ r.rotulo }}</text>
+              }
+
+              <!-- A lavagem por baixo, nunca um bloco sólido: as duas áreas se sobrepõem e
+                   continuam legíveis porque cada uma vai a 10% de opacidade. -->
+              <path [attr.d]="s.areaPrevisto" class="area previsto" />
+              <path [attr.d]="s.areaPago" class="area pago" />
+
+              <path [attr.d]="s.caminhoPrevisto" class="linha previsto" />
+              <path [attr.d]="s.caminhoPago" class="linha pago" />
+
+              @for (p of s.pontos; track p.mes) {
+                <!-- O ponto só aparece no mês sob o ponteiro; doze pares de bolinhas fixas
+                     poluiriam a curva. -->
+                @if (mesDestacado() === $index) {
+                  <line class="guia" [attr.x1]="p.x" [attr.y1]="16" [attr.x2]="p.x" [attr.y2]="s.base" />
+                  <circle [attr.cx]="p.x" [attr.cy]="p.yPrevisto" r="5" class="ponto-serie previsto" />
+                  <circle [attr.cx]="p.x" [attr.cy]="p.yPago" r="5" class="ponto-serie pago" />
+                }
+
+                @if (p.mostrarRotulo) {
+                  <text class="rotulo-eixo" [attr.x]="p.x" [attr.y]="s.altura - 8"
+                        text-anchor="middle">{{ p.rotulo }}</text>
+                }
+
+                <!-- Área de alcance maior que a marca, para a dica não exigir pontaria. -->
+                <rect class="alvo" [attr.x]="p.x - 12" y="0" width="24" [attr.height]="s.base"
+                      (mouseenter)="mesDestacado.set($index); mostrarDica($event, p.rotulo, ['Previsto: ' + moeda(p.previsto), 'Pago: ' + moeda(p.pago)])"
+                      (mouseleave)="mesDestacado.set(null); esconderDica()" />
+              }
+            </svg>
+          } @else {
+            <p class="vazio">{{ carregando() ? 'Carregando...' : 'Sem histórico no período.' }}</p>
+          }
+        </div>
+
+        @if (dica(); as d) {
+          <div class="dica" [style.left.px]="d.x" [style.top.px]="d.y">
+            <strong>{{ d.titulo }}</strong>
+            @for (l of d.linhas; track l) {
+              <span>{{ l }}</span>
+            }
+          </div>
+        }
+      </section>
+    </div>
+
+    <!-- ---------- Painel direito: calendário e o dia escolhido ---------- -->
+    <aside class="lateral cartao">
+      <div class="lateral-topo">
+        <strong>{{ tituloDoMes() }}</strong>
+        <small>Dias com vencimento aparecem marcados</small>
+      </div>
+
+      <table class="calendario">
+        <thead>
+          <tr>
+            @for (d of diasDaSemana; track d) {
+              <th>{{ d }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (semana of semanas(); track $index) {
+            <tr>
+              @for (c of semana; track $index) {
+                <td>
+                  @if (c) {
+                    <button class="dia"
+                            [class.tem-lancamento]="c.quantidade > 0"
+                            [class.tem-a-pagar]="c.aPagar > 0"
+                            [class.hoje]="c.hoje"
+                            [class.escolhido]="diaEscolhido() === c.iso"
+                            [disabled]="c.quantidade === 0"
+                            [attr.title]="c.quantidade > 0
+                              ? c.quantidade + ' vencimento(s), ' + moeda(c.total)
+                              : 'Sem vencimento'"
+                            (click)="escolherDia(c)">
+                      {{ c.dia }}
+                    </button>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="lista-dia">
+        @if (diaEscolhido(); as dia) {
+          <div class="lista-topo">
+            <strong>{{ data(dia) }}</strong>
+            <button class="link" (click)="verDia(dia)">Ver na grade</button>
+          </div>
+
+          @if (carregandoDia()) {
+            <p class="vazio">Buscando...</p>
+          } @else {
+            @for (l of lancamentosDoDia(); track l.id) {
+              <div class="item-dia" [class.item-pago]="l.pago">
+                <span class="item-descricao">{{ l.descricao }}</span>
+                <span class="item-valor dinheiro">{{ moeda(l.valorPrevisto) }}</span>
+                <span class="item-nota">
+                  {{ l.despesa }} · {{ l.conta }}{{ l.pago ? ' · pago' : '' }}
+                </span>
+              </div>
+            } @empty {
+              <p class="vazio">Nenhum lançamento neste dia.</p>
+            }
+          }
+        } @else {
+          <div class="resumo-dias">
+            <strong>{{ inteiro(diasComVencimento().length) }}</strong> dia(s) com vencimento neste mês.
+            <small>Clique num dia marcado para ver o que vence nele.</small>
+          </div>
+        }
+      </div>
+    </aside>
+  </div>
+</div>
