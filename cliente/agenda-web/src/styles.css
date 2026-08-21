@@ -263,3 +263,50 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
   @page { size: A4 portrait; margin: 15mm; }
 }
+
+/* ---------- Caixa de confirmação ---------- */
+/*
+ * Substitui o `confirm()` do navegador, que no Electron aparece como caixa do Windows, com
+ * o título "agenda-desktop" e botões OK/Cancelar. Ver `nucleo/confirmacao.ts`.
+ *
+ * Mora aqui, e não num componente, porque o diálogo é criado direto no documento — as telas
+ * de relatório vivem fora da casca e um host fixo não alcançaria elas.
+ */
+
+.confirmacao {
+  border: none;
+  border-radius: var(--raio-grande);
+  padding: 22px 24px 18px;
+  min-width: 340px;
+  max-width: 460px;
+  color: var(--cor-texto);
+  background: var(--cor-superficie);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .28);
+}
+.confirmacao::backdrop { background: rgba(15, 23, 42, .45); }
+
+.confirmacao h2 { margin: 0 0 10px; font-size: 17px; }
+.confirmacao p { margin: 0 0 8px; line-height: 1.5; }
+
+/* O que não tem volta ganha fundo próprio: some no meio do texto se for só mais um parágrafo. */
+.confirmacao-alerta {
+  background: var(--cor-atencao-fundo);
+  border: 1px solid #fcd34d;
+  border-radius: var(--raio);
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.confirmacao-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.botao-destrutivo {
+  background: var(--cor-erro);
+  border-color: var(--cor-erro);
+  color: #fff;
+}
+.botao-destrutivo:hover:not(:disabled) { background: #991b1b; }

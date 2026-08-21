@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { Confirmacao } from '../../nucleo/confirmacao';
 import { Impressao } from '../../nucleo/impressao';
 import { formatarInteiro } from '../../nucleo/moeda';
 
@@ -51,6 +52,7 @@ const PAGINAS_QUE_MERECEM_AVISO = 20;
 export class BarraImpressao {
   private readonly impressao = inject(Impressao);
   private readonly router = inject(Router);
+  private readonly confirmacao = inject(Confirmacao);
 
   readonly inteiro = formatarInteiro;
 
@@ -71,11 +73,13 @@ export class BarraImpressao {
 
   async imprimir(): Promise<void> {
     if (this.longo()) {
-      const pergunta =
-        `Este relatório tem ${this.inteiro(this.quantidade())} linhas, ` +
-        `o que dá cerca de ${this.inteiro(this.paginas())} páginas.\n\n` +
-        `Imprimir mesmo assim?`;
-      if (!confirm(pergunta)) return;
+      const ok = await this.confirmacao.perguntar({
+        titulo: `Imprimir cerca de ${this.inteiro(this.paginas())} páginas?`,
+        linhas: [`O relatório tem ${this.inteiro(this.quantidade())} linhas.`],
+        alerta: 'Confira o período antes: um recorte largo consome muito papel.',
+        confirmar: 'Imprimir',
+      });
+      if (!ok) return;
     }
 
     this.aviso.set(await this.impressao.imprimir());
@@ -85,7 +89,11 @@ export class BarraImpressao {
     this.aviso.set(await this.impressao.salvarPdf(this.nomeDoPdf()));
   }
 
+  /**
+   * `navigateByUrl` e não `navigate([...])` porque o endereço de volta carrega os filtros da
+   * tela de origem na consulta — e `navigate` trataria isso como parte do caminho.
+   */
   voltar(): void {
-    this.router.navigate([this.voltarPara()]);
+    this.router.navigateByUrl(this.voltarPara());
   }
 }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
+import { Confirmacao } from '../../nucleo/confirmacao';
 import {
   Conta, Despesa, FormaPagamento, PreviaImportacao, ResultadoImportacao, Subdespesa,
 } from '../../nucleo/modelos';
@@ -25,6 +26,7 @@ import { formatarData, formatarInteiro, formatarMoeda } from '../../nucleo/moeda
 export class Importar {
   private readonly api = inject(Api);
   private readonly router = inject(Router);
+  private readonly confirmacao = inject(Confirmacao);
 
   readonly moeda = formatarMoeda;
   readonly data = formatarData;
@@ -131,18 +133,23 @@ export class Importar {
     });
   }
 
-  importar(): void {
+  async importar(): Promise<void> {
     const arquivo = this.arquivo();
     const p = this.previa();
     const d = this.destino();
     if (!arquivo || !p || !d) return;
 
-    const pergunta =
-      `Importar ${p.quantidade} lançamento(s), somando ${this.moeda(p.total)}?\n\n` +
-      `Todos entram QUITADOS, com a data de pagamento que está na planilha, em:\n` +
-      `  ${d.subdespesa} / ${d.conta} / ${d.forma}\n\n` +
-      `Esta operação não tem desfazer.`;
-    if (!confirm(pergunta)) return;
+    const ok = await this.confirmacao.perguntar({
+      titulo: `Importar ${this.inteiro(p.quantidade)} lançamentos?`,
+      linhas: [
+        `Somam ${this.moeda(p.total)}.`,
+        `Todos entram quitados, com a data de pagamento que está na planilha, em ` +
+        `${d.subdespesa} / ${d.conta} / ${d.forma}.`,
+      ],
+      alerta: 'Esta operação não tem desfazer.',
+      confirmar: 'Importar',
+    });
+    if (!ok) return;
 
     this.carregando.set(true);
     this.erro.set(null);

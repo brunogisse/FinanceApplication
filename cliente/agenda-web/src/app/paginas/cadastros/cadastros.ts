@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { Api } from '../../nucleo/api';
+import { Confirmacao } from '../../nucleo/confirmacao';
 import { Conta, Despesa, FormaPagamento, Subdespesa } from '../../nucleo/modelos';
 import { formatarInteiro } from '../../nucleo/moeda';
 
@@ -29,6 +30,7 @@ interface Simples {
 export class Cadastros {
   private readonly api = inject(Api);
   private readonly router = inject(Router);
+  private readonly confirmacao = inject(Confirmacao);
 
   readonly inteiro = formatarInteiro;
   readonly usuario = this.api.usuario;
@@ -209,10 +211,16 @@ export class Cadastros {
     }
   }
 
-  excluir(item: Simples): void {
+  async excluir(item: Simples): Promise<void> {
     // A confirmação repete o nome inteiro: numa lista, o que se apaga por engano é a linha vizinha.
-    const pergunta = 'Excluir a ' + this.nomeDoItem() + ' "' + item.descricao + '"?';
-    if (!confirm(pergunta)) return;
+    const ok = await this.confirmacao.perguntar({
+      titulo: `Excluir a ${this.nomeDoItem()}?`,
+      linhas: [this.rotulo(item.descricao)],
+      alerta: 'Se houver lançamentos usando esta ' + this.nomeDoItem() + ', a exclusão é recusada.',
+      confirmar: 'Excluir',
+      perigo: true,
+    });
+    if (!ok) return;
 
     this.executar(this.excluirNaAba(item.id), item.descricao + ' foi excluída.');
   }
@@ -265,18 +273,38 @@ export class Cadastros {
       ? this.api.criarSubdespesa(descricao, despesaId)
       : this.api.alterarSubdespesa(id, descricao, despesaId);
 
+    const destino = this.despesas().find((d) => d.id === despesaId);
+    const nomeDoDestino = destino ? this.rotulo(destino.descricao) : '';
+
     // Mover para outra despesa faz a subdespesa sumir da lista em tela. Dizer para onde ela
     // foi evita a conclusão de que sumiu.
-    const destino = this.despesas().find((d) => d.id === despesaId);
     const mudouDeDespesa = destino !== undefined && this.despesaSelecionada()?.id !== despesaId;
 
-    this.executar(chamada, mudouDeDespesa
-      ? descricao + ' agora pertence à despesa ' + destino!.descricao + '.'
-      : 'Subdespesa salva: ' + descricao + '.');
+    // A subdespesa nasce na despesa que está marcada na lista da esquerda. Nomear essa
+    // despesa na confirmação é o que permite perceber, na hora, que ela caiu no lugar
+    // errado — depois de pronta, só se descobre pelo relatório.
+    const mensagem = mudouDeDespesa
+      ? `${descricao} agora pertence à despesa ${nomeDoDestino}.`
+      : id === null
+        ? `${descricao} criada na despesa ${nomeDoDestino}.`
+        : `Subdespesa salva: ${descricao}.`;
+
+    this.executar(chamada, mensagem);
   }
 
-  excluirSub(s: Subdespesa): void {
-    if (!confirm('Excluir a subdespesa "' + s.descricao + '"?')) return;
+  async excluirSub(s: Subdespesa): Promise<void> {
+    const ok = await this.confirmacao.perguntar({
+      titulo: 'Excluir a subdespesa?',
+      linhas: [
+        s.descricao,
+        `da despesa ${this.rotulo(this.despesaSelecionada()?.descricao ?? '')}`,
+      ],
+      alerta: 'Se houver lançamentos usando esta subdespesa, a exclusão é recusada.',
+      confirmar: 'Excluir',
+      perigo: true,
+    });
+    if (!ok) return;
+
     this.executar(this.api.excluirSubdespesa(s.id), s.descricao + ' foi excluída.');
   }
 
