@@ -364,6 +364,11 @@ os tamanhos de fonte dentro do SVG já contam com isso.
 **A grade de lançamentos continua densa.** O painel é arejado; a grade não pode ser. A
 operadora quer muitas linhas de uma vez, e isso é funcionalidade.
 
+O resto do visual sai de tokens compartilhados em `styles.css` — `--raio`, `--raio-grande`,
+`--sombra`, `--borda-sutil` —, então mudar a linguagem visual de todas as telas é mexer neles,
+não em cada arquivo. As páginas de conteúdo são alinhadas à esquerda, junto do menu: numa tela
+larga, conteúdo centralizado vira uma ilha com vazio dos dois lados.
+
 ### Pendências que valem lembrar
 
 - **Etapa 0 do roadmap** continua sem dono e não depende da migração. A correção de uma linha

@@ -4,8 +4,10 @@
   flex-direction: column;
   gap: 10px;
   padding: 10px 14px 14px;
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: 1240px;
+  /* Alinhado a esquerda, junto do menu: centralizado numa tela larga o conteudo vira uma
+     ilha, com vazio dos dois lados. */
+  margin: 0;
   width: 100%;
 }
 
@@ -28,7 +30,10 @@
 
 /* Os dois modos como escolha visível, não como caixa de seleção escondida:
    trocar o modo troca a coluna de data e portanto o resultado. */
+/* Os dois modos dividem um cartão só. `overflow: hidden` é o que faz o fundo do botão
+   respeitar o canto arredondado do cartão em vez de vazar por baixo dele. */
 .modos { display: flex; padding: 0; overflow: hidden; }
+.modo:first-child { border-right: 1px solid var(--borda-sutil); }
 
 .modo {
   flex: 1;

@@ -2,13 +2,18 @@
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: 24px;
+  /* Mesmo verde do menu lateral: a entrada já é o sistema. */
+  background: var(--marca);
 }
 
 .caixa {
-  width: 100%;
-  max-width: 360px;
-  padding: 28px;
+  width: min(400px, 100%);
+  padding: 32px;
+  border-radius: 22px;
+  /* Sombra funda porque o cartão flutua sobre cor, não sobre o cinza da aplicação. */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .22);
+  border: none;
   display: flex;
   flex-direction: column;
   gap: 14px;

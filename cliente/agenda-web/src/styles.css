@@ -15,9 +15,11 @@
   --cor-selecao: #ffccce;
   --cor-selecao-texto: #555555;
 
-  --cor-fundo: #f4f5f7;
+  --cor-fundo: #f4f6fa;
   --cor-superficie: #ffffff;
-  --cor-borda: #d6d8dd;
+  --cor-borda: #dfe3ea;
+  /* Borda quase invisível: a separação vem do contraste de superfície, não do traço. */
+  --borda-sutil: rgba(23, 43, 77, .07);
   --cor-texto: #1f2430;
   --cor-texto-fraco: #6b7280;
   --cor-primaria: #15803d;
@@ -73,10 +75,12 @@
   --serie-previsto-lavagem: rgba(236, 131, 90, .10);
   --grade-grafico: #e6e8ef;
 
-  --raio: 6px;
-  --raio-grande: 14px;
-  --sombra: 0 1px 3px rgba(0, 0, 0, .12);
-  --sombra-card: 0 6px 18px rgba(15, 23, 42, .10);
+  --raio: 10px;
+  --raio-grande: 18px;
+  /* Sombra de duas camadas: uma rente, para descolar do fundo, e uma larga e fraca, que dá
+     profundidade sem virar borrão cinza. */
+  --sombra: 0 1px 2px rgba(23, 43, 77, .04), 0 4px 16px rgba(23, 43, 77, .06);
+  --sombra-card: var(--sombra);
 }
 
 /* box-sizing não é global por padrão: sem isto, altura 100vh mais padding estoura a janela
@@ -98,12 +102,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- Botões ---------- */
 
 .botao {
-  padding: 7px 14px;
+  padding: 8px 15px;
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   background: var(--cor-superficie);
   cursor: pointer;
   white-space: nowrap;
+  font-weight: 500;
 }
 .botao:hover:not(:disabled) { background: #eef1f6; }
 .botao:disabled { opacity: .5; cursor: not-allowed; }
@@ -124,7 +129,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .campo label { font-size: 12px; color: var(--cor-texto-fraco); }
 
 .campo input, .campo select, .campo textarea {
-  padding: 6px 8px;
+  padding: 8px 10px;
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   background: var(--cor-superficie);
@@ -161,8 +166,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .cartao {
   background: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
+  border: 1px solid var(--borda-sutil);
+  border-radius: var(--raio-grande);
   box-shadow: var(--sombra);
 }
 
