@@ -31,6 +31,9 @@
       <button class="botao" (click)="imprimir()" [disabled]="!consultou() || linhas().length === 0">
         Imprimir
       </button>
+      <!-- O recorte fica guardado no endereço e sobrevive a ir e voltar do detalhado. Este
+           botão é como se recomeça de propósito. -->
+      <button class="botao" (click)="limparFiltros()">Limpar filtros</button>
     </div>
   </section>
 

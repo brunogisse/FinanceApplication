@@ -46,6 +46,9 @@ export class RelatorioConsolidado {
   readonly quantidade = computed(() =>
     this.linhas().reduce((s, l) => s + l.quantidade, 0));
 
+  /** Volta para o consolidado em tela com o mesmo recorte; o endereço vem pronto de lá. */
+  readonly voltarPara = signal('/relatorios/por-despesa');
+
   /** Somado em centavos inteiros: o cliente não faz aritmética de dinheiro com decimal. */
   readonly total = computed(() => {
     const campo = this.pagos()
@@ -61,6 +64,7 @@ export class RelatorioConsolidado {
     this.inicio.set(p.get('inicio') ?? '');
     this.fim.set(p.get('fim') ?? '');
     this.pagos.set(p.get('pagos') !== 'false');
+    if (p.get('voltarPara')) this.voltarPara.set(p.get('voltarPara')!);
 
     if (!this.despesa()) {
       this.erro.set('O relatório precisa de uma despesa.');

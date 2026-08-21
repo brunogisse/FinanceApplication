@@ -61,8 +61,13 @@ export class RelatorioSubdespesa implements OnDestroy {
   readonly nomeDoPdf = computed(() =>
     `subdespesa-${this.subdespesa().toLowerCase().replace(/\s+/g, '-')}-${hojeIso()}.pdf`);
 
-  /** Volta para o consolidado com os mesmos parâmetros, não para o começo. */
-  readonly voltarPara = computed(() => '/relatorios/por-despesa');
+  /**
+   * Volta para o consolidado **com o mesmo recorte**, não para o começo.
+   *
+   * O endereço vem pronto de lá, na consulta. Sem ele, voltar devolvia a tela em branco e a
+   * pessoa refazia o filtro toda vez que fosse ver um detalhe.
+   */
+  readonly voltarPara = signal('/relatorios/por-despesa');
 
   constructor() {
     this.estiloPaisagem.textContent = '@media print { @page { size: A4 landscape; margin: 12mm; } }';
@@ -75,6 +80,7 @@ export class RelatorioSubdespesa implements OnDestroy {
     this.inicio.set(p.get('inicio') ?? '');
     this.fim.set(p.get('fim') ?? '');
     this.pagos.set(p.get('pagos') !== 'false');
+    if (p.get('voltarPara')) this.voltarPara.set(p.get('voltarPara')!);
 
     if (!this.subdespesa()) {
       this.erro.set('O relatório precisa de uma subdespesa.');
