@@ -337,10 +337,37 @@ export class Lancamentos {
     return this.selecionados().has(id);
   }
 
-  selecionarNaoPagos(): void {
-    this.selecionados.set(new Set(
-      this.lancamentos().filter((l) => !l.pago).map((l) => l.id),
-    ));
+  /** Todos os não pagos que estão em tela já estão marcados. */
+  readonly todosNaoPagosMarcados = computed(() => {
+    const naoPagos = this.lancamentos().filter((l) => !l.pago);
+    if (naoPagos.length === 0) return false;
+
+    const escolhidos = this.selecionados();
+    return naoPagos.every((l) => escolhidos.has(l.id));
+  });
+
+  /** Há seleção, mas não é o conjunto inteiro — é o estado indeterminado da caixa. */
+  readonly selecaoParcial = computed(() =>
+    this.selecionados().size > 0 && !this.todosNaoPagosMarcados());
+
+  /**
+   * A caixa do cabeçalho marca e **desmarca**.
+   *
+   * Antes ela só marcava: clicar de novo repetia a mesma seleção e nada acontecia, o que
+   * parece a tela travada. Marcar acrescenta aos já escolhidos em vez de substituir, para
+   * não desfazer uma linha paga que a pessoa tenha marcado à mão.
+   */
+  alternarTodos(): void {
+    if (this.todosNaoPagosMarcados()) {
+      this.limparSelecao();
+      return;
+    }
+
+    const novo = new Set(this.selecionados());
+    for (const l of this.lancamentos()) {
+      if (!l.pago) novo.add(l.id);
+    }
+    this.selecionados.set(novo);
   }
 
   limparSelecao(): void {

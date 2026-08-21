@@ -198,9 +198,16 @@
       <thead>
         <tr>
           <th class="col-selecao">
-            <button class="mini" (click)="selecionarNaoPagos()" title="Selecionar os não pagos">
-              ✓
-            </button>
+            <!-- Caixa de verdade, com o estado indeterminado: ela mostra se a seleção está
+                 inteira, parcial ou vazia, e clicar desmarca. -->
+            <input type="checkbox"
+                   [checked]="todosNaoPagosMarcados()"
+                   [indeterminate]="selecaoParcial()"
+                   (change)="alternarTodos()"
+                   [attr.title]="todosNaoPagosMarcados()
+                     ? 'Limpar a seleção'
+                     : 'Selecionar os não pagos'"
+                   aria-label="Selecionar os não pagos" />
           </th>
           <th>Vencimento</th>
           <th>Descrição</th>
