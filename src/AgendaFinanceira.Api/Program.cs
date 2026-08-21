@@ -14,6 +14,7 @@ var caminhoBanco = builder.Configuration["Banco:Caminho"]
 builder.Services.AddSingleton(new ConexaoFirebird(caminhoBanco));
 builder.Services.AddSingleton<RepositorioLancamentos>();
 builder.Services.AddSingleton<RepositorioCadastros>();
+builder.Services.AddSingleton<RepositorioPainel>();
 builder.Services.AddSingleton<IServicoSenha, ServicoSenhaBCrypt>();
 builder.Services.AddSingleton<RepositorioUsuarios>();
 builder.Services.AddProblemDetails();
@@ -121,6 +122,7 @@ app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 app.MapearCadastros();
 app.MapearLancamentos();
+app.MapearPainel();
 
 app.MapGet("/saude", () => Results.Ok(new { situacao = "no ar", banco = Path.GetFileName(caminhoBanco) }))
    .WithTags("Diagnóstico")
