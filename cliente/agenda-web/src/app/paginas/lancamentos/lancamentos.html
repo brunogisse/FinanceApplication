@@ -15,11 +15,11 @@
   </header>
 
   <section class="filtros cartao">
-    <div class="campo">
+    <div class="campo campo-data">
       <label for="inicio">De</label>
       <input id="inicio" type="date" [ngModel]="inicio()" (ngModelChange)="inicio.set($event)" />
     </div>
-    <div class="campo">
+    <div class="campo campo-data">
       <label for="fim">Até</label>
       <input id="fim" type="date" [ngModel]="fim()" (ngModelChange)="fim.set($event)" />
     </div>

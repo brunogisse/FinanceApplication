@@ -9,6 +9,7 @@ import {
   formatarData, formatarInteiro, formatarMoeda, hojeIso, lerMoeda, somarMeses,
 } from '../../nucleo/moeda';
 import { baixarArquivo } from '../../nucleo/arquivos';
+import { Confirmacao } from '../../nucleo/confirmacao';
 
 /**
  * Período que cobre a base inteira, usado na busca por documento.
@@ -39,6 +40,7 @@ export class Lancamentos {
   private readonly api = inject(Api);
   private readonly router = inject(Router);
   private readonly rota = inject(ActivatedRoute);
+  private readonly confirmacao = inject(Confirmacao);
 
   readonly moeda = formatarMoeda;
   readonly data = formatarData;
@@ -376,15 +378,19 @@ export class Lancamentos {
 
   // ---- Ações ----
 
-  pagarSelecionados(): void {
+  async pagarSelecionados(): Promise<void> {
     const ids = [...this.selecionados()];
     if (ids.length === 0) return;
 
-    const total = this.moeda(this.previstoSelecionado());
-    if (!confirm(
-      `Confirmar o pagamento de ${ids.length} lançamento(s), somando ${total}?\n\n` +
-      `A data de pagamento será hoje e o valor pago receberá o valor previsto.`,
-    )) return;
+    const ok = await this.confirmacao.perguntar({
+      titulo: `Pagar ${this.inteiro(ids.length)} lançamentos?`,
+      linhas: [
+        `Somam ${this.moeda(this.previstoSelecionado())}.`,
+        'A data de pagamento será hoje e o valor pago receberá o valor previsto.',
+      ],
+      confirmar: 'Pagar',
+    });
+    if (!ok) return;
 
     this.carregando.set(true);
     this.api.pagarEmLote(ids).subscribe({
@@ -443,8 +449,18 @@ export class Lancamentos {
     });
   }
 
-  excluir(l: Lancamento): void {
-    if (!confirm(`Excluir "${l.descricao}" de ${this.moeda(l.valorPrevisto)}?`)) return;
+  async excluir(l: Lancamento): Promise<void> {
+    const ok = await this.confirmacao.perguntar({
+      titulo: 'Excluir o lançamento?',
+      linhas: [
+        l.descricao,
+        `${this.moeda(l.valorPrevisto)} — vencimento ${this.data(l.dataVencimento)}`,
+      ],
+      alerta: 'Esta operação não tem desfazer.',
+      confirmar: 'Excluir',
+      perigo: true,
+    });
+    if (!ok) return;
 
     this.carregando.set(true);
     this.api.excluir(l.id).subscribe({
