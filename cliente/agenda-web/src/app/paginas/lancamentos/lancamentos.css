@@ -42,8 +42,9 @@
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: #e0e7ff;
-  border: 1px solid #c7d2fe;
+  /* Mesmo verde da seleção na grade: a barra e as linhas falam da mesma coisa. */
+  background: var(--linha-selecionada-fundo);
+  border: 1px solid #bfe0cb;
   border-radius: var(--raio);
 }
 .barra-selecao div { display: flex; gap: 8px; }
@@ -82,16 +83,25 @@
 
 .grade tbody tr:hover { background: #f6f8fc; }
 
-/* Cores herdadas do legado — a operadora lê a grade por elas antes de ler o texto. */
-.linha-paga { background: var(--cor-pago); color: var(--cor-pago-texto); }
-.linha-paga:hover { background: #6f6f6f; }
+/*
+ * Estado da linha. Ver a nota longa em styles.css: a tarja da lateral diz o estado, o fundo
+ * diz a seleção, e o texto fica sempre escuro.
+ */
+.linha-paga { background: var(--linha-paga-fundo); color: var(--linha-paga-texto); }
+.linha-paga:hover { background: #e7eaef; }
 
-.linha-aguardando { background: var(--cor-aguardando); color: var(--cor-aguardando-texto); }
-.linha-aguardando:hover { background: #6a1fbd; }
+.linha-aguardando { background: var(--linha-aguardando-fundo); color: var(--linha-aguardando-texto); }
+.linha-aguardando:hover { background: #ece0ff; }
 
-.selecionada, .selecionada:hover {
-  background: var(--cor-selecao) !important;
-  color: var(--cor-selecao-texto) !important;
+/* A tarja mora na primeira célula, que é a da caixa de seleção. */
+.linha-paga td:first-child { box-shadow: inset 4px 0 0 var(--linha-paga-tarja); }
+.linha-aguardando td:first-child { box-shadow: inset 4px 0 0 var(--linha-aguardando-tarja); }
+
+/* A seleção troca o fundo e **não** mexe na tarja: linha paga e selecionada continua
+   dizendo que está paga. A caixa marcada é a segunda pista de que ela está selecionada. */
+.selecionada, .selecionada:hover { background: var(--linha-selecionada-fundo); }
+.selecionada:not(.linha-paga):not(.linha-aguardando) td:first-child {
+  box-shadow: inset 4px 0 0 var(--linha-selecionada-tarja);
 }
 
 .descricao {

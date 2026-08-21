@@ -7,13 +7,32 @@
  */
 
 :root {
-  /* Cores herdadas do legado, para a leitura da grade continuar a mesma. */
-  --cor-pago: #616161;
-  --cor-pago-texto: #ffffff;
-  --cor-aguardando: #5300a6;
-  --cor-aguardando-texto: #ffffff;
-  --cor-selecao: #ffccce;
-  --cor-selecao-texto: #555555;
+  /*
+   * Estado da linha na grade.
+   *
+   * A operadora lê a grade pela cor antes do texto, e isso continua valendo — o que mudou
+   * foi o meio. O legado pinta a linha inteira de cinza-escuro ou roxo com texto branco, e
+   * numa tela clara aquilo vira uma faixa pesada que rouba a leitura do resto. Aqui o
+   * estado é uma **tarja na lateral** mais um fundo de leve, e o texto fica sempre escuro.
+   *
+   * **A tarja diz o estado; o fundo diz a seleção.** Assim uma linha paga e selecionada
+   * continua dizendo que está paga — no legado ela perdia a cor e virava só "selecionada".
+   *
+   * Todas as combinações foram medidas e ficam acima de 4,5:1, inclusive as selecionadas.
+   */
+  --linha-paga-fundo: #e9edf3;
+  --linha-paga-texto: #5b6472;
+  --linha-paga-tarja: #98a1ae;
+
+  --linha-aguardando-fundo: #f4ecff;
+  --linha-aguardando-texto: #4c1d95;
+  --linha-aguardando-tarja: #7c3aed;
+
+  --linha-selecionada-fundo: #e7f5ec;
+  --linha-selecionada-tarja: #15803d;
+
+  /* Cinza do legado, ainda usado fora da grade — na lista do dia, no painel. */
+  --cor-pago: #98a1ae;
 
   --cor-fundo: #f4f6fa;
   --cor-superficie: #ffffff;

@@ -354,8 +354,12 @@ julgada no olho:
 - **Séries dos gráficos:** azul `#2a78d6` para pago, laranja `#eb6834` para previsto. Passaram
   no validador de paleta com ΔE 24,7 na simulação de daltonismo. **A cor segue a grandeza, não
   o rank:** pago é azul em qualquer gráfico.
-- **Cores da grade herdadas do legado** — pago em cinza, aguardando em roxo — continuam. A
-  operadora lê a grade pela cor antes do texto.
+- **Estado da linha na grade:** a leitura por cor continua — pago em cinza, aguardando em roxo
+  —, mas o meio mudou. O legado pinta a linha inteira com texto branco, e numa tela clara
+  aquilo vira faixa pesada. Agora o estado é uma **tarja na lateral** mais um fundo de leve,
+  com o texto sempre escuro. **A tarja diz o estado; o fundo diz a seleção**, então uma linha
+  paga e selecionada continua dizendo que está paga — no legado ela perdia a cor. Todas as
+  combinações foram medidas e ficam acima de 4,5:1.
 
 Os gráficos são **SVG escrito à mão**, sem biblioteca: o app empacotado roda de `file://` e não
 alcança CDN. O `viewBox` é de 640 e o cartão tem cerca de 390px, então tudo encolhe uns 40% —
