@@ -86,7 +86,10 @@ Decisão do cliente: não migrar. Tratar como legado inativo.
    copie o arquivo antes e conecte só à cópia.
 4. Qualquer script destrutivo mostra o que vai destruir **antes** de perguntar, e confere o
    código de saída de cada passo.
-5. `isql -i` sem `-v ON_ERROR_STOP=1` **segue após erros e termina com código 0**. Sempre usar.
+5. `isql -i` sem **`-b`** (*bail*) **segue executando as instruções seguintes depois de um
+   erro**. Sempre usar `-b`, e conferir o código de saída.
+   `-v ON_ERROR_STOP=1` é do **`psql`** e o `isql` não conhece — medido em 22/08/2026: com
+   um `SELECT` numa tabela inexistente, sem `-b` a instrução seguinte roda; com `-b`, não.
 
 **Dados sensíveis:** `LOGIN.SENHA` está em texto plano e `FORNECEDOR.CNPJ` tem 157 registros
 reais. Toda base de desenvolvimento precisa ser anonimizada antes de sair da máquina.

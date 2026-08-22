@@ -1,14 +1,52 @@
 {
   "name": "agenda-desktop",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Agenda Financeira - cliente desktop",
+  "author": "Grupo Juliatti de Carvalho",
   "main": "principal.js",
   "private": true,
   "scripts": {
     "dev": "electron . --dev",
-    "start": "electron ."
+    "start": "electron .",
+    "build:web": "cd ../agenda-web && ng build --base-href ./ --output-path ../agenda-desktop/web",
+    "icone": "electron build/gerar-icone.cjs",
+    "empacotar": "npm run build:web && electron-builder --win"
+  },
+  "build": {
+    "appId": "br.juliattidecarvalho.agendafinanceira",
+    "productName": "Agenda Financeira",
+    "copyright": "Grupo Juliatti de Carvalho",
+    "directories": {
+      "output": "instalador",
+      "buildResources": "build"
+    },
+    "files": [
+      "principal.js",
+      "preload.js",
+      "web/browser/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icone.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Agenda Financeira",
+      "artifactName": "AgendaFinanceira-Instalador-${version}.${ext}",
+      "installerLanguages": ["pt_BR"],
+      "language": "1046"
+    }
   },
   "devDependencies": {
-    "electron": "^34.0.0"
+    "electron": "^34.0.0",
+    "electron-builder": "^26.0.0"
   }
 }

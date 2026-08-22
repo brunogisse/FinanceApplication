@@ -1,0 +1,5 @@
+# Saida da publicacao: 112 MB de binarios, regerada por 1-publicar-api.ps1.
+publicado/
+
+# Gerado pelo instalador no notebook e contem a CHAVE que assina as sessoes.
+appsettings.Production.json

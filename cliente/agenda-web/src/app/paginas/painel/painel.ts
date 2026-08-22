@@ -1,4 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject,
+  signal, viewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
 import { Lancamento, Painel as DadosDoPainel } from '../../nucleo/modelos';
@@ -8,16 +11,34 @@ import { formatarData, formatarInteiro, formatarMoeda, hojeIso } from '../../nuc
 const DESPESAS_NO_GRAFICO = 8;
 
 /**
- * Área de desenho dos gráficos, em coordenadas próprias — o CSS escala para a largura do
- * cartão.
+ * Área de desenho dos gráficos.
  *
- * As margens da esquerda são diferentes de propósito: o gráfico de barras precisa de espaço
- * para o nome da despesa, e o de linhas só para "24 mil".
+ * **O `viewBox` acompanha a largura real do cartão**, medida por `ResizeObserver`, para que
+ * uma unidade do desenho valha um pixel na tela. Antes era fixo em 640, e o SVG inteiro
+ * escalava: num cartão de 367px o texto de 12 unidades saía a 6px, ilegível. O gráfico
+ * equivalente do Fechamento Petrotorque não tem esse problema porque desenha em canvas, onde
+ * o texto é sempre do tamanho pedido.
+ *
+ * Este valor é só o ponto de partida, usado antes da primeira medição.
  */
-const LARGURA = 640;
+const LARGURA_INICIAL = 640;
 const ALTURA_LINHA = 230;
-const MARGEM_BARRAS = { esquerda: 168, direita: 14 };
+
+/*
+ * Margens das áreas de plotagem. A da esquerda difere: o gráfico de barras precisa de espaço
+ * para o nome da despesa, e o de linhas só para "24 mil".
+ *
+ * `base` no gráfico de barras é o espaço dos rótulos do eixo — "0, 5 mil, 10 mil" —, que o
+ * gráfico não tinha e o do Petrotorque tem.
+ */
+const MARGEM_BARRAS = { esquerda: 150, direita: 16, topo: 6, base: 26 };
 const MARGEM_LINHA = { esquerda: 60, direita: 14, topo: 16, base: 30 };
+
+/** Cores do eixo, iguais às do Fechamento Petrotorque. */
+const COR_GRADE = '#e6e8ef';
+
+/** Espessura máxima da barra, como o `maxBarThickness` de lá. */
+const ESPESSURA_MAXIMA = 24;
 
 /** Além disto o nome da despesa é cortado com reticências; o inteiro fica na dica. */
 const LETRAS_NO_ROTULO = 16;
@@ -73,6 +94,7 @@ export class Painel {
   private readonly api = inject(Api);
   private readonly router = inject(Router);
   private readonly rota = inject(ActivatedRoute);
+  private readonly destruir = inject(DestroyRef);
 
   readonly moeda = formatarMoeda;
   readonly inteiro = formatarInteiro;
@@ -81,6 +103,22 @@ export class Painel {
   readonly dados = signal<DadosDoPainel | null>(null);
   readonly carregando = signal(true);
   readonly erro = signal<string | null>(null);
+
+  /**
+   * Largura real da área de desenho, em pixels, alimentada por `ResizeObserver`.
+   *
+   * É ela que vira a largura do `viewBox`, para uma unidade valer um pixel e o texto do
+   * gráfico sair no tamanho pedido. Ver a nota em LARGURA_INICIAL.
+   */
+  readonly larguraDoDesenho = signal(LARGURA_INICIAL);
+
+  /**
+   * A área de desenho do gráfico de barras.
+   *
+   * Vive dentro de um `@if` — não existe enquanto os dados não chegam —, por isso a medição
+   * é ligada por `effect` quando o elemento aparece, e não no construtor.
+   */
+  private readonly areaBarras = viewChild<ElementRef<HTMLElement>>('areaBarras');
 
   /**
    * Mês em foco, como aaaa-mm.
@@ -104,6 +142,25 @@ export class Painel {
     const daUrl = this.rota.snapshot.queryParamMap.get('mes');
     if (daUrl && /^\d{4}-\d{2}$/.test(daUrl)) this.mes.set(daUrl);
     this.carregar();
+
+    // A área de desenho só existe depois que os dados chegam, por isso o observador é
+    // ligado quando o elemento aparece, e religado se ele for trocado.
+    let observador: ResizeObserver | null = null;
+
+    effect(() => {
+      const elemento = this.areaBarras()?.nativeElement;
+      observador?.disconnect();
+      if (!elemento) return;
+
+      observador = new ResizeObserver((entradas) => {
+        const largura = Math.round(entradas[0].contentRect.width);
+        // Zero acontece enquanto o cartão está oculto; adotar isso quebraria a escala.
+        if (largura > 0) this.larguraDoDesenho.set(largura);
+      });
+      observador.observe(elemento);
+    });
+
+    this.destruir.onDestroy(() => observador?.disconnect());
   }
 
   /** Troca o mês e reflete a mudança no endereço, sem empilhar histórico. */
@@ -197,22 +254,52 @@ export class Painel {
   readonly totalDasDespesas = computed(() =>
     this.despesas().reduce((s, d) => s + Math.round(d.total * 100), 0) / 100);
 
-  /** Geometria das barras. Cada uma é um caminho com só as pontas do dado arredondadas. */
-  readonly barras = computed<{ altura: number; marcas: Barra[] }>(() => {
+  /**
+   * Geometria das barras, agora com eixo.
+   *
+   * O gráfico equivalente do Fechamento Petrotorque tem faixas de valor e rótulos no eixo —
+   * "0, 5 mil, 10 mil" —, e é o que permite ler magnitude sem passar o ponteiro em cada
+   * barra. Este não tinha: só as barras, sem referência nenhuma.
+   */
+  readonly barras = computed<{
+    altura: number;
+    marcas: Barra[];
+    grades: { x: number; rotulo: string }[];
+    baseY: number;
+    esquerda: number;
+    direita: number;
+  }>(() => {
     const itens = this.despesas();
-    if (itens.length === 0) return { altura: 60, marcas: [] };
+    const esquerda = MARGEM_BARRAS.esquerda;
+    const direita = this.larguraDoDesenho() - MARGEM_BARRAS.direita;
+    const vazio = { altura: 60, marcas: [], grades: [], baseY: 0, esquerda, direita };
+    if (itens.length === 0) return vazio;
+
+    const total = this.totalDasDespesas();
+    const largura = Math.max(direita - esquerda, 40);
+
+    // Passo e espessura acompanham a altura disponível, com o teto de 24 do Petrotorque.
+    const passo = 34;
+    const espessura = Math.min(ESPESSURA_MAXIMA, passo - 10);
 
     const maior = Math.max(...itens.map((d) => d.total), 0.01);
-    const total = this.totalDasDespesas();
-    const passo = 34;
-    const espessura = 16;
-    const largura = LARGURA - MARGEM_BARRAS.esquerda - MARGEM_BARRAS.direita;
+
+    /*
+     * As faixas saem de um **passo redondo**, e não de dividir o topo em N partes iguais.
+     * Dividido em partes iguais, um topo de 10 mil em 8 faixas dava 1.250 por faixa e os
+     * rótulos arredondados viravam "0, 1 mil, 3 mil, 4 mil, 5 mil, 6 mil, 8 mil" — passo
+     * irregular e dois rótulos repetidos. É o que o Chart.js faz por baixo dos panos.
+     */
+    const cabem = Math.max(2, Math.min(8, Math.floor(largura / 58)));
+    const passoDoEixo = arredondarParaCima(maior / cabem);
+    const teto = Math.ceil(maior / passoDoEixo) * passoDoEixo;
+    const quantasFaixas = Math.round(teto / passoDoEixo);
 
     const marcas = itens.map((d, i) => {
-      const y = i * passo + 8;
-      const comprimento = Math.max((d.total / maior) * largura, 2);
+      const y = MARGEM_BARRAS.topo + i * passo + (passo - espessura) / 2;
+      const comprimento = Math.max((d.total / teto) * largura, 2);
       return {
-        caminho: barraHorizontal(MARGEM_BARRAS.esquerda, y, comprimento, espessura, 4),
+        caminho: barraHorizontal(esquerda, y, comprimento, espessura, 4),
         rotulo: d.despesa,
         curto: d.despesa.length > LETRAS_NO_ROTULO
           ? `${d.despesa.slice(0, LETRAS_NO_ROTULO - 1)}…`
@@ -220,12 +307,24 @@ export class Painel {
         valor: formatarMoeda(d.total),
         percentual: total > 0 ? `${Math.round((d.total / total) * 100)}%` : '',
         quantidade: d.quantidade,
-        y,
+        y: y + espessura / 2,
       };
     });
 
-    return { altura: itens.length * passo + 12, marcas };
+    const baseY = MARGEM_BARRAS.topo + itens.length * passo;
+
+    const grades = Array.from({ length: quantasFaixas + 1 }, (_, i) => {
+      const valor = i * passoDoEixo;
+      return { x: esquerda + (valor / teto) * largura, rotulo: formatarCurto(valor) };
+    });
+
+    return {
+      altura: baseY + MARGEM_BARRAS.base,
+      marcas, grades, baseY, esquerda, direita,
+    };
   });
+
+  readonly corDaGrade = COR_GRADE;
 
   /** Onde os rótulos do eixo do gráfico de barras terminam. */
   readonly eixoDasBarras = MARGEM_BARRAS.esquerda - 8;
@@ -239,7 +338,7 @@ export class Painel {
     if (meses.length === 0) return null;
 
     const maior = Math.max(...meses.flatMap((m) => [m.previsto, m.pago]), 1);
-    const largura = LARGURA - MARGEM_LINHA.esquerda - MARGEM_LINHA.direita;
+    const largura = this.larguraDoDesenho() - MARGEM_LINHA.esquerda - MARGEM_LINHA.direita;
     const altura = ALTURA_LINHA - MARGEM_LINHA.topo - MARGEM_LINHA.base;
     const passo = meses.length > 1 ? largura / (meses.length - 1) : 0;
 
@@ -279,7 +378,7 @@ export class Painel {
       // A área é a mesma curva, fechada no eixo. Fica por baixo da linha, em lavagem.
       areaPrevisto: fechar(linhaPrevisto, pontos[0].x, pontos[pontos.length - 1].x, base),
       areaPago: fechar(linhaPago, pontos[0].x, pontos[pontos.length - 1].x, base),
-      largura: LARGURA,
+      largura: this.larguraDoDesenho(),
       altura: ALTURA_LINHA,
       base,
     };
@@ -472,4 +571,20 @@ function formatarCurto(valor: number): string {
   if (valor >= 1_000_000) return `${(valor / 1_000_000).toFixed(1).replace('.', ',')} mi`;
   if (valor >= 1_000) return `${Math.round(valor / 1_000)} mil`;
   return String(Math.round(valor));
+}
+
+/**
+ * Sobe um valor para o próximo número redondo — 1, 2, 2,5 ou 5 vezes uma potência de dez.
+ *
+ * Usado no passo do eixo. Sem isto os rótulos cairiam em valores quebrados e a referência
+ * que o eixo deveria dar se perderia.
+ */
+function arredondarParaCima(valor: number): number {
+  if (valor <= 0) return 1;
+  const ordem = Math.pow(10, Math.floor(Math.log10(valor)));
+  for (const passo of [1, 2, 2.5, 5, 10]) {
+    const candidato = passo * ordem;
+    if (candidato >= valor) return candidato;
+  }
+  return 10 * ordem;
 }

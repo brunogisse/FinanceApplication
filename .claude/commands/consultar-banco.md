@@ -20,9 +20,9 @@ Responda com dados do banco: **$ARGUMENTS**
      -user SYSDBA -password masterkey -i consulta.sql -o saida.txt "localhost:$copia"
    ```
 
-3. **Se a consulta alterar dados** — o que só é aceitável na cópia —, inclua
-   `-v ON_ERROR_STOP=1`. Sem isso o `isql` segue depois do erro e termina com código zero,
-   declarando sucesso sobre um trabalho pela metade.
+3. **Se a consulta alterar dados** — o que só é aceitável na cópia —, inclua **`-b`** (*bail*).
+   Sem isso o `isql` segue executando as instruções seguintes depois de um erro, deixando um
+   trabalho pela metade. `-v ON_ERROR_STOP=1` é do `psql`; o `isql` não conhece.
 
 4. **Confira o código de saída e a saída.** Erros do Firebird aparecem no texto mesmo quando o
    código de saída é zero.

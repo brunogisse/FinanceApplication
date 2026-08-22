@@ -82,7 +82,18 @@
   text-align: left;
   border-radius: 18px;
   padding: 16px 24px;
-  min-height: 116px;
+  /*
+   * 148px, e não os 116px que estão no CSS do Fechamento Petrotorque.
+   *
+   * Não é divergência: é o mesmo cartão. **Aquele projeto não tem `box-sizing` global** — o
+   * comentário em `app.scss` diz isso —, então o `min-height: 116px` de lá é da caixa de
+   * conteúdo e o cartão rende 116 + 32 de padding = 148px. Aqui `border-box` é global, e o
+   * mesmo 116 já incluiria o padding, deixando o cartão 32px mais baixo.
+   *
+   * Medido nos dois lado a lado na mesma página: `computed height` 116px contra
+   * `offsetHeight` 148px. A diferença era exatamente o padding vertical.
+   */
+  min-height: 148px;
   color: #fff;
   box-shadow: var(--sombra-realce);
   overflow: hidden;
@@ -113,9 +124,16 @@
   color: rgba(255, 255, 255, .95);
 }
 
-/* Em cartão estreito o ícone cede espaço ao número: ele é decoração, o valor é a informação. */
-@container (max-width: 300px) {
+/*
+ * Em cartão estreito o ícone cede espaço ao número: ele é decoração, o valor é a informação.
+ *
+ * 252px, e não os 300px de lá, pela mesma diferença de estrutura do `.card-valor`: o
+ * container aqui é a caixa de conteúdo, 48px menor. 300 − 48 = 252, então os dois viram no
+ * mesmo ponto.
+ */
+@container (max-width: 252px) {
   .card-icone { width: 40px; height: 40px; border-radius: 11px; }
+  .card-icone svg { width: 21px; height: 21px; }
 }
 
 button.card { cursor: pointer; }
@@ -141,10 +159,21 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
   text-transform: uppercase;
   letter-spacing: .3px;
 }
-/* Com `vw` o valor ficaria enorme justamente quando o cartão é estreito; `cqw` mede o
-   cartão. E `nowrap` mantém R$ 2.279.416,69 numa linha só. */
+/*
+ * Com `vw` o valor ficaria enorme justamente quando o cartão é estreito; `cqw` mede o
+ * cartão. E `nowrap` mantém R$ 2.279.416,69 numa linha só.
+ *
+ * O `+ 3.84px` não é ajuste no olho, é a correção de uma diferença de estrutura. No
+ * Fechamento Petrotorque o container de consulta é o elemento externo, e `8cqw` mede a
+ * largura cheia do cartão. Aqui o container é o próprio `.card`, e `cqw` mede a **caixa de
+ * conteúdo**, 48px menor por causa do padding lateral. Como 8% de 48px são 3,84px,
+ * `8cqw + 3.84px` dá exatamente 8% da largura do cartão — em qualquer largura, não só numa.
+ *
+ * Sem isto o valor saía a 22,4px onde o deles sai a 25,9px, e o cartão ficava 33px mais
+ * baixo. Medido nos dois lado a lado.
+ */
 .card-valor {
-  font-size: clamp(17px, 8cqw, 29px);
+  font-size: clamp(17px, calc(8cqw + 3.84px), 29px);
   font-weight: 700;
   letter-spacing: -.8px;
   line-height: 1.1;
@@ -161,10 +190,20 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
 
 /* ---------- Gráficos ---------- */
 
+/*
+ * Os gráficos descem um pouco em relação aos cards.
+ *
+ * No Fechamento Petrotorque a separação entre a fila de indicadores e os gráficos é maior
+ * porque há uma faixa entre os dois — o "Saldo de abertura" —, com 16px acima e 24px abaixo.
+ * Aqui essa faixa não existe (não há saldo neste sistema), então a folga vem do
+ * espaçamento: 14px do `gap` da coluna mais estes 14px, chegando aos 28px que separam a
+ * leitura dos números do topo da leitura dos gráficos.
+ */
 .graficos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 14px;
+  margin-top: 14px;
   position: relative;
 }
 
@@ -174,14 +213,13 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
   min-width: 0;
   position: relative;
 }
-.grafico h2 { margin: 0; font-size: 15px; }
-.explicacao { margin: 2px 0 12px; color: var(--cor-texto-fraco); font-size: 13px; }
+/* Título e subtítulo com as medidas do Fechamento Petrotorque: 15px/600 e 12,5px a 65%. */
+.grafico h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.explicacao { margin: 2px 0 12px; color: var(--cor-texto-fraco); font-size: 12.5px; }
 
-.desenho { width: 100%; display: block; overflow: visible; }
 
 /* O SVG e desenhado num viewBox de 640 e renderizado em cerca de 390px: tudo encolhe uns
    40%. Os tamanhos aqui ja contam com isso — 17 unidades viram uns 10px na tela. */
-.rotulo-eixo { font-size: 17px; fill: var(--cor-texto-fraco); }
 
 /* Uma cor só nas barras: o gráfico é sobre magnitude, não sobre identidade. */
 .barra { fill: var(--serie-pago); }
@@ -359,4 +397,20 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
 @media (max-width: 1080px) {
   .corpo { grid-template-columns: minmax(0, 1fr); }
   .lateral { position: static; }
+}
+
+/* A área medida pelo ResizeObserver: é a largura dela que vira o viewBox. */
+.area-desenho { width: 100%; }
+.desenho { width: 100%; display: block; overflow: visible; }
+
+/*
+ * Rótulos do gráfico de barras, agora em pixels de verdade.
+ *
+ * Antes o viewBox era fixo em 640 e o SVG inteiro escalava: num cartão de 367px este texto
+ * saía a 6px. Com o viewBox acompanhando a largura real, uma unidade vale um pixel — e 12px
+ * aqui são 12px na tela, como no Chart.js do Fechamento Petrotorque.
+ */
+.rotulo-eixo, .rotulo-faixa {
+  font-size: 12px;
+  fill: #8a90a3;
 }

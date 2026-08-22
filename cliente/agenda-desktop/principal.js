@@ -35,10 +35,23 @@ function criarJanela() {
   // Só mostra quando estiver pronta, para não piscar uma janela em branco.
   janela.once('ready-to-show', () => janela.show());
 
+  const arquivoDoApp = path.join(__dirname, 'web', 'browser', 'index.html');
+
   if (desenvolvimento) {
     janela.loadURL(ENDERECO_DEV);
   } else {
-    janela.loadFile(path.join(__dirname, 'web', 'browser', 'index.html'));
+    janela.loadFile(arquivoDoApp);
+
+    // Rede de segurança para o Ctrl+R: sob file://, recarregar uma rota com hash pode
+    // perder o "index.html" do caminho e cair em ERR_FILE_NOT_FOUND (-6). Aqui o arquivo
+    // é recarregado preservando a rota que estava aberta, em vez de a janela ficar em
+    // branco sem explicação.
+    janela.webContents.on('did-fail-load', (_evento, codigo, _descricao, urlQueFalhou) => {
+      if (codigo === -6 && urlQueFalhou.startsWith('file://')) {
+        const rota = urlQueFalhou.includes('#') ? urlQueFalhou.split('#')[1] : '';
+        janela.loadFile(arquivoDoApp, rota ? { hash: rota } : undefined);
+      }
+    });
   }
 
   // Link externo abre no navegador do sistema, não dentro do aplicativo.

@@ -120,19 +120,35 @@
           @if (despesas().length === 0) {
             <p class="vazio">{{ carregando() ? 'Carregando...' : 'Nada foi pago neste mês.' }}</p>
           } @else {
-            <svg class="desenho" [attr.viewBox]="'0 0 640 ' + barras().altura" role="img"
-                 aria-label="Total pago por despesa no mês">
-              @for (b of barras().marcas; track b.rotulo) {
-                <text class="rotulo-eixo" [attr.x]="eixoDasBarras" [attr.y]="b.y + 13"
-                      text-anchor="end">
-                  {{ b.curto }}
-                  <title>{{ b.rotulo }}</title>
-                </text>
-                <path [attr.d]="b.caminho" class="barra"
-                      (mouseenter)="mostrarDica($event, b.rotulo, [b.valor, b.quantidade + ' lançamento(s)', b.percentual + ' do mês'])"
-                      (mouseleave)="esconderDica()" />
-              }
-            </svg>
+            <!-- #areaBarras é medido por ResizeObserver: o viewBox acompanha a largura real,
+                 para uma unidade valer um pixel e o texto não encolher junto com o cartão. -->
+            <div class="area-desenho" #areaBarras>
+              <svg class="desenho"
+                   [attr.viewBox]="'0 0 ' + larguraDoDesenho() + ' ' + barras().altura"
+                   [attr.height]="barras().altura" role="img"
+                   aria-label="Total pago por despesa no mês">
+
+                <!-- Faixas de valor: sem elas não há como ler magnitude sem passar o
+                     ponteiro em cada barra. -->
+                @for (g of barras().grades; track g.x) {
+                  <line [attr.x1]="g.x" [attr.y1]="0" [attr.x2]="g.x" [attr.y2]="barras().baseY"
+                        [attr.stroke]="corDaGrade" stroke-width="1" />
+                  <text class="rotulo-faixa" [attr.x]="g.x" [attr.y]="barras().baseY + 17"
+                        text-anchor="middle">{{ g.rotulo }}</text>
+                }
+
+                @for (b of barras().marcas; track b.rotulo) {
+                  <text class="rotulo-eixo" [attr.x]="barras().esquerda - 10" [attr.y]="b.y + 4"
+                        text-anchor="end">
+                    {{ b.curto }}
+                    <title>{{ b.rotulo }}</title>
+                  </text>
+                  <path [attr.d]="b.caminho" class="barra"
+                        (mouseenter)="mostrarDica($event, b.rotulo, [b.valor, b.quantidade + ' lançamento(s)', b.percentual + ' do mês'])"
+                        (mouseleave)="esconderDica()" />
+                }
+              </svg>
+            </div>
 
             <!-- A lista abaixo é a versão em tabela do gráfico: quem não lê a barra, lê o número. -->
             <ul class="legenda">

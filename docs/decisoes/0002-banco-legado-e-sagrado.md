@@ -33,8 +33,13 @@ O banco de produção é tratado como fonte imutável durante toda a migração.
    arquivo. O backup lógico é consistente e, de quebra, valida a integridade da origem.
 3. Para leitura sem escrita nenhuma, o arquivo é copiado primeiro e a conexão é feita apenas
    contra a cópia — conectar à origem pelo servidor sempre escreve no cabeçalho.
-4. Todo script `isql` roda com `-v ON_ERROR_STOP=1`. Sem isso, o `isql` continua após erros e
-   termina com código de saída zero, declarando sucesso sobre um trabalho pela metade.
+4. Todo script `isql` roda com **`-b`** (*bail*). Sem isso, o `isql` continua executando as
+   instruções seguintes depois de um erro, deixando um trabalho pela metade.
+
+   > **Correção de 22/08/2026.** Esta regra dizia `-v ON_ERROR_STOP=1`, que é do `psql`; o
+   > `isql` do Firebird não conhece essa opção. Medido: com um `SELECT` numa tabela
+   > inexistente, sem `-b` a instrução seguinte roda, com `-b` não. A intenção da regra estava
+   > certa, o instrumento não.
 5. Todo script destrutivo mostra o que vai destruir **antes** de perguntar, incluindo
    contagens que permitam a pessoa reconhecer os próprios dados, e confere o código de saída
    de cada passo.

@@ -45,8 +45,9 @@ de executável, e o SQL chega deformado ao servidor:
 & "$fb\isql.exe" -user SYSDBA -password masterkey -i consulta.sql -o saida.txt "localhost:$copia"
 ```
 
-**Use `-v ON_ERROR_STOP=1` em qualquer script que altere dados.** Sem isso o `isql` segue
-depois do erro e termina com código zero — um trabalho pela metade se declarando bem-sucedido.
+**Use `-b` (bail) em qualquer script que altere dados.** Sem isso o `isql` segue executando as
+instruções seguintes depois de um erro — um trabalho pela metade se declarando feito.
+`-v ON_ERROR_STOP=1` é do `psql`; o `isql` não conhece essa opção.
 
 **Confira o código de saída e o efeito, não só um deles.** Um script pode retornar zero tendo
 falhado, e pode retornar erro tendo feito parte do trabalho.

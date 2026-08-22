@@ -1,8 +1,33 @@
+using Microsoft.Extensions.Hosting.WindowsServices;
 using AgendaFinanceira.Api;
 using AgendaFinanceira.Dominio;
 using AgendaFinanceira.Infraestrutura;
 
 var builder = WebApplication.CreateBuilder(args);
+
+/*
+ * Como serviço do Windows.
+ *
+ * `UseWindowsService` faz a API responder aos comandos do gerenciador de serviços; fora
+ * dele a chamada não tem efeito, então o `dotnet run` continua igual.
+ *
+ * O `ContentRootPath` é obrigatório: um serviço nasce com o diretório atual em `system32`,
+ * e sem isto os `appsettings.json` seriam procurados lá. O sintoma seria a API subir sem
+ * configuração nenhuma e falhar por falta do caminho do banco — apontando para o lugar
+ * errado, porque o arquivo existe, só não onde ela procurou.
+ */
+builder.Host.UseWindowsService(o => o.ServiceName = "Agenda Financeira API");
+
+if (WindowsServiceHelpers.IsWindowsService())
+{
+    builder.Environment.ContentRootPath = AppContext.BaseDirectory;
+    builder.Configuration
+        .SetBasePath(AppContext.BaseDirectory)
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json",
+                     optional: true, reloadOnChange: true)
+        .AddEnvironmentVariables();
+}
 
 // O caminho do banco vem da configuração. Nunca é fixo no código, ao contrário do backup
 // automático do legado, que aponta para a área de trabalho de um usuário específico.
@@ -22,9 +47,20 @@ builder.Services.AddProblemDetails();
 // Falha fechada: sem chave de assinatura, a API não sobe.
 builder.Services.AdicionarAutenticacao(ConfiguracaoAutenticacao.ExigirChave(builder.Configuration));
 
-// O cliente Angular roda noutra porta durante o desenvolvimento, e empacotado em Electron
-// tem origem própria. As origens liberadas vêm da configuração, nunca abertas para qualquer
-// uma: liberar tudo num sistema com dados financeiros é convite.
+/*
+ * Origens do cliente.
+ *
+ * Em desenvolvimento o Angular roda em `http://localhost:4200`. **Empacotado, a página vem
+ * de `file://`, e o Chromium envia `Origin: null`** — uma cadeia de caracteres, não a
+ * ausência do cabeçalho. Sem `"null"` na lista, a API responde 200 mas sem o
+ * `Access-Control-Allow-Origin`, e o navegador descarta a resposta: tudo funciona no
+ * desenvolvimento e nada funciona no aplicativo instalado.
+ *
+ * A lista vem da configuração e nunca é aberta para qualquer origem: liberar tudo num
+ * sistema com dados financeiros é convite. O que protege de verdade é o token — nenhum
+ * endpoint além de `POST /sessao` responde sem ele, e ele viaja em cabeçalho, não em
+ * cookie, então não é enviado sozinho por uma página de terceiro.
+ */
 const string PoliticaCliente = "cliente";
 var origens = builder.Configuration.GetSection("Cors:Origens").Get<string[]>()
               ?? ["http://localhost:4200"];
