@@ -56,18 +56,8 @@ public sealed record PagarEmLoteDto(IReadOnlyList<int> Ids);
 
 public static class EndpointsLancamentos
 {
-    /// <summary>Monta o usuário a partir do token, sem ida ao banco.</summary>
-    private static Usuario Autenticado(ClaimsPrincipal quem)
-    {
-        var nivel = int.TryParse(quem.FindFirst("nivel")?.Value, out var n) ? n : 1;
-        return new Usuario
-        {
-            Id = quem.IdDoUsuario(),
-            Nome = quem.Identity?.Name ?? "",
-            Nivel = (NivelAcesso)nivel,
-            AindaSemHash = false
-        };
-    }
+    /// <summary>Atalho para a extensão que monta o usuário a partir do token.</summary>
+    private static Usuario Autenticado(ClaimsPrincipal quem) => quem.Autenticado();
 
     public static void MapearLancamentos(this WebApplication app)
     {

@@ -1,0 +1,137 @@
+<div class="pagina">
+
+  <header class="topo">
+    <div class="titulo">
+      <strong>Usuários</strong>
+    </div>
+  </header>
+
+  @if (erro()) {
+    <div class="erro">{{ erro() }}</div>
+  }
+  @if (aviso()) {
+    <div class="aviso" (click)="aviso.set(null)">{{ aviso() }}</div>
+  }
+
+  <section class="cartao lista-area">
+    <div class="cabecalho-lista">
+      <span>
+        {{ inteiro(lista().length) }} usuário(s)
+        @if (semHash() > 0) {
+          <small class="nota">
+            · {{ inteiro(semHash()) }} ainda não entrou pelo sistema novo
+          </small>
+        }
+      </span>
+      <button class="botao botao-primario" (click)="novo()"
+              [disabled]="editandoId() !== null || carregando()">
+        Novo usuário
+      </button>
+    </div>
+
+    <table class="grade">
+      <thead>
+        <tr>
+          <th class="col-id">ID</th>
+          <th>Nome</th>
+          <th class="col-nivel">Nível</th>
+          <th class="col-acoes">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        @if (criando()) {
+          <tr class="linha-edicao">
+            <td class="col-id">novo</td>
+            <td>
+              <input [ngModel]="nome()" (ngModelChange)="nome.set($event)"
+                     (keydown)="aoTeclar($event)" maxlength="20" autofocus
+                     placeholder="Nome de acesso, até 20 caracteres" />
+            </td>
+            <td class="col-nivel">
+              <select [ngModel]="nivel()" (ngModelChange)="nivel.set($event)">
+                @for (n of niveis; track n.valor) {
+                  <option [value]="n.valor">{{ n.nome }} — {{ n.explica }}</option>
+                }
+              </select>
+            </td>
+            <td class="col-acoes">
+              <input class="senha" type="password" [ngModel]="senha()"
+                     (ngModelChange)="senha.set($event)" (keydown)="aoTeclar($event)"
+                     maxlength="20" placeholder="Senha (4 a 20)" />
+              <button class="botao botao-primario mini-botao" (click)="salvar()"
+                      [disabled]="carregando()">Salvar</button>
+              <button class="botao mini-botao" (click)="cancelar()">Cancelar</button>
+            </td>
+          </tr>
+        }
+
+        @for (u of lista(); track u.id) {
+          @if (editandoId() === u.id) {
+            <tr class="linha-edicao">
+              <td class="col-id">{{ u.id }}</td>
+              <td>
+                <input [ngModel]="nome()" (ngModelChange)="nome.set($event)"
+                       (keydown)="aoTeclar($event)" maxlength="20" autofocus />
+              </td>
+              <td class="col-nivel">
+                <select [ngModel]="nivel()" (ngModelChange)="nivel.set($event)"
+                        [disabled]="nivelEstaTravado(u.id)">
+                  @for (n of niveis; track n.valor) {
+                    <option [value]="n.valor">{{ n.nome }}</option>
+                  }
+                </select>
+                @if (nivelEstaTravado(u.id)) {
+                  <small class="travado">
+                    {{ u.id === 1
+                        ? 'O usuário 1 administra o sistema e não muda de nível.'
+                        : 'Você não pode mudar o seu próprio nível.' }}
+                  </small>
+                }
+              </td>
+              <td class="col-acoes">
+                <button class="botao botao-primario mini-botao" (click)="salvar()"
+                        [disabled]="carregando()">Salvar</button>
+                <button class="botao mini-botao" (click)="cancelar()">Cancelar</button>
+              </td>
+            </tr>
+          } @else {
+            <tr [class.eu]="u.id === euSou()">
+              <td class="col-id">{{ u.id }}</td>
+              <td>
+                {{ u.nome }}
+                @if (u.id === euSou()) { <span class="etiqueta">você</span> }
+                @if (u.id === 1) { <span class="etiqueta admin">administrador</span> }
+                @if (u.aindaSemHash) {
+                  <span class="etiqueta pendente"
+                        title="Ainda não entrou pelo sistema novo, então continua dependendo da senha em texto plano do sistema antigo.">
+                    só no sistema antigo
+                  </span>
+                }
+              </td>
+              <td class="col-nivel">{{ nomeDoNivel(u.nivel) }}</td>
+              <td class="col-acoes">
+                <button class="mini" (click)="editar(u)" title="Alterar nome e nível">✎</button>
+                <button class="mini" (click)="trocarSenha(u)" title="Trocar a senha">🔑</button>
+                @if (podeExcluir(u)) {
+                  <button class="mini perigo" (click)="excluir(u)" title="Excluir">✕</button>
+                }
+              </td>
+            </tr>
+          }
+        } @empty {
+          <tr>
+            <td colspan="4" class="vazio">
+              {{ carregando() ? 'Carregando...' : 'Nenhum usuário.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <p class="rodape-explicacao">
+    A senha vale para os <strong>dois sistemas</strong>: quem for criado aqui entra também no
+    programa antigo. Por isso o limite de 20 caracteres, que é o tamanho do campo de lá.
+  </p>
+</div>

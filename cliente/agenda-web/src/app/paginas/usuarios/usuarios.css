@@ -1,0 +1,124 @@
+.pagina {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 14px 14px;
+  /* Mais estreita que os cadastros: são quatro colunas curtas, e uma linha longa demais
+     afastaria o nome das ações lá na ponta. */
+  max-width: 900px;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.topo { display: flex; justify-content: space-between; align-items: center; }
+.topo strong { font-size: 17px; }
+
+.lista-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.cabecalho-lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--cor-borda);
+  background: #f8f9fc;
+}
+.nota { color: var(--cor-texto-fraco); }
+
+.grade {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  display: block;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+.grade thead th {
+  position: sticky;
+  top: 0;
+  background: #eef1f6;
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 8px;
+  text-align: left;
+}
+.grade tbody, .grade thead { display: table; width: 100%; }
+.grade tbody td { padding: 6px 8px; border-bottom: 1px solid #eceef2; vertical-align: middle; }
+.grade tbody tr:hover { background: #f6f8fc; }
+
+.col-id { width: 1%; white-space: nowrap; color: var(--cor-texto-fraco); }
+.col-nivel { width: 30%; }
+.col-acoes { width: 1%; white-space: nowrap; text-align: right; }
+
+/* A própria linha fica marcada: as travas contra se rebaixar e se excluir só fazem sentido
+   se a pessoa reconhecer qual linha é a dela. */
+.grade tbody tr.eu, .grade tbody tr.eu:hover {
+  background: #eef2ff;
+  box-shadow: inset 3px 0 0 var(--cor-primaria);
+}
+
+.etiqueta {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #e5e9f2;
+  color: #3f4a5f;
+  vertical-align: middle;
+}
+.etiqueta.admin { background: var(--cor-primaria-clara); color: var(--cor-primaria-escura); }
+/* Quem ainda depende da senha em texto plano do legado — informação de convivência. */
+.etiqueta.pendente { background: #fef3c7; color: #7c2d12; cursor: help; }
+
+.linha-edicao, .linha-edicao:hover { background: #fffbe9; }
+.linha-edicao td { padding: 8px; }
+.linha-edicao input, .linha-edicao select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  font: inherit;
+  font-size: 13px;
+}
+.linha-edicao select:disabled { background: #f1f3f7; color: var(--cor-texto-fraco); }
+.linha-edicao .senha { margin-bottom: 6px; }
+.travado {
+  display: block;
+  margin-top: 4px;
+  color: var(--cor-texto-fraco);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.mini {
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  border-radius: var(--raio);
+  padding: 2px 7px;
+  margin-left: 3px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.mini:hover { background: #eef1f6; }
+.mini.perigo { color: var(--cor-erro); border-color: #f0b4b4; }
+.mini.perigo:hover { background: var(--cor-erro-fundo); }
+
+.mini-botao { padding: 4px 10px; font-size: 13px; }
+
+.vazio { text-align: center; padding: 24px; color: var(--cor-texto-fraco); }
+
+.rodape-explicacao {
+  margin: 0;
+  color: var(--cor-texto-fraco);
+  font-size: 12px;
+  line-height: 1.5;
+}

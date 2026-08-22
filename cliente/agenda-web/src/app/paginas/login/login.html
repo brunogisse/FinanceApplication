@@ -1,46 +1,76 @@
 <div class="tela">
-  <form class="caixa cartao" (ngSubmit)="entrar()">
-    <h1>Agenda Financeira</h1>
-    <p class="subtitulo">Grupo Juliatti de Carvalho</p>
+  <div class="caixa">
 
-    @if (erro()) {
-      <div class="erro">{{ erro() }}</div>
-    }
+    <!-- ---------- Painel de identidade ---------- -->
+    <aside class="painel">
+      <span class="marca-icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M3 10h18M8 3v4M16 3v4" />
+        </svg>
+      </span>
 
-    <div class="campo">
-      <label for="usuario">Usuário</label>
-      <input id="usuario" #campoUsuario name="usuario" autocomplete="username"
-             [ngModel]="usuario()" (ngModelChange)="usuario.set($event)"
-             [disabled]="entrando()" />
-    </div>
+      <h1>Agenda Financeira</h1>
+      <p class="linha-forte">Contas a pagar</p>
+      <p class="linha">Grupo Juliatti de Carvalho</p>
 
-    <div class="campo">
-      <label for="senha">Senha</label>
-      <input id="senha" name="senha" type="password" autocomplete="current-password"
-             [ngModel]="senha()" (ngModelChange)="senha.set($event)"
-             [disabled]="entrando()" />
-    </div>
+      <p class="linha nota">
+        O usuário e a senha são os mesmos do sistema antigo. Trocar a senha aqui vale nos dois.
+      </p>
 
-    <button type="submit" class="botao botao-primario" [disabled]="entrando()">
-      {{ entrando() ? 'Entrando...' : 'Entrar' }}
-    </button>
-
-    <!-- A configuração do endereço não pode exigir login: para entrar é preciso alcançar
-         o servidor, e é justamente o endereço dele que se configura aqui. -->
-    <button type="button" class="link"
-            (click)="mostrarConfiguracao.set(!mostrarConfiguracao())">
-      {{ mostrarConfiguracao() ? 'Ocultar' : 'Configurar servidor' }}
-    </button>
-
-    @if (mostrarConfiguracao()) {
-      <div class="configuracao">
-        <div class="campo">
+      <!-- O endereço do servidor mora aqui, à vista, e não atrás de um link.
+           Quando alguém não consegue entrar, a causa mais comum não é a senha — é o
+           endereço estar errado. E esta é a única tela onde ele pode ser configurado:
+           para entrar é preciso alcançar o servidor. -->
+      <div class="servidor">
+        @if (mostrarConfiguracao()) {
           <label for="endereco">Endereço do servidor</label>
-          <input id="endereco" name="endereco"
-                 [ngModel]="endereco()" (ngModelChange)="endereco.set($event)" />
-        </div>
-        <button type="button" class="botao" (click)="salvarEndereco()">Salvar endereço</button>
+          <input id="endereco" name="endereco" class="campo-servidor"
+                 [ngModel]="endereco()" (ngModelChange)="endereco.set($event)"
+                 (keydown.enter)="salvarEndereco()" />
+          <div class="acoes-servidor">
+            <button type="button" class="botao-painel" (click)="salvarEndereco()">Salvar</button>
+            <button type="button" class="link-painel" (click)="cancelarConfiguracao()">
+              Cancelar
+            </button>
+          </div>
+        } @else {
+          <span class="rotulo-servidor">Servidor</span>
+          <span class="endereco-atual">{{ endereco() }}</span>
+          <button type="button" class="link-painel" (click)="mostrarConfiguracao.set(true)">
+            Alterar
+          </button>
+        }
       </div>
-    }
-  </form>
+    </aside>
+
+    <!-- ---------- Formulário ---------- -->
+    <form class="formulario" (ngSubmit)="entrar()">
+      <h2>Entrar</h2>
+
+      @if (erro()) {
+        <div class="erro">{{ erro() }}</div>
+      }
+
+      <div class="campo">
+        <label for="usuario">Usuário</label>
+        <input id="usuario" #campoUsuario name="usuario" autocomplete="username"
+               [ngModel]="usuario()" (ngModelChange)="usuario.set($event)"
+               [disabled]="entrando()" />
+      </div>
+
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <input id="senha" name="senha" type="password" autocomplete="current-password"
+               [ngModel]="senha()" (ngModelChange)="senha.set($event)"
+               [disabled]="entrando()" />
+      </div>
+
+      <button type="submit" class="botao botao-primario entrar" [disabled]="entrando()">
+        {{ entrando() ? 'Entrando...' : 'Entrar' }}
+      </button>
+    </form>
+
+  </div>
 </div>

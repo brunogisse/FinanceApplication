@@ -152,6 +152,108 @@ public sealed class RepositorioUsuarios
         }
     }
 
+
+    /// <summary>
+    /// Cria um usuário, gravando a senha nas duas colunas.
+    ///
+    /// O texto plano existe para o Delphi continuar autenticando quem for criado aqui — sem
+    /// ele, a pessoa entraria pela API e seria recusada pelo sistema antigo. Some quando o
+    /// legado for desligado.
+    /// </summary>
+    public Usuario Criar(DadosUsuario dados, string senha)
+    {
+        var nome = RegrasUsuario.ExigirNome(dados.Nome);
+        var senhaLimpa = RegrasUsuario.ExigirSenha(senha);
+
+        using var con = _conexao.Abrir();
+        ExigirNomeInedito(con, nome, ignorarId: null);
+
+        var id = con.ExecuteScalar<int>(@"
+INSERT INTO LOGIN (NOME, SENHA, NIVEL, SENHA_HASH)
+VALUES (@nome, @plana, @nivel, @hash)
+RETURNING LOGIN_ID",
+            new
+            {
+                nome = ConexaoFirebird.NormalizarParaGravar(nome),
+                plana = senhaLimpa,
+                nivel = (int)dados.Nivel,
+                hash = _senhas.GerarHash(senhaLimpa)
+            });
+
+        return new Usuario { Id = id, Nome = nome, Nivel = dados.Nivel, AindaSemHash = false };
+    }
+
+    /// <summary>
+    /// Altera nome e nível. A senha não passa por aqui: quem troca senha é
+    /// <see cref="TrocarSenha"/>, e misturar as duas coisas faria uma alteração de nome
+    /// reescrever a senha por descuido.
+    /// </summary>
+    public Usuario Alterar(int id, DadosUsuario dados, Usuario quemAltera)
+    {
+        var nome = RegrasUsuario.ExigirNome(dados.Nome);
+        RegrasUsuario.ExigirQuePodeAlterar(id, dados.Nivel, quemAltera);
+
+        using var con = _conexao.Abrir();
+        ExigirNomeInedito(con, nome, ignorarId: id);
+
+        var afetados = con.Execute(
+            "UPDATE LOGIN SET NOME = @nome, NIVEL = @nivel WHERE LOGIN_ID = @id",
+            new { nome = ConexaoFirebird.NormalizarParaGravar(nome), nivel = (int)dados.Nivel, id });
+
+        if (afetados == 0)
+            throw new RegraDeNegocioException("Usuário não encontrado.");
+
+        return new Usuario { Id = id, Nome = nome, Nivel = dados.Nivel, AindaSemHash = false };
+    }
+
+    /// <summary>
+    /// Exclui um usuário.
+    ///
+    /// Quem já lançou não pode ser excluído, e essa regra está no banco: existe a chave
+    /// estrangeira FK_REGISTRO_DE_GASTOS_5, de USERID para LOGIN. Aqui a checagem é feita
+    /// antes só para a mensagem dizer o número de lançamentos em vez de vazar o erro cru do
+    /// Firebird — a recusa de verdade continua sendo do banco, mesmo que este código falhe.
+    /// </summary>
+    public void Excluir(int id, Usuario quemExclui)
+    {
+        RegrasUsuario.ExigirQuePodeExcluir(id, quemExclui);
+
+        using var con = _conexao.Abrir();
+
+        var nome = con.QuerySingleOrDefault<string>(
+            "SELECT NOME FROM LOGIN WHERE LOGIN_ID = @id", new { id });
+        if (nome is null)
+            throw new RegraDeNegocioException("Usuário não encontrado.");
+
+        var lancamentos = con.ExecuteScalar<int>(
+            "SELECT COUNT(*) FROM REGISTRO_DE_GASTOS WHERE USERID = @id", new { id });
+
+        // Frase neutra de propósito: "excluído/excluída" concordaria com um gênero que o nome
+        // do usuário não informa.
+        if (lancamentos > 0)
+            throw new RegraDeNegocioException(
+                $"Não é possível excluir {ConexaoFirebird.TextoDoLegado(nome)?.Trim()}: " +
+                $"são {lancamentos:N0} lançamento(s), e a autoria deles se perderia.");
+
+        con.Execute("DELETE FROM LOGIN WHERE LOGIN_ID = @id", new { id });
+    }
+
+    /// <summary>
+    /// Nome único, sem diferenciar maiúsculas.
+    ///
+    /// O legado deixa criar dois usuários com o mesmo nome — e aí <see cref="Autenticar"/>,
+    /// que busca por UPPER(NOME) esperando um só, **estoura com exceção em vez de recusar o
+    /// login**. Nome repetido não é só desordem de cadastro: quebra a entrada no sistema.
+    /// </summary>
+    private static void ExigirNomeInedito(System.Data.IDbConnection con, string nome, int? ignorarId)
+    {
+        var existe = con.ExecuteScalar<int>(
+            "SELECT COUNT(*) FROM LOGIN WHERE UPPER(NOME) = @nome AND LOGIN_ID <> @ignorar",
+            new { nome = nome.ToUpperInvariant(), ignorar = ignorarId ?? 0 });
+
+        if (existe > 0)
+            throw new RegraDeNegocioException($"Já existe um usuário chamado {nome}.");
+    }
     public IReadOnlyList<Usuario> Listar()
     {
         using var con = _conexao.Abrir();

@@ -302,6 +302,11 @@ escolhido. Tudo vem de `GET /painel?mes=aaaa-mm`.
 > **Não há entrada, sobra nem saldo, e não é esquecimento:** não existe receita em lugar nenhum
 > do banco. Este sistema é contas a pagar. Um card de "saldo" teria de inventar número.
 
+**O login é um cartão dividido:** identidade no painel verde à esquerda, formulário à direita.
+O **endereço do servidor mora no painel, à vista**, e não atrás de um link que expande — quando
+alguém não consegue entrar, a causa mais comum não é a senha, é o endereço. E esta é a única
+tela onde ele pode ser configurado: para entrar é preciso alcançar o servidor.
+
 **Telas prontas:** login, painel, grade de lançamentos (seleção, pagamento em lote,
 parcelamento, exportação para planilha, busca avançada), formulário de lançamento, consolidado
 por despesa, cadastros (contas, formas de pagamento, despesas e subdespesas) e importação de
@@ -324,11 +329,30 @@ O legado tem a mesma intenção quando força o início em 01/01/2018 na busca p
 são os mesmos da grade, e a paridade da grade está provada por teste — mas **a conferência
 final contra a folha impressa do legado ainda não foi feita**, e ela depende de rodar o Delphi.
 
-**Falta no cliente:** o cadastro de usuários, marcar a situação direto pela grade (a API já
-tem o endpoint, ninguém chama) e o empacotamento em instalador.
+**Cadastro de usuários pronto**, servidor e tela: criar, alterar nome e nível, trocar senha e
+excluir, tudo restrito ao nível 3, em `paginas/usuarios` com item próprio no menu. Trocar a
+**própria** senha fica no rodapé do menu, porque é a única ação que todo nível faz sobre si
+mesmo — inclusive quem só consulta e nunca vê aquela tela.
 
-**Falta no servidor:** os relatórios impressos e a criação/alteração de usuários. O resto do
-módulo financeiro está completo.
+A senha é gravada **nas duas colunas**, hash e texto plano, senão quem for criado pela API não
+entraria no Delphi. As validações são todas divergência intencional, porque a tela do legado
+(`UcadastroUser.pas`) é um `TDBNavigator` sobre `select * from LOGIN` sem validação nenhuma:
+
+- **Nome único**, sem diferenciar maiúsculas. Nome repetido não é só desordem: `Autenticar`
+  busca por `UPPER(NOME)` com `QuerySingleOrDefault` e **estoura em vez de recusar o login**.
+  A base não tem duplicata hoje, então é defeito latente.
+- **Nível só 1, 2 ou 3.** O legado aceita qualquer inteiro, e um nível 7 passaria em toda
+  checagem de `>= 2`.
+- **Senha de 4 a 20**, nome até 20 — tamanho das colunas do legado.
+- **O usuário 1 não perde o nível 3 nem é excluído**, e ninguém se rebaixa nem se exclui.
+- **Quem já lançou não é excluído, e essa regra é do banco:** existe a FK
+  `FK_REGISTRO_DE_GASTOS_5`, de `USERID` para `LOGIN`. A contagem antes serve só para a
+  mensagem dizer quantos lançamentos são.
+
+**Falta no cliente:** marcar a situação direto pela grade (a API já tem o endpoint, ninguém
+chama) e o empacotamento em instalador.
+
+**Falta no servidor:** os relatórios impressos. O resto do módulo financeiro está completo.
 
 **Duas funções do navegador não funcionam no Electron**, e as duas falham do jeito pior:
 funcionam no navegador durante o desenvolvimento e morrem caladas no aplicativo empacotado.
@@ -336,7 +360,7 @@ Ambas verificadas na janela real, por CDP.
 
 | Função | O que acontece | O que usar |
 |---|---|---|
-| `window.prompt()` | lança `prompt() is not supported.` | um `<dialog>` — ver o parcelamento em `lancamentos.html` |
+| `window.prompt()` | lança `prompt() is not supported.` | `Confirmacao.pedirTexto()` em `nucleo/confirmacao.ts` |
 | `window.print()` | **retorna sem erro, sem abrir caixa e sem imprimir** | a ponte do preload — ver `nucleo/impressao.ts` |
 
 `alert()` e `confirm()` funcionam normalmente.
@@ -358,6 +382,10 @@ julgada no olho:
 - **Cards do painel:** gradientes cujos dois extremos ficam acima de 4,5:1 com texto branco,
   inclusive no texto pequeno. Os tons claros óbvios (`#16a34a`, `#ea580c`) **falham** nesse
   limite e por isso não estão lá.
+- **O `--marca` não carrega texto branco.** Ele vai de `#5ec26a` a `#3d9950`, e branco sobre o
+  extremo claro dá **2,23:1**. No menu ele leva só um ícone de 34px; onde precisa de texto —
+  o painel do login — há um gradiente próprio, `#15803d → #166534`, medido em **5,02:1** e
+  **7,13:1**.
 - **Séries dos gráficos:** azul `#2a78d6` para pago, laranja `#eb6834` para previsto. Passaram
   no validador de paleta com ΔE 24,7 na simulação de daltonismo. **A cor segue a grandeza, não
   o rank:** pago é azul em qualquer gráfico.

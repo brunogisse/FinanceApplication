@@ -5,7 +5,7 @@ import { catchError, switchMap, tap } from 'rxjs/operators';
 import {
   Conta, Despesa, EntradaLancamento, FiltroConsulta, FormaPagamento, Lancamento,
   Painel, PreviaImportacao, ResultadoConsulta, ResultadoImportacao, ResultadoPagamentoEmLote,
-  ResultadoParcelamento, Sessao, Subdespesa, TotalPorSubdespesa,
+  ResultadoParcelamento, Sessao, Subdespesa, TotalPorSubdespesa, Usuario,
 } from './modelos';
 
 /** Endereço da API. Numa instalação real, isto vem da tela de configuração. */
@@ -23,6 +23,9 @@ export class Api {
   readonly sessao = this._sessao.asReadonly();
   readonly autenticado = computed(() => this._sessao() !== null);
   readonly usuario = computed(() => this._sessao()?.nome ?? '');
+  /** Identificador de quem está logado. A tela de usuários precisa dele para se proteger. */
+  readonly usuarioId = computed(() => this._sessao()?.id ?? 0);
+  readonly podeCadastrarUsuarios = computed(() => this._sessao()?.podeCadastrarUsuarios ?? false);
   readonly podeLancar = computed(() => this._sessao()?.podeLancar ?? false);
   readonly podeImportar = computed(() => this._sessao()?.podeImportarPlanilha ?? false);
 
@@ -66,6 +69,34 @@ export class Api {
   trocarSenha(usuarioId: number, senhaNova: string): Observable<unknown> {
     return this.http
       .post(`${this.endereco()}/sessao/trocar-senha`, { usuarioId, senhaNova })
+      .pipe(catchError(traduzirErro));
+  }
+
+  // ---------------- Usuários ----------------
+
+  usuarios(): Observable<Usuario[]> {
+    return this.http
+      .get<Usuario[]>(`${this.endereco()}/usuarios`)
+      .pipe(catchError(traduzirErro));
+  }
+
+  /** O nível viaja como número, que é o que a coluna LOGIN.NIVEL guarda. */
+  criarUsuario(nome: string, nivel: number, senha: string): Observable<Usuario> {
+    return this.http
+      .post<Usuario>(`${this.endereco()}/usuarios`, { nome, nivel, senha })
+      .pipe(catchError(traduzirErro));
+  }
+
+  /** Só nome e nível: a senha tem endpoint próprio, para não ser reescrita por descuido. */
+  alterarUsuario(id: number, nome: string, nivel: number): Observable<Usuario> {
+    return this.http
+      .put<Usuario>(`${this.endereco()}/usuarios/${id}`, { nome, nivel })
+      .pipe(catchError(traduzirErro));
+  }
+
+  excluirUsuario(id: number): Observable<void> {
+    return this.http
+      .delete<void>(`${this.endereco()}/usuarios/${id}`)
       .pipe(catchError(traduzirErro));
   }
 

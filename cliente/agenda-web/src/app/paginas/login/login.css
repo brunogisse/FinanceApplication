@@ -7,45 +7,187 @@
   background: var(--marca);
 }
 
+/*
+ * Cartão dividido: identidade à esquerda, formulário à direita.
+ *
+ * Não é dividido de ponta a ponta da janela de propósito. Numa tela de 2560 aquilo vira
+ * uma parede de cor, e o formulário — que é o que a pessoa veio fazer — fica perdido no
+ * meio dela.
+ */
 .caixa {
-  width: min(400px, 100%);
-  padding: 32px;
-  border-radius: 22px;
-  /* Sombra funda porque o cartão flutua sobre cor, não sobre o cinza da aplicação. */
+  width: min(940px, 100%);
+  /* O painel precisa de altura para o endereço do servidor descer até o rodapé; sem isto
+     a altura vem só do formulário e os dois blocos ficam grudados. */
+  min-height: 460px;
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  background: var(--cor-superficie);
+  border-radius: var(--raio-grande);
+  overflow: hidden;
+  /* Funda porque o cartão flutua sobre cor, não sobre o cinza da aplicação. */
   box-shadow: 0 20px 50px rgba(0, 0, 0, .22);
-  border: none;
+}
+
+/* ---------- Painel de identidade ---------- */
+
+/*
+ * Gradiente próprio, mais escuro que o `--marca` do menu.
+ *
+ * O `--marca` vai de #5ec26a a #3d9950, e texto branco sobre o extremo claro dá 2,2:1 —
+ * ilegível. Ali ele carrega só um ícone de 34px, aqui carregaria texto. Este par foi
+ * escolhido para os dois extremos passarem de 4,5:1 com branco.
+ */
+.painel {
+  background: linear-gradient(165deg, #15803d 0%, #166534 100%);
+  color: #fff;
+  padding: 38px 34px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 6px;
 }
 
-h1 {
+.marca-icone {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .16);
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+}
+
+.painel h1 {
   margin: 0;
-  font-size: 20px;
-  text-align: center;
+  font-size: 22px;
+  line-height: 1.25;
 }
 
-.subtitulo {
-  margin: 0 0 6px;
-  text-align: center;
-  color: var(--cor-texto-fraco);
+.linha-forte {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.linha {
+  margin: 0;
   font-size: 13px;
+  line-height: 1.55;
+  /* Branco cheio, não translúcido: sobre este verde, branco a 85% cai para 4,1:1. */
+  color: #fff;
 }
 
-.link {
+.nota {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, .28);
+}
+
+/* Endereço do servidor: fica colado no rodapé do painel. */
+.servidor {
+  margin-top: auto;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.rotulo-servidor {
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.endereco-atual {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.painel label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.campo-servidor {
+  width: 100%;
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--cor-texto);
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, .5);
+  border-radius: var(--raio);
+}
+.campo-servidor:focus {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+.acoes-servidor { display: flex; align-items: center; gap: 10px; margin-top: 7px; }
+
+.botao-painel {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  color: var(--cor-primaria-escura);
+  background: #fff;
+  border: none;
+  border-radius: var(--raio);
+  cursor: pointer;
+}
+.botao-painel:hover { background: #eef7f1; }
+
+/* Sublinhado permanente: link identificado só pela cor some para quem não distingue o
+   contraste, e aqui não há cor de link possível sobre o verde. */
+.link-painel {
+  align-self: flex-start;
+  font: inherit;
+  font-size: 12px;
+  color: #fff;
   background: none;
   border: none;
-  color: var(--cor-primaria);
+  padding: 2px 0;
   cursor: pointer;
-  font-size: 12px;
-  padding: 2px;
+  text-decoration: underline;
 }
-.link:hover { text-decoration: underline; }
+.link-painel:hover { opacity: .85; }
+.link-painel:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
-.configuracao {
+/* ---------- Formulário ---------- */
+
+.formulario {
+  padding: 44px 40px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--cor-borda);
+  gap: 16px;
+  justify-content: center;
+}
+
+.formulario h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.entrar { margin-top: 6px; padding: 11px; font-size: 15px; }
+
+/* ---------- Janela estreita ---------- */
+
+/*
+ * Empilhado, o painel vira uma faixa de topo: as três primeiras linhas bastam para dizer
+ * onde a pessoa está, e o formulário sobe para perto do teclado.
+ */
+@media (max-width: 780px) {
+  .caixa { grid-template-columns: 1fr; }
+  .painel { padding: 24px 26px; gap: 4px; }
+  .marca-icone { width: 42px; height: 42px; border-radius: 13px; margin-bottom: 8px; }
+  .painel h1 { font-size: 19px; }
+  .nota { display: none; }
+  .servidor { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .28); }
+  .formulario { padding: 26px; }
 }

@@ -57,4 +57,10 @@ export class Login {
     this.mostrarConfiguracao.set(false);
     this.erro.set(null);
   }
+
+  /** Desistir de alterar devolve o endereço que estava valendo, não o que foi digitado. */
+  cancelarConfiguracao(): void {
+    this.endereco.set(this.api.endereco());
+    this.mostrarConfiguracao.set(false);
+  }
 }

@@ -63,6 +63,15 @@ export interface Subdespesa {
 
 export type NivelAcesso = 'Consulta' | 'Operacao' | 'Administracao';
 
+/** Usuário do sistema — tabela LOGIN do legado. A senha nunca vem do servidor. */
+export interface Usuario {
+  id: number;
+  nome: string;
+  nivel: NivelAcesso;
+  /** Quem ainda não entrou pela API e portanto depende da senha em texto plano do legado. */
+  aindaSemHash: boolean;
+}
+
 export interface Sessao {
   token: string;
   expiraEm: string;

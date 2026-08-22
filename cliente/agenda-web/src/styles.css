@@ -310,3 +310,21 @@ button, input, select, textarea { font: inherit; color: inherit; }
   color: #fff;
 }
 .botao-destrutivo:hover:not(:disabled) { background: #991b1b; }
+
+/* Campo de texto dentro da caixa de diálogo — o lugar do prompt(), que não existe no Electron. */
+.confirmacao-campo {
+  width: 100%;
+  margin: 4px 0 2px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--cor-texto);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+.confirmacao-campo:focus {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: -1px;
+  border-color: var(--cor-primaria);
+}

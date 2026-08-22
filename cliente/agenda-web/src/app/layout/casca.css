@@ -115,3 +115,21 @@
   .itens a { justify-content: center; }
   .sair { font-size: 12px; }
 }
+
+.trocar-senha { width: 100%; font-size: 13px; }
+
+/* Confirmação da troca de senha. Some sozinha: é recado, não erro para resolver. */
+.recado {
+  margin: 0;
+  padding: 6px 8px;
+  background: var(--cor-primaria-clara);
+  color: var(--cor-primaria-escura);
+  border-radius: var(--raio);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* No menu recolhido não cabe texto de botão; o rodapé fica só com o essencial. */
+@media (max-width: 900px) {
+  .trocar-senha, .recado { display: none; }
+}

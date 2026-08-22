@@ -8,6 +8,8 @@ public sealed record DescricaoDto(string Descricao);
 public sealed record SubdespesaDto(string Descricao, int DespesaId);
 public sealed record CredenciaisDto(string Usuario, string Senha);
 public sealed record TrocaSenhaDto(int UsuarioId, string SenhaNova);
+public sealed record UsuarioNovoDto(string Nome, int Nivel, string Senha);
+public sealed record UsuarioAlteradoDto(string Nome, int Nivel);
 
 public static class EndpointsCadastros
 {
@@ -78,6 +80,66 @@ public static class EndpointsCadastros
         .WithSummary("Lista os usuários (nível 3)")
         .WithDescription("`aindaSemHash` mostra quem ainda não entrou pela API e portanto " +
                          "continua dependendo da senha em texto plano do legado.");
+
+        app.MapPost("/usuarios", (RepositorioUsuarios repo, UsuarioNovoDto dto) =>
+        {
+            var u = repo.Criar(
+                new DadosUsuario { Nome = dto.Nome, Nivel = RegrasUsuario.ExigirNivel(dto.Nivel) },
+                dto.Senha);
+
+            return Results.Created($"/usuarios/{u.Id}",
+                new { u.Id, u.Nome, Nivel = u.Nivel.ToString(), u.AindaSemHash });
+        })
+        .RequireAuthorization(Politicas.PodeAdministrar)
+        .WithTags("Sessão")
+        .WithSummary("Cria um usuário (nível 3)")
+        .WithDescription(
+            "A senha é gravada **nas duas colunas**: o hash para a API e o texto plano para o " +
+            "Delphi continuar autenticando quem foi criado aqui. Sem isso a pessoa entraria " +
+            "pelo sistema novo e seria recusada pelo antigo.\n\n" +
+            "⚠️ **Divergências intencionais em relação ao legado**, cuja tela é um " +
+            "`TDBNavigator` sobre `select * from LOGIN` sem validação nenhuma:\n\n" +
+            "- **Nome único**, sem diferenciar maiúsculas. Nome repetido não é só desordem: a " +
+            "autenticação busca por `UPPER(NOME)` esperando um só registro e **estoura em vez " +
+            "de recusar o login**.\n" +
+            "- **Nível restrito a 1, 2 ou 3.** O legado aceita qualquer inteiro, e um nível 7 " +
+            "passaria em toda checagem de \"maior ou igual a 2\".\n" +
+            "- **Senha de 4 a 20 caracteres.** O teto é o tamanho da coluna do legado.");
+
+        app.MapPut("/usuarios/{id:int}", (RepositorioUsuarios repo, ClaimsPrincipal quem,
+                                          int id, UsuarioAlteradoDto dto) =>
+        {
+            var u = repo.Alterar(
+                id,
+                new DadosUsuario { Nome = dto.Nome, Nivel = RegrasUsuario.ExigirNivel(dto.Nivel) },
+                quem.Autenticado());
+
+            return Results.Ok(new { u.Id, u.Nome, Nivel = u.Nivel.ToString(), u.AindaSemHash });
+        })
+        .RequireAuthorization(Politicas.PodeAdministrar)
+        .WithTags("Sessão")
+        .WithSummary("Altera o nome e o nível de um usuário (nível 3)")
+        .WithDescription(
+            "A senha **não** passa por aqui — quem troca senha é `POST /sessao/trocar-senha`. " +
+            "Misturar as duas coisas faria uma correção de nome reescrever a senha por descuido.\n\n" +
+            "Duas travas contra alguém se trancar para fora: o usuário 1 é o administrador de " +
+            "fato do legado e precisa continuar no nível 3, e ninguém rebaixa o próprio nível.");
+
+        app.MapDelete("/usuarios/{id:int}", (RepositorioUsuarios repo, ClaimsPrincipal quem,
+                                             int id) =>
+        {
+            repo.Excluir(id, quem.Autenticado());
+            return Results.NoContent();
+        })
+        .RequireAuthorization(Politicas.PodeAdministrar)
+        .WithTags("Sessão")
+        .WithSummary("Exclui um usuário (nível 3)")
+        .WithDescription(
+            "Quem já lançou não pode ser excluído, e **a regra está no banco**: existe a chave " +
+            "estrangeira `FK_REGISTRO_DE_GASTOS_5`, de `USERID` para `LOGIN`. A contagem feita " +
+            "antes serve só para a mensagem dizer quantos lançamentos são, em vez de vazar o " +
+            "erro cru do Firebird.\n\n" +
+            "O usuário 1 não pode ser excluído, e ninguém exclui a si mesmo.");
 
         // ---------------- Contas ----------------
 

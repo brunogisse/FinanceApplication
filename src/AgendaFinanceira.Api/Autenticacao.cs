@@ -126,4 +126,22 @@ public static class ConfiguracaoAutenticacao
     /// <summary>Identificador do usuário autenticado, extraído do token.</summary>
     public static int IdDoUsuario(this ClaimsPrincipal usuario) =>
         int.TryParse(usuario.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var id) ? id : 0;
+
+    /// <summary>
+    /// Monta o usuário a partir do token, sem ida ao banco.
+    ///
+    /// Mora aqui, e não em um arquivo de endpoints, porque mais de um grupo precisa dele —
+    /// duas cópias divergiriam no dia em que o token ganhasse um campo.
+    /// </summary>
+    public static Usuario Autenticado(this ClaimsPrincipal quem)
+    {
+        var nivel = int.TryParse(quem.FindFirst("nivel")?.Value, out var n) ? n : 1;
+        return new Usuario
+        {
+            Id = quem.IdDoUsuario(),
+            Nome = quem.Identity?.Name ?? "",
+            Nivel = (NivelAcesso)nivel,
+            AindaSemHash = false
+        };
+    }
 }
