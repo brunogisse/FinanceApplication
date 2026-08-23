@@ -147,15 +147,28 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .campo { display: flex; flex-direction: column; gap: 3px; }
 .campo label { font-size: 12px; color: var(--cor-texto-fraco); }
 
-.campo input, .campo select, .campo textarea {
+/*
+ * A aparência de caixa de texto mora AQUI, num lugar só.
+ *
+ * `.caixa` existe para os campos que não estão dentro de um `.campo` — a tabela de parcelas,
+ * por exemplo, onde o input mora numa célula. Sem ela, aqueles campos saíam quadrados e com o
+ * foco amarelo do navegador, destoando de todos os outros da tela.
+ */
+.campo input, .campo select, .campo textarea, .caixa {
   padding: 8px 10px;
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   background: var(--cor-superficie);
 }
-.campo input:focus, .campo select:focus, .campo textarea:focus {
+.campo input:focus, .campo select:focus, .campo textarea:focus, .caixa:focus {
   outline: 2px solid var(--cor-primaria);
   outline-offset: -1px;
+}
+/* Campo desabilitado tem uma aparência só, em qualquer tela. */
+.campo input:disabled, .campo select:disabled, .campo textarea:disabled, .caixa:disabled {
+  background: #f1f3f7;
+  color: #9aa0ad;
+  cursor: not-allowed;
 }
 
 /* Dinheiro alinhado à direita e em fonte tabular: as casas decimais ficam sob as casas
@@ -205,6 +218,29 @@ button, input, select, textarea { font: inherit; color: inherit; }
   color: #000;
 }
 
+/*
+ * Folha deitada: A4 em paisagem, 297mm.
+ *
+ * O relatório detalhado de subdespesas tem nove colunas e sai deitado — `@page { size: A4
+ * landscape }`. Na tela, porém, a folha continuava com os 210mm do A4 em pé, e a tabela
+ * escorria para fora do branco: as colunas de Previsto e Pago ficavam sobre o fundo cinza,
+ * dando a impressão de que sairiam cortadas no papel.
+ *
+ * A prévia tem de ter a largura do papel que vai sair. Se não tiver, ela mente.
+ */
+.folha-deitada { max-width: 297mm; }
+
+/*
+ * Na tela, o que não couber rola DENTRO da folha em vez de escorrer para fora dela.
+ *
+ * Numa janela mais estreita que o papel, a folha encolhe e a tabela não: sem esta regra as
+ * colunas da direita passeiam sobre o fundo cinza. Vale só na tela — no papel a folha tem a
+ * largura que tem, e `overflow` ali cortaria conteúdo em silêncio.
+ */
+@media screen {
+  .folha { overflow-x: auto; }
+}
+
 .folha h1 { font-size: 17px; margin: 0 0 4px; }
 .folha .periodo { margin: 0; color: #444; }
 .folha .gerado { margin: 2px 0 14px; color: #666; font-size: 12px; }
@@ -233,6 +269,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   max-width: 210mm;
   margin: 0 auto 10px;
 }
+.barra-impressao.deitada { max-width: 297mm; }
 .barra-impressao .espaco { flex: 1; }
 
 /* Relatorio longo: o numero de folhas precisa saltar aos olhos antes do clique. */

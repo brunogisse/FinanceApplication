@@ -211,6 +211,90 @@
 
 .acoes-dialogo { display: flex; justify-content: flex-end; gap: 8px; }
 
+/* ---------- Segundo passo do parcelamento ----------
+   As parcelas ficam aqui, editáveis, antes de existir qualquer linha no banco. O diálogo
+   precisa crescer: com doze parcelas os 440px do passo 1 não servem. */
+
+/*
+ * O diálogo das parcelas é largo porque a descrição precisa caber.
+ *
+ * Com 720px a coluna da descrição cortava no meio — "FINANCIAMENTO CARRO..." — e a operadora
+ * não conseguia conferir o que estava prestes a gravar. `min()` com `vw` para caber também
+ * numa janela pequena, em vez de vazar para fora dela.
+ */
+.dialogo:has(.tabela-parcelas) {
+  width: min(1100px, 94vw);
+  max-width: min(1100px, 94vw);
+}
+
+.tabela-parcelas {
+  /* Rola aqui dentro, e não o diálogo inteiro — senão o rodapé com a soma sai da vista
+     justamente enquanto ela mexe nos valores. O teto acompanha a janela: numa tela grande
+     cabem mais parcelas sem rolar. */
+  max-height: min(480px, 52vh);
+  overflow: auto;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  margin-bottom: 12px;
+}
+.tabela-parcelas table { width: 100%; border-collapse: collapse; }
+.tabela-parcelas thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f4f6f9;
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 7px 8px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cor-texto-fraco);
+}
+.tabela-parcelas td { padding: 5px 6px; border-bottom: 1px solid var(--borda-sutil); }
+.tabela-parcelas tr:last-child td { border-bottom: none; }
+.tabela-parcelas input { width: 100%; }
+
+.tabela-parcelas .col-numero {
+  width: 34px;
+  text-align: center;
+  color: var(--cor-texto-fraco);
+  font-variant-numeric: tabular-nums;
+}
+/* Vencimento e valor têm tamanho conhecido; a descrição fica com toda a sobra, que é o
+   campo que precisa dela. */
+.tabela-parcelas .col-vencimento { width: 170px; }
+.tabela-parcelas .col-valor { width: 150px; }
+
+/* A soma corrente contra o valor original. Diferença muda a cor, mas não bloqueia: juros de
+   financiamento fazem a soma passar do previsto, e isso é decisão de quem opera. */
+.soma-parcelas {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  border-radius: var(--raio);
+  background: var(--cor-primaria-clara);
+  border: 1px solid #bfe0cb;
+}
+.soma-parcelas small { color: var(--cor-texto-fraco); }
+.soma-parcelas.difere { background: #fff7ed; border-color: #fed7aa; }
+.soma-parcelas.difere small { color: #9a3412; }
+
+/* ---------- Tarja das parcelas recém-criadas ---------- */
+
+.tarja-parcelas {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--raio);
+  background: var(--cor-primaria-clara);
+  border: 1px solid #bfe0cb;
+}
+
 /* ---------- Busca avançada ---------- */
 
 .alternar-avancada { display: inline-flex; align-items: center; gap: 6px; }
@@ -233,6 +317,51 @@
 }
 .avancada .campo { width: 150px; }
 .avancada .campo-curto { width: 104px; }
+
+/* ---------- Faixa de valor ----------
+   Os três controles são uma frase só — "de ___ até ___ sobre [previsto]" —, e a moldura é
+   o que diz isso. Soltos, o "sobre" parecia um filtro independente e escolhê-lo sozinho não
+   mudava resultado nenhum. */
+
+.faixa-valor {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 2px 12px 10px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-grande);
+  background: var(--cor-superficie);
+}
+.faixa-valor legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cor-texto-fraco);
+}
+/*
+ * `.parte` também é `.campo` no HTML, e é de propósito: quem desenha caixa de texto neste
+ * sistema é a regra `.campo input` do styles.css — borda, canto arredondado, foco verde.
+ * Sem essa classe os três campos aqui saíam quadrados e com o foco amarelo do navegador,
+ * destoando dos que ficam logo acima.
+ *
+ * A largura vem daqui porque `.avancada .campo` vale 150px para todos, e estes três são
+ * de tamanhos diferentes.
+ */
+.faixa-valor .parte { width: auto; }
+.faixa-valor .parte > span { font-size: 12px; color: var(--cor-texto-fraco); }
+.faixa-valor input { width: 116px; }
+.faixa-valor select { width: 144px; }
+
+/* Sem faixa, o "sobre" fica desabilitado e a moldura recua: ela não está valendo. */
+.faixa-valor.inativa { border-style: dashed; background: #fafbfd; }
+.faixa-valor select:disabled { background: #f1f3f7; color: #9aa0ad; cursor: not-allowed; }
+
+.dica-faixa {
+  align-self: center;
+  font-size: 12px;
+  color: var(--cor-texto-fraco);
+}
 
 .nota-avancada {
   flex-basis: 100%;

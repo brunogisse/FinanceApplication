@@ -38,6 +38,13 @@ export class RelatorioConsolidado {
   readonly fim = signal('');
   /** true = "quanto gastei", pela data de pagamento; false = "quanto devo", pelo vencimento. */
   readonly pagos = signal(true);
+  /**
+   * Conta, quando a tela filtrou por uma.
+   *
+   * Precisa viajar e precisa aparecer no cabeçalho: uma folha que traz o recorte de uma
+   * conta sem dizer qual vira um número solto na mesa de alguém.
+   */
+  readonly conta = signal('');
 
   readonly geradoEm = formatarData(hojeIso());
   readonly nomeDoPdf = computed(() =>
@@ -64,6 +71,7 @@ export class RelatorioConsolidado {
     this.inicio.set(p.get('inicio') ?? '');
     this.fim.set(p.get('fim') ?? '');
     this.pagos.set(p.get('pagos') !== 'false');
+    this.conta.set(p.get('conta') ?? '');
     if (p.get('voltarPara')) this.voltarPara.set(p.get('voltarPara')!);
 
     if (!this.despesa()) {
@@ -72,7 +80,9 @@ export class RelatorioConsolidado {
       return;
     }
 
-    this.api.consolidadoPorDespesa(this.despesa(), this.inicio(), this.fim(), this.pagos())
+    this.api
+      .consolidadoPorDespesa(
+        this.despesa(), this.inicio(), this.fim(), this.pagos(), this.conta() || undefined)
       .subscribe({
         next: (linhas) => {
           this.linhas.set(linhas);

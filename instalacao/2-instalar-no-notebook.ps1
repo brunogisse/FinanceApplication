@@ -53,6 +53,46 @@ function GravarSql {
     }
 }
 
+
+<#
+.SYNOPSIS
+  Roda um executavel externo deixando que ele escreva em stderr sem derrubar o script.
+
+.DESCRIPTION
+  Com `$ErrorActionPreference = 'Stop'`, CADA LINHA que um programa externo manda para o
+  stderr vira excecao terminante. O `isql` usa stderr para dizer "Statement failed", e o
+  ALTER TABLE que cria a coluna de convivencia falha de proposito quando ela ja existe --
+  numa reinstalacao, ou quando o .FDB entregue ja veio preparado.
+
+  Medido em 23/08/2026, ensaiando a instalacao do notebook sobre um banco que ja tinha a
+  coluna: o script morria no ALTER TABLE, ANTES de chegar na conferencia logo abaixo que
+  existe justamente para tolerar esse erro. Aqui funcionou na primeira vez porque a copia
+  veio do banco do Delphi, que nao tem a coluna.
+
+  Devolve o codigo de saida. Quem chama decide se ele importa -- para o ALTER TABLE nao
+  importa, o que vale e o efeito.
+#>
+function RodarFerramenta {
+    param([Parameter(Mandatory)][string]$Programa,
+          [Parameter(Mandatory)][string[]]$Argumentos,
+          [switch]$Silencioso,
+          # Arquivo de saida do isql (-o). Apagado ANTES de rodar: o isql ACRESCENTA ao
+          # arquivo em vez de sobrescrever, e numa reinstalacao a conferencia leria o
+          # resultado da vez anterior -- aprovando uma instalacao que falhou agora.
+          [string]$LimparAntes)
+
+    if ($LimparAntes -and (Test-Path $LimparAntes)) { Remove-Item $LimparAntes -Force }
+
+    $anterior = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        if ($Silencioso) { & $Programa @Argumentos 2>&1 | Out-Null }
+        else             { & $Programa @Argumentos 2>&1 | Out-Host }
+        return $LASTEXITCODE
+    }
+    finally { $ErrorActionPreference = $anterior }
+}
+
 $publicado  = Join-Path $PSScriptRoot 'publicado'
 $executavel = Join-Path $publicado 'AgendaFinanceira.Api.exe'
 $copia      = Join-Path $PastaDeTrabalho 'AGENDA_TESTE.FDB'
@@ -124,7 +164,7 @@ SELECT COUNT(*) AS USUARIOS FROM LOGIN;
 '@ | GravarSql $sql
 
     $saida = Join-Path $env:TEMP 'agenda-contagem.txt'
-    & "$fb\isql.exe" -b -user SYSDBA -password masterkey -i $sql -o $saida "localhost:$copia" 2>&1 | Out-Host
+    RodarFerramenta "$fb\isql.exe" @('-b','-user','SYSDBA','-password','masterkey','-i',$sql,'-o',$saida,"localhost:$copia") -LimparAntes $saida | Out-Null
     if (Test-Path $saida) { Get-Content $saida | Where-Object { $_.Trim() } | ForEach-Object { Write-Host "  $_" } }
 
     Write-Host ''
@@ -142,11 +182,12 @@ Copy-Item $origem.FullName $bruta -Force
 Write-Host 'Gerando a copia de trabalho por gbak (backup + restore)...' -ForegroundColor Cyan
 $fbk = Join-Path $PastaDeTrabalho 'agenda.fbk'
 
-& "$fb\gbak.exe" -b -user SYSDBA -password masterkey "localhost:$bruta" $fbk 2>&1 | Out-Host
-if ($LASTEXITCODE -ne 0) { throw "gbak (backup) falhou com codigo $LASTEXITCODE." }
+# O gbak escreve avisos em stderr mesmo quando termina bem; por isso vai pelo RodarFerramenta.
+$codigo = RodarFerramenta "$fb\gbak.exe" @('-b','-user','SYSDBA','-password','masterkey',"localhost:$bruta",$fbk)
+if ($codigo -ne 0) { throw "gbak (backup) falhou com codigo $codigo." }
 
-& "$fb\gbak.exe" -c -user SYSDBA -password masterkey $fbk "localhost:$copia" 2>&1 | Out-Host
-if ($LASTEXITCODE -ne 0) { throw "gbak (restore) falhou com codigo $LASTEXITCODE." }
+$codigo = RodarFerramenta "$fb\gbak.exe" @('-c','-user','SYSDBA','-password','masterkey',$fbk,"localhost:$copia")
+if ($codigo -ne 0) { throw "gbak (restore) falhou com codigo $codigo." }
 
 if (-not (Test-Path $copia)) { throw "O gbak terminou sem erro, mas $copia nao existe." }
 Remove-Item $bruta -Force
@@ -166,7 +207,19 @@ COMMIT;
 $saidaColuna = Join-Path $env:TEMP 'agenda-coluna.txt'
 # -b (bail): sem ele o isql segue executando depois de um erro. Nao e -v ON_ERROR_STOP,
 # que e do psql e o isql nao conhece.
-& "$fb\isql.exe" -b -user SYSDBA -password masterkey -i $sqlColuna -o $saidaColuna "localhost:$copia" 2>&1 | Out-Host
+#
+# Este e o ponto onde a instalacao morria: quando a coluna JA EXISTE -- reinstalacao, ou um
+# .FDB entregue ja preparado -- o isql escreve "Statement failed" em stderr, e com
+# ErrorActionPreference = Stop isso virava excecao terminante antes da conferencia abaixo.
+#
+# -Silencioso porque a falha aqui e ROTINA quando o banco ja vem preparado, e o texto do
+# isql em vermelho faria quem instala achar que quebrou. O que vale e a conferencia abaixo.
+RodarFerramenta "$fb\isql.exe" @('-b','-user','SYSDBA','-password','masterkey','-i',$sqlColuna,'-o',$saidaColuna,"localhost:$copia") -Silencioso -LimparAntes $saidaColuna | Out-Null
+
+$jaExistia = (Get-Content $saidaColuna -Raw -ErrorAction SilentlyContinue) -match 'duplicate value'
+if ($jaExistia) {
+    Write-Host '  a coluna ja existia neste banco (ele ja veio preparado).' -ForegroundColor DarkGray
+}
 
 # Conferir o EFEITO, nao so o codigo de saida: a coluna pode ja existir de uma
 # instalacao anterior, e nesse caso o erro e esperado.
@@ -178,7 +231,7 @@ SELECT COUNT(*) AS TEM_A_COLUNA FROM RDB$RELATION_FIELDS
 '@ | GravarSql $sqlConfere
 
 $saidaConfere = Join-Path $env:TEMP 'agenda-confere.txt'
-& "$fb\isql.exe" -b -user SYSDBA -password masterkey -i $sqlConfere -o $saidaConfere "localhost:$copia" 2>&1 | Out-Null
+RodarFerramenta "$fb\isql.exe" @('-b','-user','SYSDBA','-password','masterkey','-i',$sqlConfere,'-o',$saidaConfere,"localhost:$copia") -Silencioso -LimparAntes $saidaConfere | Out-Null
 
 $temColuna = (Get-Content $saidaConfere -Raw) -match 'TEM_A_COLUNA\s+1'
 if (-not $temColuna) {

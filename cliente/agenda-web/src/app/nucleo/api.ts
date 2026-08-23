@@ -4,8 +4,9 @@ import { Observable, from, throwError } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import {
   Conta, Despesa, EntradaLancamento, FiltroConsulta, FormaPagamento, Lancamento,
-  Painel, PreviaImportacao, ResultadoConsulta, ResultadoImportacao, ResultadoPagamentoEmLote,
-  ResultadoParcelamento, Sessao, Subdespesa, TotalPorSubdespesa, Usuario,
+  Painel, ParcelaAjustada, PreviaImportacao, ResultadoConsulta, ResultadoImportacao,
+  ResultadoPagamentoEmLote, ResultadoParcelamento, Sessao, Subdespesa, TotalPorSubdespesa,
+  Usuario,
 } from './modelos';
 
 /** Endereço da API. Numa instalação real, isto vem da tela de configuração. */
@@ -170,9 +171,18 @@ export class Api {
       .pipe(catchError(traduzirErro));
   }
 
-  parcelar(id: number, parcelas: number): Observable<ResultadoParcelamento> {
+  /**
+   * Grava o parcelamento.
+   *
+   * Com `valores`, o servidor grava exatamente aquelas parcelas — é o que a tela manda depois
+   * que a operadora ajusta. Sem, ele divide em `parcelas` partes iguais, que é a forma antiga
+   * e continua valendo.
+   */
+  parcelar(id: number, parcelas: number,
+           valores?: ParcelaAjustada[]): Observable<ResultadoParcelamento> {
     return this.http
-      .post<ResultadoParcelamento>(`${this.endereco()}/lancamentos/${id}/parcelar`, { parcelas })
+      .post<ResultadoParcelamento>(
+        `${this.endereco()}/lancamentos/${id}/parcelar`, { parcelas, valores })
       .pipe(catchError(traduzirErro));
   }
 
@@ -240,11 +250,17 @@ export class Api {
       .pipe(catchError(traduzirErro));
   }
 
+  /**
+   * `conta` é opcional: recorta o consolidado a uma conta só. Vazia significa "todas", e
+   * nesse caso o parâmetro nem viaja — o servidor então nem faz o JOIN em CONTAS.
+   */
   consolidadoPorDespesa(
-    despesa: string, inicio: string, fim: string, pagos: boolean,
+    despesa: string, inicio: string, fim: string, pagos: boolean, conta?: string,
   ): Observable<TotalPorSubdespesa[]> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('despesa', despesa).set('inicio', inicio).set('fim', fim).set('pagos', pagos);
+    if (conta) params = params.set('conta', conta);
+
     return this.http
       .get<TotalPorSubdespesa[]>(`${this.endereco()}/relatorios/por-despesa`, { params })
       .pipe(catchError(traduzirErro));

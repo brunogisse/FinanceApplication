@@ -24,7 +24,7 @@ const PAGINAS_QUE_MERECEM_AVISO = 20;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="barra-impressao nao-imprime">
+    <div class="barra-impressao nao-imprime" [class.deitada]="deitada()">
       <button class="botao" (click)="voltar()">Voltar</button>
 
       @if (quantidade() !== null) {
@@ -62,6 +62,14 @@ export class BarraImpressao {
   readonly nomeDoPdf = input.required<string>();
   readonly voltarPara = input<string>('/lancamentos');
   readonly ocupado = input(false);
+
+  /**
+   * O relatório sai deitado (A4 paisagem)?
+   *
+   * A barra acompanha a largura da folha. Sem isto ela ficaria com a largura do A4 em pé,
+   * desalinhada da folha larga logo abaixo.
+   */
+  readonly deitada = input(false);
 
   readonly aviso = signal<string | null>(null);
   readonly noAplicativo = this.impressao.noAplicativo;

@@ -77,12 +77,24 @@ FROM REGISTRO_DE_GASTOS REG
     ///
     /// A troca da coluna de data entre os modos é a regra central deste relatório:
     /// pago filtra por DATA_PAGAMENTO, não pago filtra por DATA_VENCIMENTO.
+    ///
+    /// <paramref name="conta"/> é opcional e recorta o consolidado a uma conta só —
+    /// "quanto saiu desta conta, nesta despesa". Sem ela, o resultado é o de sempre.
     /// </summary>
     public IReadOnlyList<TotalPorSubdespesa> ConsolidarPorDespesa(
-        string despesa, Periodo periodo, bool apenasPagos)
+        string despesa, Periodo periodo, bool apenasPagos, string? conta = null)
     {
         var coluna = apenasPagos ? "REG.DATA_PAGAMENTO" : "REG.DATA_VENCIMENTO";
         var condicaoPago = apenasPagos ? "REG.PAGO = 1" : "REG.PAGO = 0";
+
+        // O JOIN em CONTAS só entra quando há conta a filtrar. Deixá-lo fixo mudaria o
+        // resultado de quem não filtra: um lançamento com CONTA_ID órfão sairia da soma
+        // sem ninguém pedir.
+        var filtrarConta = !string.IsNullOrWhiteSpace(conta);
+        var juncaoConta = filtrarConta
+            ? "\n     JOIN CONTAS CT ON CT.CONTA_ID = REG.CONTA_ID"
+            : "";
+        var condicaoConta = filtrarConta ? "\n  AND CT.DESCRICAO = @conta" : "";
 
         var sql = $@"
 SELECT S.SUBCATEGORIA_ID AS SubdespesaId, S.DESCRICAO AS Subdespesa, C.DESCRICAO AS Despesa,
@@ -91,10 +103,10 @@ SELECT S.SUBCATEGORIA_ID AS SubdespesaId, S.DESCRICAO AS Subdespesa, C.DESCRICAO
        SUM(CAST(REG.VALOR_PAGO     AS NUMERIC(15,2))) AS TotalPago
 FROM REGISTRO_DE_GASTOS REG
      JOIN CATEGORIA    C ON C.CATEGORIA_ID    = REG.CATEGORIA_ID
-     JOIN SUBCATEGORIA S ON S.SUBCATEGORIA_ID = REG.SUBCATEGORIA_ID
+     JOIN SUBCATEGORIA S ON S.SUBCATEGORIA_ID = REG.SUBCATEGORIA_ID{juncaoConta}
 WHERE C.DESCRICAO = @despesa
   AND {coluna} BETWEEN @inicio AND @fim
-  AND {condicaoPago}
+  AND {condicaoPago}{condicaoConta}
 GROUP BY S.SUBCATEGORIA_ID, S.DESCRICAO, C.DESCRICAO
 ORDER BY S.DESCRICAO";
 
@@ -102,6 +114,7 @@ ORDER BY S.DESCRICAO";
         return con.Query(sql, new
         {
             despesa,
+            conta = conta?.Trim(),
             inicio = periodo.Inicio.ToDateTime(TimeOnly.MinValue),
             fim = periodo.Fim.ToDateTime(TimeOnly.MinValue)
         }).Select(l => new TotalPorSubdespesa

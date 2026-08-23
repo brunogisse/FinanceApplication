@@ -74,6 +74,21 @@ public sealed record ResultadoImportacao
     public int Quantidade => Lancamentos.Count;
 }
 
+/// <summary>
+/// Uma parcela como quem opera decidiu que ela deve ficar.
+///
+/// Existe porque parcela igual é o caso comum, não a regra: financiamento com juros, entrada
+/// maior, acerto de centavo no fim. Antes, quem quisesse valores diferentes tinha de deixar o
+/// sistema dividir e depois caçar cada parcela na grade — e elas nascem uma por mês, então a
+/// maioria cai fora do período em tela assim que o parcelamento termina.
+/// </summary>
+public sealed record ParcelaAjustada
+{
+    public required Dinheiro ValorPrevisto { get; init; }
+    public required DateOnly DataVencimento { get; init; }
+    public required string Descricao { get; init; }
+}
+
 /// <summary>Regras de parcelamento, isoladas para poderem ser testadas sem banco.</summary>
 public static class RegrasParcelamento
 {
@@ -89,6 +104,66 @@ public static class RegrasParcelamento
         if (parcelas > MaximoDeParcelas)
             throw new RegraDeNegocioException(
                 $"O parcelamento aceita no máximo {MaximoDeParcelas} parcelas.");
+    }
+
+    /// <summary>
+    /// Confere a lista que veio da tela e devolve as parcelas com a descrição já normalizada.
+    ///
+    /// **A soma não precisa fechar o valor original, e isso é decisão de quem opera.** Juros de
+    /// financiamento fazem a soma passar do previsto legitimamente. Quem chama recebe
+    /// <see cref="ResultadoParcelamento.Fechou"/> para dizer se bateu; recusar aqui obrigaria a
+    /// operadora a lançar tudo de novo por fora.
+    /// </summary>
+    public static IReadOnlyList<ParcelaAjustada> ExigirParcelasValidas(
+        IReadOnlyList<ParcelaAjustada> parcelas)
+    {
+        ExigirQuantidadeValida(parcelas.Count);
+
+        var conferidas = new List<ParcelaAjustada>(parcelas.Count);
+
+        for (var i = 0; i < parcelas.Count; i++)
+        {
+            var p = parcelas[i];
+            var numero = i + 1;
+
+            // Zero passaria pelo banco sem reclamar e viraria uma linha que ninguém cobra —
+            // some da conta sem sumir da lista.
+            if (p.ValorPrevisto.EhZero)
+                throw new RegraDeNegocioException(
+                    $"A parcela {numero} está sem valor. Informe um valor maior que zero.");
+
+            if (p.ValorPrevisto < Dinheiro.Zero)
+                throw new RegraDeNegocioException(
+                    $"A parcela {numero} tem valor negativo. Este sistema é de contas a pagar.");
+
+            conferidas.Add(p with
+            {
+                Descricao = ValidacaoCadastro.ExigirDescricao(
+                    p.Descricao, DadosLancamento.TamanhoMaximoDescricao,
+                    $"descrição da parcela {numero}")
+            });
+        }
+
+        return conferidas;
+    }
+
+    /// <summary>
+    /// A divisão padrão, que a tela mostra já preenchida: valor repartido em centavos inteiros
+    /// com o resto nas primeiras parcelas, uma por mês a partir do vencimento original.
+    /// </summary>
+    public static IReadOnlyList<ParcelaAjustada> DivisaoPadrao(
+        Dinheiro valor, DateOnly vencimento, string descricao, int parcelas)
+    {
+        ExigirQuantidadeValida(parcelas);
+
+        var valores = valor.Dividir(parcelas);
+
+        return Enumerable.Range(1, parcelas).Select(numero => new ParcelaAjustada
+        {
+            ValorPrevisto = valores[numero - 1],
+            DataVencimento = VencimentoDaParcela(vencimento, numero),
+            Descricao = DescricaoDaParcela(descricao, numero, parcelas)
+        }).ToList();
     }
 
     /// <summary>

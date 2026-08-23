@@ -395,6 +395,22 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
 .dia.tem-lancamento:hover { background: rgba(255, 255, 255, .34); }
 .dia.tem-a-pagar:hover { background: var(--cor-primaria-clara); }
 .dia.hoje { outline: 2px solid #fff; outline-offset: -2px; color: #fff; }
+
+/*
+ * Hoje SOBRE a pastilha branca: texto e contorno escuros.
+ *
+ * Sem esta regra o número some — 23/08/2026 era hoje e tinha a pagar, e a pastilha branca do
+ * `tem-a-pagar` recebia o `color: #fff` do `hoje`: branco no branco, o dia em branco no meio
+ * do calendário. O contorno branco também sumia contra a própria pastilha.
+ *
+ * `#14532d` sobre branco dá 9,11:1. O `:not(.escolhido)` protege o caso em que o dia também
+ * está selecionado: lá o fundo é verde-escuro e quem manda é a regra de baixo.
+ */
+.dia.hoje.tem-a-pagar:not(.escolhido) {
+  color: #14532d;
+  outline-color: #14532d;
+}
+
 .dia.escolhido {
   background: #0b3d22;
   color: #fff;

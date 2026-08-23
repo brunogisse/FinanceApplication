@@ -12,7 +12,14 @@
 <div class="folha">
   <h1>Relatório de Despesa/Subdespesa</h1>
 
-  <p class="periodo">Despesa: <strong>{{ despesa() }}</strong></p>
+  <p class="periodo">
+    Despesa: <strong>{{ despesa() }}</strong>
+    <!-- Sem esta linha, a folha filtrada por uma conta seria indistinguível da folha
+         completa — e alguém a leria como o total da despesa inteira. -->
+    @if (conta()) {
+      &nbsp;·&nbsp; Conta: <strong>{{ conta() }}</strong>
+    }
+  </p>
   <p class="periodo">
     Relatório gerado entre as datas
     <strong>{{ data(inicio()) }}</strong> e <strong>{{ data(fim()) }}</strong>,
@@ -54,7 +61,7 @@
     @if (linhas().length > 0) {
       <tfoot>
         <tr>
-          <th>Total de {{ despesa() }}</th>
+          <th>Total de {{ despesa() }}{{ conta() ? ' — ' + conta() : '' }}</th>
           <th class="col-qtd">{{ inteiro(quantidade()) }}</th>
           <th class="dinheiro" colspan="2">
             {{ pagos() ? 'Total pago: ' : 'Total previsto: ' }}{{ moeda(total()) }}

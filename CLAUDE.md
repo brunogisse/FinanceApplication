@@ -90,6 +90,11 @@ Decisão do cliente: não migrar. Tratar como legado inativo.
    erro**. Sempre usar `-b`, e conferir o código de saída.
    `-v ON_ERROR_STOP=1` é do **`psql`** e o `isql` não conhece — medido em 22/08/2026: com
    um `SELECT` numa tabela inexistente, sem `-b` a instrução seguinte roda; com `-b`, não.
+6. **`isql -o` ACRESCENTA ao arquivo, não sobrescreve.** Rodar a mesma consulta duas vezes
+   deixa os dois resultados no arquivo, um embaixo do outro, cada um com seu cabeçalho — e
+   parece uma listagem só, longa. Em 23/08/2026 isso quase me fez apagar registros que não
+   eram meus: a lista trazia linhas já excluídas na rodada anterior. **Apague o arquivo de
+   saída antes de cada consulta**, e confirme por `COUNT(*)` antes de qualquer `DELETE`.
 
 **Dados sensíveis:** `LOGIN.SENHA` está em texto plano e `FORNECEDOR.CNPJ` tem 157 registros
 reais. Toda base de desenvolvimento precisa ser anonimizada antes de sair da máquina.
@@ -320,6 +325,26 @@ parcelamento, exportação para planilha, busca avançada), formulário de lanç
 por despesa, cadastros (contas, formas de pagamento, despesas e subdespesas) e importação de
 planilha.
 
+**O parcelamento tem dois passos, e o segundo é editável.** Escolhida a quantidade, as parcelas
+aparecem numa tabela já preenchida com a divisão exata — valor, vencimento e descrição de cada
+uma —, e nada foi gravado ainda. A operadora ajusta o que precisar e manda gravar de uma vez.
+Se não mexer em nada, sai igual ao parcelamento automático de antes; há teste no servidor
+provando que os dois caminhos dão o mesmo resultado.
+
+> **A soma não precisa fechar o valor original.** Juros de financiamento fazem passar do
+> previsto legitimamente, e recusar obrigaria a lançar tudo por fora. A tela mostra a diferença
+> em destaque e grava assim mesmo.
+
+Depois de gravar, **a grade passa a mostrar só as parcelas recém-criadas**, com uma tarja
+dizendo isso e um botão de voltar ao filtro. Sem isso elas somem no instante em que nascem: o
+filtro em tela é um período e as parcelas vencem uma por mês, então parcelar em cinco dentro de
+um filtro de junho deixaria quatro fora da vista.
+
+> **A data das parcelas é gerada no cliente** e precisa bater com o `DateOnly.AddMonths` do
+> servidor: 31/01 mais um mês é **28/02**. Para isso existe `somarMesesNoCalendario` em
+> `nucleo/moeda.ts` — `somarMeses`, ao lado dela, transborda para 03/03 e serve só para o
+> período do filtro.
+
 **A importação lê extrato bancário direto**, sem preparar a planilha: pula título e cabeçalho,
 deixa crédito de fora, e a linha que vem só com valor herda a data da anterior — que é onde o
 legado perde dinheiro (defeito 8 abaixo). A prévia diz por extenso cada decisão dessas, e
@@ -331,6 +356,33 @@ A busca avançada cobre a segunda aba do legado: subdespesa, nota fiscal, cheque
 compensado, situação e faixa de valor sobre previsto ou pago. **Busca por nota fiscal ou por
 cheque ignora o período e varre a base inteira** — é um documento que se procura, não um mês.
 O legado tem a mesma intenção quando força o início em 01/01/2018 na busca por NF.
+
+**"Faixa sobre" não é filtro, é o modificador de "de" e "até"**, e a tela agora diz isso: os
+três moram numa moldura `Faixa de valor` que se lê como frase, e o "sobre" fica desabilitado
+enquanto não houver faixa. Antes ele ficava solto, com cara de filtro independente, e
+escolhê-lo sozinho não mudava nada — medido em 23/08/2026 contra a base real: 4.741
+lançamentos com "pago", com "previsto" e sem escolher. Com "de R$ 1.000", previsto dá 1.614 e
+pago dá 1.425. A regra do servidor sempre esteve certa; quem enganava era a tela.
+
+**Todo campo de digitar dinheiro usa a diretiva `mascaraMoeda`** (`nucleo/mascara-moeda.ts`),
+que monta o valor dos centavos para a esquerda: `123456` vira `R$ 1.234,56`. São cinco campos
+— previsto e pago no formulário, "de" e "até" na faixa, e o valor de cada parcela.
+
+> **A máscara é manipulação de texto, não aritmética:** `mascararMoeda` não divide por 100 nem
+> passa por `Number`. É por aqui que o dinheiro entra no sistema, e é onde o ponto flutuante
+> não pode encostar. Campo só com zeros volta vazio de propósito — senão a tecla de retrocesso
+> nunca esvaziaria o campo, e vazio significa "sem filtro" e "igual ao previsto".
+
+**O consolidado por despesa tem "Mais filtros", e por enquanto só conta** — pedido de quem
+opera em 23/08/2026: "quanto saiu desta conta, nesta despesa". O `JOIN` em `CONTAS` só entra
+quando há conta a filtrar; fixá-lo mudaria o resultado de quem não filtra, porque um
+`CONTA_ID` órfão sairia da soma sem ninguém pedir.
+
+> **O recorte tem de valer nos três lugares.** A conta viaja no endereço, no botão Imprimir e
+> no Detalhar. Se a tela filtra e a folha não, a folha contradiz a tela; se o detalhado não
+> filtra, ele não fecha com o total da linha em que a pessoa clicou — que é exatamente o que
+> ela foi conferir. As duas folhas dizem a conta no cabeçalho, e o rótulo do total vira
+> "Total de DESPESA — CONTA".
 
 **Relatórios impressos:** os três do legado existem, como páginas de impressão em
 `paginas/relatorio-lancamentos`, `relatorio-consolidado` e `relatorio-subdespesa`. Os números
@@ -382,6 +434,12 @@ o que a ponte do `preload.js` expõe.
 vence o `@page` da folha, e o relatório detalhado de subdespesas — que precisa sair deitado,
 senão perde colunas — sairia em pé e cortado.
 
+**Relatório deitado leva `folha-deitada` na tela.** O `@page { size: A4 landscape }` só vale
+na impressão; sem a classe, a prévia continuava com os 210mm do A4 em pé e a tabela de nove
+colunas escorria para fora do branco, sobre o fundo cinza — parecia que sairia cortada.
+A prévia tem de ter a largura do papel que vai sair, senão ela mente. A `.barra-impressao`
+recebe `[deitada]="true"` para acompanhar. Medido: folha 1123px, tabela 1017px, cabe.
+
 ### Cores e gráficos
 
 A paleta está em `cliente/agenda-web/src/styles.css`, e cada escolha foi **medida**, não
@@ -400,6 +458,10 @@ julgada no olho:
   volta de 1,9:1. **Não é esquecimento, e não precisa ser "corrigido"** — só reabra o assunto
   se ele pedir. `#15803d` é o verde mais claro em que branco passa dos 4,5:1; a família
   inteira está medida no comentário de `painel.css`, sobre `.lateral`.
+- **Dia que é hoje E tem a pagar leva texto escuro.** As duas marcas se somam — pastilha
+  branca do "a pagar" mais o `color: #fff` do "hoje" — e o número sumia: branco no branco.
+  Aconteceu em 23/08/2026, com o dia 23. A regra `.dia.hoje.tem-a-pagar:not(.escolhido)`
+  devolve `#14532d` ao texto e ao contorno, 9,11:1 sobre branco.
 - **Séries dos gráficos:** azul `#2a78d6` para pago, laranja `#eb6834` para previsto. Passaram
   no validador de paleta com ΔE 24,7 na simulação de daltonismo. **A cor segue a grandeza, não
   o rank:** pago é azul em qualquer gráfico.

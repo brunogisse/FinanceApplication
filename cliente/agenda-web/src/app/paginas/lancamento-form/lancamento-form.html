@@ -60,8 +60,8 @@
 
     <div class="campo">
       <label for="valorPrevisto">Valor previsto</label>
-      <input id="valorPrevisto" name="valorPrevisto" inputmode="decimal" placeholder="0,00"
-             class="dinheiro"
+      <input id="valorPrevisto" name="valorPrevisto" inputmode="numeric" placeholder="R$ 0,00"
+             class="dinheiro" mascaraMoeda
              [ngModel]="valorPrevistoTexto()" (ngModelChange)="valorPrevistoTexto.set($event)" />
     </div>
 
@@ -114,8 +114,8 @@
 
       <div class="campo">
         <label for="valorPago">Valor pago</label>
-        <input id="valorPago" name="valorPago" inputmode="decimal" class="dinheiro"
-               [placeholder]="'em branco = ' + (valorPrevistoTexto() || '0,00')"
+        <input id="valorPago" name="valorPago" inputmode="numeric" class="dinheiro" mascaraMoeda
+               [placeholder]="'em branco = ' + (valorPrevistoTexto() || 'R$ 0,00')"
                [ngModel]="valorPagoTexto()" (ngModelChange)="valorPagoTexto.set($event)" />
       </div>
     }

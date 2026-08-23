@@ -4,11 +4,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
 import { Conta, EntradaLancamento, FormaPagamento, Subdespesa } from '../../nucleo/modelos';
 import { formatarMoeda, hojeIso, lerMoeda } from '../../nucleo/moeda';
+import { MascaraMoeda } from '../../nucleo/mascara-moeda';
 
 @Component({
   selector: 'app-lancamento-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, MascaraMoeda],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './lancamento-form.html',
   styleUrl: './lancamento-form.css',

@@ -138,28 +138,52 @@
         </select>
       </div>
 
-      <div class="campo campo-curto">
-        <label for="valorMin">Valor de</label>
-        <input id="valorMin" [ngModel]="valorMinimoTexto()"
-               (ngModelChange)="valorMinimoTexto.set($event)" (keydown)="aoTeclar($event)"
-               placeholder="0,00" />
-      </div>
+      <!--
+        Os três campos da faixa vivem numa moldura só, e a frase se lê inteira:
+        "de ___ até ___ sobre [previsto]".
 
-      <div class="campo campo-curto">
-        <label for="valorMax">até</label>
-        <input id="valorMax" [ngModel]="valorMaximoTexto()"
-               (ngModelChange)="valorMaximoTexto.set($event)" (keydown)="aoTeclar($event)"
-               placeholder="0,00" />
-      </div>
+        Antes eram três campos soltos, do mesmo tamanho e com a mesma cara dos outros, e o
+        "Faixa sobre" parecia um filtro independente. Escolhê-lo sozinho não muda resultado
+        nenhum — ele é o modificador da faixa, não a faixa —, e a tela não dizia isso.
+      -->
+      <fieldset class="faixa-valor" [class.inativa]="!temFaixaDeValor()">
+        <legend>Faixa de valor</legend>
 
-      <div class="campo">
-        <label for="sobreValor">Faixa sobre</label>
-        <select id="sobreValor" [ngModel]="faixaSobreValorPago()"
-                (ngModelChange)="faixaSobreValorPago.set($event)">
-          <option [ngValue]="false">Valor previsto</option>
-          <option [ngValue]="true">Valor pago</option>
-        </select>
-      </div>
+        <label class="campo parte" for="valorMin">
+          <span>de</span>
+          <input id="valorMin" class="dinheiro" inputmode="numeric" mascaraMoeda
+                 [ngModel]="valorMinimoTexto()"
+                 (ngModelChange)="valorMinimoTexto.set($event)" (keydown)="aoTeclar($event)"
+                 placeholder="R$ 0,00" />
+        </label>
+
+        <label class="campo parte" for="valorMax">
+          <span>até</span>
+          <input id="valorMax" class="dinheiro" inputmode="numeric" mascaraMoeda
+                 [ngModel]="valorMaximoTexto()"
+                 (ngModelChange)="valorMaximoTexto.set($event)" (keydown)="aoTeclar($event)"
+                 placeholder="R$ 0,00" />
+        </label>
+
+        <label class="campo parte" for="sobreValor">
+          <span>sobre</span>
+          <!-- Desabilitado enquanto não há faixa: sem "de" nem "até", escolher aqui não muda
+               nada, e um controle que aceita ser mexido sem efeito é uma promessa falsa. -->
+          <select id="sobreValor" [ngModel]="faixaSobreValorPago()"
+                  (ngModelChange)="faixaSobreValorPago.set($event)"
+                  [disabled]="!temFaixaDeValor()"
+                  [attr.title]="temFaixaDeValor()
+                    ? null
+                    : 'Preencha \'de\' ou \'até\' para escolher sobre qual valor a faixa vale.'">
+            <option [ngValue]="false">Valor previsto</option>
+            <option [ngValue]="true">Valor pago</option>
+          </select>
+        </label>
+
+        @if (!temFaixaDeValor()) {
+          <small class="dica-faixa">Preencha <strong>de</strong> ou <strong>até</strong>.</small>
+        }
+      </fieldset>
 
       <div class="botoes-filtro">
         <button class="botao" (click)="limparBuscaAvancada(); pesquisar()">Limpar estes</button>
@@ -179,6 +203,19 @@
   }
   @if (aviso()) {
     <div class="aviso" (click)="aviso.set(null)">{{ aviso() }}</div>
+  }
+
+  <!-- As parcelas vencem uma por mês, então quase nenhuma cabe no período que está no filtro.
+       Enquanto esta tarja estiver aqui, a grade mostra as parcelas e não o filtro — e diz
+       isso, porque grade mostrando outra coisa sem avisar é o pior tipo de surpresa. -->
+  @if (parcelasRecemCriadas()) {
+    <div class="tarja-parcelas">
+      <span>
+        Mostrando as <strong>{{ lancamentos().length }}</strong> parcelas recém-criadas.
+        Elas já estão gravadas.
+      </span>
+      <button class="botao" (click)="voltarAoFiltro()">Voltar ao filtro</button>
+    </div>
   }
 
   @if (temSelecao()) {
@@ -273,32 +310,110 @@
         {{ moeda(l.valorPrevisto) }} — vencimento {{ data(l.dataVencimento) }}
       </p>
 
-      <div class="campo">
-        <label for="qtdParcelas">Em quantas vezes</label>
-        <input id="qtdParcelas" type="number" min="2" step="1" autofocus
-               [ngModel]="parcelas()" (ngModelChange)="parcelas.set($event)" />
-      </div>
+      @if (passoParcelamento() === 1) {
+        <div class="campo">
+          <label for="qtdParcelas">Em quantas vezes</label>
+          <input id="qtdParcelas" type="number" min="2" step="1" autofocus
+                 [ngModel]="parcelas()" (ngModelChange)="parcelas.set($event)" />
+        </div>
 
-      @if (previaParcelas(); as p) {
-        <div class="previa">
-          <div>{{ p.texto }}</div>
-          <small>Somam exatamente {{ p.soma }}.</small>
+        @if (previaParcelas(); as p) {
+          <div class="previa">
+            <div>{{ p.texto }}</div>
+            <small>Somam exatamente {{ p.soma }}.</small>
+          </div>
+        } @else {
+          <div class="previa invalida">Informe um número inteiro de parcelas, a partir de 2.</div>
+        }
+
+        <p class="alerta">
+          As parcelas nascem uma por mês a partir do vencimento, e este lançamento é excluído.
+        </p>
+
+        <div class="acoes-dialogo">
+          <button class="botao" (click)="fecharParcelamento()">Cancelar</button>
+          <button class="botao botao-primario" (click)="irParaAjusteDasParcelas()"
+                  [disabled]="!previaParcelas()">
+            Continuar
+          </button>
         </div>
       } @else {
-        <div class="previa invalida">Informe um número inteiro de parcelas, a partir de 2.</div>
+        <!-- Segundo passo: as parcelas já divididas, na tela, prontas para ajuste.
+             Nada foi gravado ainda. Se ela não mexer em nada e mandar gravar, sai igual ao
+             parcelamento automático. -->
+        <p class="alerta">
+          Ajuste o que precisar. Nada foi gravado ainda — a gravação é de uma vez só.
+        </p>
+
+        <div class="tabela-parcelas">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-numero">#</th>
+                <th class="col-vencimento">Vencimento</th>
+                <th class="col-valor">Valor</th>
+                <th>Descrição</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of parcelasEditaveis(); track p.numero; let i = $index) {
+                <tr>
+                  <td class="col-numero">{{ p.numero }}</td>
+                  <td>
+                    <!-- `caixa` é a aparência de campo do sistema, definida em styles.css.
+                         Aqui não há `.campo` em volta — o input mora numa célula —, e sem a
+                         classe estes três saíam quadrados no meio de uma tela arredondada. -->
+                    <input type="date" class="caixa" [value]="p.vencimento"
+                           [attr.aria-label]="'Vencimento da parcela ' + p.numero"
+                           (input)="alterarParcela(i, 'vencimento', $any($event.target).value)" />
+                  </td>
+                  <td>
+                    <input class="caixa dinheiro" inputmode="numeric" mascaraMoeda
+                           [value]="p.valor"
+                           [attr.aria-label]="'Valor da parcela ' + p.numero"
+                           (input)="alterarParcela(i, 'valor', $any($event.target).value)" />
+                  </td>
+                  <td>
+                    <input class="caixa" maxlength="200" [value]="p.descricao"
+                           [attr.aria-label]="'Descrição da parcela ' + p.numero"
+                           (input)="alterarParcela(i, 'descricao', $any($event.target).value)" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Soma contra o original. Diferença NÃO impede de gravar: juros de financiamento
+             fazem a soma passar do previsto legitimamente. -->
+        <div class="soma-parcelas" [class.difere]="diferencaDasParcelas() !== 0">
+          <span>
+            Soma <strong>{{ moeda(somaDasParcelas() / 100) }}</strong>
+            de {{ moeda(l.valorPrevisto) }}
+          </span>
+          @if (diferencaDasParcelas() === 0) {
+            <small>Fecha o valor original.</small>
+          } @else {
+            <small>
+              {{ moeda(Math.abs(diferencaDasParcelas()) / 100) }}
+              {{ diferencaDasParcelas() > 0 ? 'a mais' : 'a menos' }} que o original — dá para
+              gravar assim mesmo.
+            </small>
+          }
+        </div>
+
+        @if (problemaNasParcelas(); as p) {
+          <div class="previa invalida">{{ p }}</div>
+        }
+
+        <div class="acoes-dialogo">
+          <button class="botao" (click)="voltarParaQuantidade()">Voltar</button>
+          <button class="botao botao-primario" (click)="confirmarParcelamento()"
+                  [disabled]="!!problemaNasParcelas()">
+            Gravar {{ parcelasEditaveis().length }} parcelas
+          </button>
+        </div>
       }
-
-      <p class="alerta">
-        As parcelas nascem uma por mês a partir do vencimento, e este lançamento é excluído.
-      </p>
-
-      <div class="acoes-dialogo">
-        <button class="botao" (click)="fecharParcelamento()">Cancelar</button>
-        <button class="botao botao-primario" (click)="confirmarParcelamento()"
-                [disabled]="!previaParcelas()">
-          Parcelar
-        </button>
-      </div>
     }
   </dialog>
 </div>

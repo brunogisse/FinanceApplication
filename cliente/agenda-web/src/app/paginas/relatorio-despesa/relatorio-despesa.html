@@ -34,8 +34,32 @@
       <!-- O recorte fica guardado no endereço e sobrevive a ir e voltar do detalhado. Este
            botão é como se recomeça de propósito. -->
       <button class="botao" (click)="limparFiltros()">Limpar filtros</button>
+
+      <button class="botao alternar-avancada"
+              (click)="maisFiltrosAberto.set(!maisFiltrosAberto())">
+        {{ maisFiltrosAberto() ? 'Menos filtros ▴' : 'Mais filtros ▾' }}
+        @if (maisFiltrosAtivos() > 0) {
+          <span class="contador">{{ maisFiltrosAtivos() }}</span>
+        }
+      </button>
     </div>
   </section>
+
+  <!-- Por enquanto só a conta. O painel é uma lista de campos: o próximo filtro entra aqui
+       do lado, sem mexer em mais nada. -->
+  @if (maisFiltrosAberto()) {
+    <section class="filtros cartao avancada">
+      <div class="campo">
+        <label for="conta">Conta</label>
+        <select id="conta" [ngModel]="conta()" (ngModelChange)="conta.set($event)">
+          <option value="">(todas)</option>
+          @for (c of contas(); track c.id) {
+            <option [value]="c.descricao">{{ c.descricao }}</option>
+          }
+        </select>
+      </div>
+    </section>
+  }
 
   <!-- Os dois modos usam colunas de data diferentes, e é a regra central deste relatório.
        Deixar isso explícito na tela evita a pergunta "por que os números não batem?". -->
@@ -81,7 +105,8 @@
           } @empty {
             <tr>
               <td colspan="4" class="vazio">
-                Nada encontrado para {{ despesa() }} no período, neste modo.
+                Nada encontrado para {{ despesa() }}{{ conta() ? ' na conta ' + conta() : '' }}
+                no período, neste modo.
               </td>
             </tr>
           }
@@ -89,7 +114,9 @@
         @if (linhas().length > 0) {
           <tfoot>
             <tr>
-              <th>Total de {{ despesa() }}</th>
+              <!-- A conta entra no rótulo do total: o número precisa dizer de que recorte
+                   ele é, senão some do lado de quem lê a tela dois dias depois. -->
+              <th>Total de {{ despesa() }}{{ conta() ? ' — ' + conta() : '' }}</th>
               <th class="col-qtd">{{ quantidade() }}</th>
               <th class="dinheiro">{{ moeda(total()) }}</th>
               <th class="col-detalhe"></th>

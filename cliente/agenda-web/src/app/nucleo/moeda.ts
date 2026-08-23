@@ -60,6 +60,49 @@ export function lerMoeda(texto: string | null | undefined): number | null {
 }
 
 /**
+ * Quantos dígitos a máscara aceita antes de parar de crescer.
+ *
+ * 13 dígitos são R$ 99.999.999.999,99. O maior lançamento da base tem seis dígitos; o limite
+ * existe só para o campo não virar um número que ninguém consegue ler nem conferir.
+ */
+const MAXIMO_DE_DIGITOS = 13;
+
+/**
+ * Máscara de dinheiro, dos centavos para a esquerda.
+ *
+ * Recebe o que está no campo, joga fora tudo que não é dígito e remonta: os dois últimos são
+ * os centavos, o resto ganha ponto de milhar. Digitar `123456` vira `R$ 1.234,56`.
+ *
+ * **É manipulação de texto, não aritmética.** Nada aqui divide por 100 nem passa por
+ * `Number` — dinheiro não nasce de ponto flutuante, e este é justamente o caminho por onde
+ * ele entra no sistema.
+ *
+ * Campo só com zeros volta VAZIO, de propósito: é o que permite apagar tudo com a tecla de
+ * retrocesso. Sem isso, `R$ 0,01` menos um dígito daria `R$ 0,00` e o campo nunca esvaziaria
+ * — e vazio tem significado nos três lugares onde a máscara é usada: "sem filtro" na faixa
+ * de valor e "igual ao previsto" no valor pago.
+ */
+export function mascararMoeda(texto: string | null | undefined): string {
+  if (!texto) return '';
+
+  const digitos = texto.replace(/\D/g, '').slice(0, MAXIMO_DE_DIGITOS);
+  if (digitos === '' || /^0*$/.test(digitos)) return '';
+
+  const comCentavos = digitos.padStart(3, '0');
+  const centavos = comCentavos.slice(-2);
+  const inteiro = comCentavos.slice(0, -2).replace(/^0+/, '') || '0';
+
+  // Ponto de milhar da direita para a esquerda, sem regex de lookbehind: o Electron aqui
+  // suporta, mas a conta em pedaços de três é mais fácil de conferir de cabeça.
+  const grupos: string[] = [];
+  for (let fim = inteiro.length; fim > 0; fim -= 3) {
+    grupos.unshift(inteiro.slice(Math.max(0, fim - 3), fim));
+  }
+
+  return `R$ ${grupos.join('.')},${centavos}`;
+}
+
+/**
  * Converte para centavos inteiros.
  *
  * Só use se for realmente inevitável somar dinheiro no cliente. O caminho certo é pedir o
@@ -86,6 +129,28 @@ export function hojeIso(): string {
   const mes = String(agora.getMonth() + 1).padStart(2, '0');
   const dia = String(agora.getDate()).padStart(2, '0');
   return `${agora.getFullYear()}-${mes}-${dia}`;
+}
+
+/**
+ * Desloca uma data em meses **grudando no fim do mês** quando o dia não existe no destino.
+ *
+ * É a conta que o servidor faz — `DateOnly.AddMonths` — e precisa bater, porque os
+ * vencimentos das parcelas são gerados aqui e enviados prontos. 31/01 mais um mês dá
+ * **28/02**, e não 03/03.
+ *
+ * `somarMeses`, logo abaixo, é a outra conta: `new Date(2026, 1, 31)` transborda para março.
+ * Serve para o período do filtro, onde alguns dias a mais não mudam nada. Aqui mudaria: o
+ * vencimento gravado seria o do mês seguinte ao pretendido.
+ */
+export function somarMesesNoCalendario(iso: string, meses: number): string {
+  const [ano, mes, dia] = iso.split('-').map(Number);
+
+  const alvo = new Date(ano, mes - 1 + meses, 1);
+  const ultimoDia = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
+
+  const m = String(alvo.getMonth() + 1).padStart(2, '0');
+  const d = String(Math.min(dia, ultimoDia)).padStart(2, '0');
+  return `${alvo.getFullYear()}-${m}-${d}`;
 }
 
 /** Desloca uma data "aaaa-mm-dd" em meses, sem sair do calendário local. */

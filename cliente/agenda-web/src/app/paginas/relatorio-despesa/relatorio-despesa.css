@@ -28,6 +28,31 @@
 .filtros .campo { min-width: 150px; }
 .botoes-filtro { display: flex; gap: 8px; }
 
+/* ---------- Mais filtros ----------
+   Mesmos valores da busca avançada da grade de lançamentos, de propósito: é o mesmo gesto,
+   e duas aparências para a mesma coisa fariam a pessoa hesitar. */
+
+.alternar-avancada { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Filtro ativo com o painel fechado é armadilha: o total encolhe e nada na tela explica.
+   O contador conta. */
+.contador {
+  background: var(--cor-primaria);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 12px;
+  line-height: 18px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.avancada {
+  border-top: 3px solid var(--cor-primaria);
+  background: #fbfcfe;
+}
+.avancada .campo { width: 220px; }
+
 /* Os dois modos como escolha visível, não como caixa de seleção escondida:
    trocar o modo troca a coluna de data e portanto o resultado. */
 /* Os dois modos dividem um cartão só. `overflow: hidden` é o que faz o fundo do botão

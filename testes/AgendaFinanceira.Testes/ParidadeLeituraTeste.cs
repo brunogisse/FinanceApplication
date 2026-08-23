@@ -216,6 +216,91 @@ public class ParidadeLeituraTeste
         Assert.NotEqual(totalPagos, totalNaoPagos);
     }
 
+    // ---- Consolidado recortado por conta ----
+    //
+    // Pedido de quem opera: "quanto saiu desta conta, nesta despesa". O oráculo aqui é a
+    // própria consulta de lançamentos, que já filtrava por conta muito antes — se os dois
+    // caminhos discordam, um deles está errado.
+
+    /// <summary>A conta com mais lançamentos na despesa, para o teste não depender de nome fixo.</summary>
+    private static string ContaMaisUsadaEm(RepositorioLancamentos repo, string despesa) =>
+        repo.Consultar(new ConsultaLancamentos
+            {
+                Periodo = Tudo,
+                Despesa = despesa,
+                FiltrarPorData = ColunaDeData.Pagamento,
+                Pagamento = FiltroPagamento.Pagos
+            })
+            .Lancamentos
+            .GroupBy(l => l.Conta.Trim())
+            .OrderByDescending(g => g.Count())
+            .First().Key;
+
+    [Fact]
+    public void Consolidado_por_conta_bate_com_a_consulta_de_lancamentos()
+    {
+        var repo = Repositorio();
+        var conta = ContaMaisUsadaEm(repo, "AGRICOLA");
+
+        var consolidado = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, conta);
+
+        var lancamentos = repo.Consultar(new ConsultaLancamentos
+        {
+            Periodo = Tudo,
+            Despesa = "AGRICOLA",
+            Conta = conta,
+            FiltrarPorData = ColunaDeData.Pagamento,
+            Pagamento = FiltroPagamento.Pagos
+        });
+
+        Assert.NotEmpty(consolidado);
+        Assert.Equal(lancamentos.Quantidade, consolidado.Sum(l => l.Quantidade));
+        Assert.Equal(lancamentos.TotalPago, consolidado.Somar(l => l.TotalPago));
+    }
+
+    [Fact]
+    public void Consolidado_por_conta_e_um_recorte_do_consolidado_inteiro()
+    {
+        var repo = Repositorio();
+        var conta = ContaMaisUsadaEm(repo, "AGRICOLA");
+
+        var inteiro = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true);
+        var daConta = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, conta);
+
+        // Recorte de verdade: nunca traz mais do que o todo, e a base tem mais de uma conta
+        // nesta despesa — então tem de trazer menos.
+        Assert.True(daConta.Somar(l => l.TotalPago) < inteiro.Somar(l => l.TotalPago));
+        Assert.True(daConta.Sum(l => l.Quantidade) < inteiro.Sum(l => l.Quantidade));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Conta_vazia_devolve_o_consolidado_inteiro(string? conta)
+    {
+        // Garante que a tela mandando "" não vira um filtro que zera tudo, e que o JOIN em
+        // CONTAS não entra quando não deve — um CONTA_ID órfão sumiria da soma sem ninguém pedir.
+        var repo = Repositorio();
+
+        var semParametro = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true);
+        var comVazio = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, conta);
+
+        Assert.Equal(semParametro.Sum(l => l.Quantidade), comVazio.Sum(l => l.Quantidade));
+        Assert.Equal(semParametro.Somar(l => l.TotalPago), comVazio.Somar(l => l.TotalPago));
+    }
+
+    [Fact]
+    public void Conta_inexistente_devolve_vazio_em_vez_de_ignorar_o_filtro()
+    {
+        var repo = Repositorio();
+
+        var linhas = repo.ConsolidarPorDespesa(
+            "AGRICOLA", Tudo, apenasPagos: true, "CONTA QUE NAO EXISTE");
+
+        Assert.Empty(linhas);
+    }
+
     [Fact]
     public void Vencimentos_traz_apenas_nao_pagos_ate_a_data()
     {

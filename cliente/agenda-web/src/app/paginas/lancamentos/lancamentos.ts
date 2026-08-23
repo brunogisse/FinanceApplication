@@ -7,9 +7,11 @@ import { Api } from '../../nucleo/api';
 import { Conta, Despesa, FiltroConsulta, Lancamento, Subdespesa } from '../../nucleo/modelos';
 import {
   formatarData, formatarInteiro, formatarMoeda, hojeIso, lerMoeda, somarMeses,
+  somarMesesNoCalendario,
 } from '../../nucleo/moeda';
 import { baixarArquivo } from '../../nucleo/arquivos';
 import { Confirmacao } from '../../nucleo/confirmacao';
+import { MascaraMoeda } from '../../nucleo/mascara-moeda';
 
 /**
  * Período que cobre a base inteira, usado na busca por documento.
@@ -19,6 +21,23 @@ import { Confirmacao } from '../../nucleo/confirmacao';
  */
 const INICIO_DE_TUDO = '2000-01-01';
 const FIM_DE_TUDO = '2099-12-31';
+
+/** Tamanho da coluna DESCRICAO no banco do legado. */
+const TAMANHO_MAXIMO_DESCRICAO = 200;
+
+/**
+ * Uma linha da tabela de ajuste das parcelas.
+ *
+ * O valor fica como **texto**, do jeito que foi digitado, e só vira número na hora de somar
+ * ou de enviar. Guardar número aqui obrigaria a reformatar a cada tecla e a operadora perderia
+ * a vírgula no meio da digitação.
+ */
+interface LinhaParcela {
+  numero: number;
+  vencimento: string;
+  valor: string;
+  descricao: string;
+}
 
 /** Texto de campo numérico: vazio ou não numérico vira "sem filtro", nunca zero. */
 function numeroOuNada(texto: string): number | undefined {
@@ -31,7 +50,7 @@ function numeroOuNada(texto: string): number | undefined {
 @Component({
   selector: 'app-lancamentos',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, MascaraMoeda],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './lancamentos.html',
   styleUrl: './lancamentos.css',
@@ -45,6 +64,8 @@ export class Lancamentos {
   readonly moeda = formatarMoeda;
   readonly data = formatarData;
   readonly inteiro = formatarInteiro;
+  /** Exposto para o template: o modelo não alcança globais do JavaScript. */
+  readonly Math = Math;
 
   // ---- Filtros. O período padrão é o mesmo da tela do legado: últimos seis meses. ----
   readonly inicio = signal(somarMeses(hojeIso(), -6));
@@ -103,6 +124,23 @@ export class Lancamentos {
       .filter((v) => v !== '').length);
 
   /**
+   * Há faixa de valor de verdade?
+   *
+   * "Faixa sobre" não é um filtro: é o modificador de "de" e "até". Sem pelo menos um dos
+   * dois, o servidor não aplica nada — medido em 23/08/2026 contra a base real: 4.741
+   * lançamentos com a faixa em "pago", em "previsto" e sem escolher nada. Com "de 1.000",
+   * previsto dá 1.614 e pago dá 1.425.
+   *
+   * A regra do servidor está certa, e é a do legado. Quem enganava era esta tela, que punha
+   * o "sobre" solto ao lado, com a mesma cara de um filtro independente.
+   *
+   * `lerMoeda` e não `!== ''`: um campo com texto que não vira número — só espaço, um
+   * traço — também não produz faixa nenhuma.
+   */
+  readonly temFaixaDeValor = computed(() =>
+    lerMoeda(this.valorMinimoTexto()) !== null || lerMoeda(this.valorMaximoTexto()) !== null);
+
+  /**
    * Procurar por NF ou por número de cheque é procurar um documento: a data em que ele foi
    * lançado não vem ao caso, e limitar aos últimos seis meses faria a busca falhar sem
    * explicar por quê. O legado tem a mesma intenção — força o início em 01/01/2018 quando a
@@ -148,6 +186,58 @@ export class Lancamentos {
 
     return { texto, soma: formatarMoeda(centavos / 100) };
   });
+
+  // ---- Segundo passo: as parcelas na tela, para ajustar antes de gravar ----
+  //
+  // Elas ficam em memória até a operadora mandar gravar. Gravar primeiro e corrigir depois
+  // devolveria dois problemas de uma vez: a parcela nasce uma por mês, então a maioria cai
+  // fora do período em tela no instante seguinte e vira caça; e o parcelamento deixaria de
+  // ser uma transação só, que é justamente a divergência intencional em relação ao legado.
+  readonly passoParcelamento = signal<1 | 2>(1);
+  readonly parcelasEditaveis = signal<LinhaParcela[]>([]);
+
+  /** Soma das parcelas em centavos inteiros — nunca em ponto flutuante. */
+  readonly somaDasParcelas = computed(() =>
+    this.parcelasEditaveis().reduce(
+      (total, p) => total + Math.round((lerMoeda(p.valor) ?? 0) * 100), 0));
+
+  /**
+   * Quanto a soma se afastou do valor original, em centavos.
+   *
+   * Diferença **não impede de gravar**: juros de financiamento fazem a soma passar do previsto
+   * legitimamente, e recusar obrigaria a lançar tudo de novo por fora. A tela mostra e deixa
+   * decidir.
+   */
+  readonly diferencaDasParcelas = computed(() => {
+    const l = this.parcelando();
+    if (!l) return 0;
+    return this.somaDasParcelas() - Math.round(l.valorPrevisto * 100);
+  });
+
+  /** A primeira linha com problema, para o rodapé dizer o que falta antes de gravar. */
+  readonly problemaNasParcelas = computed(() => {
+    const linhas = this.parcelasEditaveis();
+
+    for (const p of linhas) {
+      const valor = lerMoeda(p.valor);
+      if (valor === null || Math.round(valor * 100) === 0)
+        return `A parcela ${p.numero} está sem valor.`;
+      if (valor < 0)
+        return `A parcela ${p.numero} tem valor negativo.`;
+      if (!p.vencimento)
+        return `A parcela ${p.numero} está sem vencimento.`;
+      if (p.descricao.trim() === '')
+        return `A parcela ${p.numero} está sem descrição.`;
+    }
+
+    return null;
+  });
+
+  /**
+   * Quando a grade está mostrando as parcelas que acabaram de nascer, e não o resultado do
+   * filtro. Sem isto elas sumiriam da vista no instante em que foram criadas.
+   */
+  readonly parcelasRecemCriadas = signal(false);
 
   /**
    * De onde a pessoa veio, quando chegou por um card do painel.
@@ -275,7 +365,10 @@ export class Lancamentos {
       // Vírgula decimal, como a operadora digita há três anos.
       valorMinimo: lerMoeda(this.valorMinimoTexto()) ?? undefined,
       valorMaximo: lerMoeda(this.valorMaximoTexto()) ?? undefined,
-      faixaSobreValorPago: this.faixaSobreValorPago() || undefined,
+      // Só viaja com uma faixa junto. Sozinho ele não filtra nada, e mandá-lo assim
+      // apareceria no endereço e no cabeçalho do relatório impresso como se filtrasse.
+      faixaSobreValorPago:
+        this.temFaixaDeValor() && this.faixaSobreValorPago() ? true : undefined,
     };
   }
 
@@ -294,6 +387,9 @@ export class Lancamentos {
     this.carregando.set(true);
     this.erro.set(null);
     this.selecionados.set(new Set());
+    // Qualquer pesquisa nova encerra o modo "recém-criadas": o que a grade mostra volta a
+    // ser o que o filtro diz.
+    this.parcelasRecemCriadas.set(false);
 
     this.api.consultar(this.filtroAtual()).subscribe({
       next: (r) => {
@@ -417,6 +513,8 @@ export class Lancamentos {
   parcelar(l: Lancamento): void {
     this.parcelando.set(l);
     this.parcelas.set('2');
+    this.passoParcelamento.set(1);
+    this.parcelasEditaveis.set([]);
     this.erro.set(null);
     this.dialogoParcelar()?.nativeElement.showModal();
   }
@@ -424,29 +522,120 @@ export class Lancamentos {
   fecharParcelamento(): void {
     this.dialogoParcelar()?.nativeElement.close();
     this.parcelando.set(null);
+    this.passoParcelamento.set(1);
+    this.parcelasEditaveis.set([]);
   }
 
-  confirmarParcelamento(): void {
+  /**
+   * Monta a tabela do segundo passo com a divisão que o servidor faria — valores em centavos
+   * inteiros com o resto nas primeiras, uma parcela por mês a partir do vencimento.
+   *
+   * Preenchida assim, quem não quiser mexer em nada é só mandar gravar: sai igual ao
+   * parcelamento automático. Provado por teste no servidor
+   * (`Divisao_padrao_e_a_mesma_conta_dos_dois_caminhos`).
+   */
+  irParaAjusteDasParcelas(): void {
     const l = this.parcelando();
     if (!l) return;
 
-    const parcelas = Number(this.parcelas());
-    if (!Number.isInteger(parcelas) || parcelas < 2) {
+    const n = Number(this.parcelas());
+    if (!Number.isInteger(n) || n < 2) {
       this.erro.set('Informe um número inteiro de parcelas, a partir de 2.');
       return;
     }
 
+    const centavos = Math.round(l.valorPrevisto * 100);
+    const base = Math.floor(centavos / n);
+    const resto = centavos - base * n;
+    const vencimento = l.dataVencimento ?? hojeIso();
+
+    // O sufixo "i/N" segue a regra do legado: quando não cabe, corta o texto e não o número —
+    // saber que é "3/12" importa mais do que os últimos caracteres da descrição.
+    const sufixoMaior = ` ${n}/${n}`;
+    const espaco = TAMANHO_MAXIMO_DESCRICAO - sufixoMaior.length;
+    const texto = l.descricao.length > espaco ? l.descricao.slice(0, espaco).trimEnd() : l.descricao;
+
+    this.parcelasEditaveis.set(
+      Array.from({ length: n }, (_, i) => ({
+        numero: i + 1,
+        vencimento: somarMesesNoCalendario(vencimento, i),
+        valor: formatarMoeda((base + (i < resto ? 1 : 0)) / 100),
+        descricao: `${texto} ${i + 1}/${n}`,
+      })));
+
+    this.erro.set(null);
+    this.passoParcelamento.set(2);
+  }
+
+  voltarParaQuantidade(): void {
+    this.passoParcelamento.set(1);
+  }
+
+  alterarParcela(indice: number, campo: 'vencimento' | 'valor' | 'descricao', valor: string): void {
+    this.parcelasEditaveis.update((linhas) =>
+      linhas.map((p, i) => (i === indice ? { ...p, [campo]: valor } : p)));
+  }
+
+  /**
+   * Grava as parcelas como estão na tela.
+   *
+   * Vai a lista pronta, e não o número de vezes: o servidor grava exatamente aquilo. Se a
+   * operadora não ajustou nada, a lista é a divisão padrão e o resultado é o mesmo de antes.
+   */
+  confirmarParcelamento(): void {
+    const l = this.parcelando();
+    if (!l) return;
+
+    const problema = this.problemaNasParcelas();
+    if (problema) { this.erro.set(problema); return; }
+
+    const valores = this.parcelasEditaveis().map((p) => ({
+      // Centavos inteiros divididos por 100 na última hora: o número que sai daqui tem no
+      // máximo dois decimais, e o servidor o recebe em decimal.
+      valorPrevisto: Math.round((lerMoeda(p.valor) ?? 0) * 100) / 100,
+      dataVencimento: p.vencimento,
+      descricao: p.descricao.trim(),
+    }));
+
     this.fecharParcelamento();
     this.carregando.set(true);
-    this.api.parcelar(l.id, parcelas).subscribe({
+
+    this.api.parcelar(l.id, valores.length, valores).subscribe({
       next: (r) => {
         this.aviso.set(
-          `${r.parcelas.length} parcelas geradas, somando ${this.moeda(r.somaDasParcelas)}` +
-          (r.fechou ? ' — fechou o valor original.' : ' — ATENÇÃO: não fechou o valor original.'));
-        this.pesquisar();
+          `${r.parcelas.length} parcelas gravadas, somando ${this.moeda(r.somaDasParcelas)}` +
+          (r.fechou
+            ? ' — fechou o valor original.'
+            : ` — ${this.moeda(Math.abs(r.somaDasParcelas - r.valorOriginal))} ` +
+              `${r.somaDasParcelas > r.valorOriginal ? 'a mais' : 'a menos'} que o original.`));
+        this.mostrarSomenteAsParcelas(r.parcelas);
       },
       error: (e: Error) => { this.erro.set(e.message); this.carregando.set(false); },
     });
+  }
+
+  /**
+   * Põe as parcelas recém-gravadas na grade, no lugar do resultado do filtro.
+   *
+   * Sem isto elas somem no instante em que nascem: o filtro em tela é um período, e as
+   * parcelas vencem uma por mês — parcelar em cinco dentro de um filtro de junho deixaria
+   * quatro delas fora da vista.
+   */
+  private mostrarSomenteAsParcelas(parcelas: Lancamento[]): void {
+    this.lancamentos.set(parcelas);
+    this.totalPrevisto.set(
+      parcelas.reduce((t, p) => t + Math.round(p.valorPrevisto * 100), 0) / 100);
+    this.totalPago.set(
+      parcelas.reduce((t, p) => t + Math.round((p.valorPago ?? 0) * 100), 0) / 100);
+    this.selecionados.set(new Set());
+    this.parcelasRecemCriadas.set(true);
+    this.carregando.set(false);
+  }
+
+  /** Sai do modo "recém-criadas" e volta ao que o filtro diz. */
+  voltarAoFiltro(): void {
+    this.parcelasRecemCriadas.set(false);
+    this.pesquisar();
   }
 
   async excluir(l: Lancamento): Promise<void> {

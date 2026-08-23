@@ -2,18 +2,27 @@
   [quantidade]="carregando() ? null : quantidade()"
   [nomeDoPdf]="nomeDoPdf()"
   [ocupado]="carregando()"
-  [voltarPara]="voltarPara()" />
+  [voltarPara]="voltarPara()"
+  [deitada]="true" />
 
 @if (erro()) {
   <div class="erro nao-imprime">{{ erro() }}</div>
 }
 
-<div class="folha">
+<!-- `folha-deitada`: este relatório sai em A4 paisagem, e a prévia na tela precisa ter a
+     largura do papel que vai sair. Com os 210mm do A4 em pé, as colunas de valor escorriam
+     para fora do branco. -->
+<div class="folha folha-deitada">
   <h1>Relatório detalhado de subdespesas</h1>
 
   <p class="periodo">
     Despesa: <strong>{{ despesa() }}</strong> —
     Subdespesa: <strong>{{ subdespesa() }}</strong>
+    <!-- Quando o consolidado veio recortado por conta, esta folha traz o mesmo recorte e
+         precisa dizer isso — senão parece o detalhe da subdespesa inteira. -->
+    @if (conta()) {
+      &nbsp;·&nbsp; Conta: <strong>{{ conta() }}</strong>
+    }
   </p>
   <p class="periodo">
     Relatório gerado entre as datas

@@ -26,27 +26,43 @@ public sealed partial class RepositorioLancamentos
     {
         RegrasParcelamento.ExigirQuantidadeValida(parcelas);
 
-        var original = PorId(id) ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
-        ExigirPermissao(quem, original);
+        var original = ExigirParcelavel(id, quem);
 
-        if (original.ValorPrevisto.EhZero)
-            throw new RegraDeNegocioException("Não é possível parcelar um lançamento sem valor.");
+        return Parcelar(
+            id,
+            RegrasParcelamento.DivisaoPadrao(
+                original.ValorPrevisto, original.DataVencimento!.Value, original.Descricao, parcelas),
+            quem,
+            hoje);
+    }
 
-        if (original.DataVencimento is null)
-            throw new RegraDeNegocioException(
-                "Não é possível parcelar um lançamento sem data de vencimento.");
+    /// <summary>
+    /// Grava o parcelamento com as parcelas exatamente como quem opera decidiu, e exclui o
+    /// original — tudo no mesmo commit.
+    ///
+    /// Existe porque parcela igual não é a regra: financiamento com juros, entrada maior, acerto
+    /// de centavo no fim. Antes, ajustar significava deixar o sistema dividir e depois caçar cada
+    /// parcela na grade, e elas nascem uma por mês — parcelar em cinco num filtro de junho deixa
+    /// quatro delas fora da vista no instante seguinte.
+    ///
+    /// **A soma não precisa fechar o valor original.** Ver a nota em
+    /// <see cref="RegrasParcelamento.ExigirParcelasValidas"/>; o resultado diz se fechou.
+    /// </summary>
+    public ResultadoParcelamento Parcelar(int id, IReadOnlyList<ParcelaAjustada> parcelas,
+                                          Usuario quem, DateOnly? hoje = null)
+    {
+        var conferidas = RegrasParcelamento.ExigirParcelasValidas(parcelas);
 
+        var original = ExigirParcelavel(id, quem);
         var referencia = hoje ?? DateOnly.FromDateTime(DateTime.Today);
-        var valores = original.ValorPrevisto.Dividir(parcelas);
-        var vencimentoBase = original.DataVencimento.Value;
 
         using var con = _conexao.Abrir();
         using var tx = con.BeginTransaction();
         try
         {
-            var ids = new List<int>(parcelas);
+            var ids = new List<int>(conferidas.Count);
 
-            for (var numero = 1; numero <= parcelas; numero++)
+            foreach (var parcela in conferidas)
             {
                 var p = new DynamicParameters();
                 p.Add("despesaId", original.DespesaId);
@@ -55,14 +71,12 @@ public sealed partial class RepositorioLancamentos
                 p.Add("formaId", original.FormaPagamentoId);
                 // A autoria do original é preservada: parcelar não muda quem lançou.
                 p.Add("usuarioId", original.UsuarioId);
-                p.Add("descricao", ConexaoFirebird.NormalizarParaGravar(
-                    RegrasParcelamento.DescricaoDaParcela(original.Descricao, numero, parcelas)));
-                p.Add("valorPrevisto", (double)valores[numero - 1].Valor);
-                p.Add("valorPago", (double)(original.Pago ? valores[numero - 1] : Dinheiro.Zero).Valor);
+                p.Add("descricao", ConexaoFirebird.NormalizarParaGravar(parcela.Descricao));
+                p.Add("valorPrevisto", (double)parcela.ValorPrevisto.Valor);
+                p.Add("valorPago",
+                    (double)(original.Pago ? parcela.ValorPrevisto : Dinheiro.Zero).Valor);
                 p.Add("pago", original.Pago ? 1 : 0);
-                p.Add("dataVencimento",
-                    RegrasParcelamento.VencimentoDaParcela(vencimentoBase, numero)
-                                      .ToDateTime(TimeOnly.MinValue));
+                p.Add("dataVencimento", parcela.DataVencimento.ToDateTime(TimeOnly.MinValue));
                 p.Add("dataPagamento", original.DataPagamento?.ToDateTime(TimeOnly.MinValue));
                 p.Add("dataCadastro",
                     (original.DataCadastro ?? referencia).ToDateTime(TimeOnly.MinValue));
@@ -107,6 +121,26 @@ RETURNING GASTOS_ID", p, tx));
             tx.Rollback();
             throw;
         }
+    }
+
+    /// <summary>
+    /// Confere que o lançamento existe, que quem pediu pode mexer nele e que ele tem o que é
+    /// preciso para virar parcelas. Um só lugar, para as duas portas de entrada do parcelamento
+    /// recusarem pelos mesmos motivos e com as mesmas palavras.
+    /// </summary>
+    private Lancamento ExigirParcelavel(int id, Usuario quem)
+    {
+        var original = PorId(id) ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
+        ExigirPermissao(quem, original);
+
+        if (original.ValorPrevisto.EhZero)
+            throw new RegraDeNegocioException("Não é possível parcelar um lançamento sem valor.");
+
+        if (original.DataVencimento is null)
+            throw new RegraDeNegocioException(
+                "Não é possível parcelar um lançamento sem data de vencimento.");
+
+        return original;
     }
 
     /// <summary>

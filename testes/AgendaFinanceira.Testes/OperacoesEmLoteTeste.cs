@@ -184,6 +184,173 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
         Assert.Contains("sem valor", e.Message);
     }
 
+    // ---------- Parcelas ajustadas pela operadora ----------
+
+    /// <summary>A lista que a tela monta, já com a divisão padrão preenchida.</summary>
+    private static List<ParcelaAjustada> Padrao(Lancamento original, int parcelas) =>
+        RegrasParcelamento.DivisaoPadrao(
+            original.ValorPrevisto, original.DataVencimento!.Value, original.Descricao, parcelas)
+        .ToList();
+
+    [Fact]
+    public void Parcelas_ajustadas_sao_gravadas_exatamente_como_vieram()
+    {
+        var repo = _base.Lancamentos();
+        var original = repo.Criar(Dados(1000.00m), Usuario(), Hoje);
+
+        // O caso que motivou a mudança: entrada maior e o resto dividido.
+        var ajustadas = Padrao(original, 3);
+        ajustadas[0] = ajustadas[0] with { ValorPrevisto = Dinheiro.De(500.00m) };
+        ajustadas[1] = ajustadas[1] with { ValorPrevisto = Dinheiro.De(250.00m) };
+        ajustadas[2] = ajustadas[2] with { ValorPrevisto = Dinheiro.De(250.00m) };
+
+        var r = repo.Parcelar(original.Id, ajustadas, Usuario(), Hoje);
+
+        Assert.Equal(
+            new[] { Dinheiro.De(500.00m), Dinheiro.De(250.00m), Dinheiro.De(250.00m) },
+            r.Parcelas.Select(p => p.ValorPrevisto));
+        Assert.True(r.Fechou);
+        Assert.Null(repo.PorId(original.Id));
+    }
+
+    [Fact]
+    public void Vencimento_e_descricao_ajustados_chegam_ao_banco()
+    {
+        var repo = _base.Lancamentos();
+        var original = repo.Criar(Dados(600.00m), Usuario(), Hoje);
+
+        var ajustadas = Padrao(original, 2);
+        ajustadas[1] = ajustadas[1] with
+        {
+            DataVencimento = new DateOnly(2026, 7, 15),
+            Descricao = "ACERTO FINAL"
+        };
+
+        var r = repo.Parcelar(original.Id, ajustadas, Usuario(), Hoje);
+
+        Assert.Equal(new DateOnly(2026, 7, 15), r.Parcelas[1].DataVencimento);
+        Assert.Equal("ACERTO FINAL", r.Parcelas[1].Descricao);
+    }
+
+    [Fact]
+    public void Soma_diferente_do_original_grava_e_avisa_que_nao_fechou()
+    {
+        // Financiamento com juros: a soma passa do previsto, e isso é legítimo. Recusar
+        // obrigaria a operadora a lançar tudo de novo por fora.
+        var repo = _base.Lancamentos();
+        var original = repo.Criar(Dados(1000.00m), Usuario(), Hoje);
+
+        var ajustadas = Padrao(original, 2);
+        ajustadas[0] = ajustadas[0] with { ValorPrevisto = Dinheiro.De(600.00m) };
+        ajustadas[1] = ajustadas[1] with { ValorPrevisto = Dinheiro.De(600.00m) };
+
+        var r = repo.Parcelar(original.Id, ajustadas, Usuario(), Hoje);
+
+        Assert.Equal(Dinheiro.De(1200.00m), r.SomaDasParcelas);
+        Assert.Equal(Dinheiro.De(1000.00m), r.ValorOriginal);
+        Assert.False(r.Fechou);
+        Assert.Null(repo.PorId(original.Id));
+    }
+
+    [Fact]
+    public void Parcela_sem_valor_e_recusada_e_nada_e_gravado()
+    {
+        var repo = _base.Lancamentos();
+        var original = repo.Criar(Dados(900.00m), Usuario(), Hoje);
+        var antes = Total();
+
+        var ajustadas = Padrao(original, 3);
+        ajustadas[1] = ajustadas[1] with { ValorPrevisto = Dinheiro.Zero };
+
+        var e = Assert.Throws<RegraDeNegocioException>(
+            () => repo.Parcelar(original.Id, ajustadas, Usuario(), Hoje));
+
+        Assert.Contains("parcela 2", e.Message);
+        Assert.Equal(antes, Total());
+        Assert.NotNull(repo.PorId(original.Id));
+    }
+
+    [Fact]
+    public void Parcela_com_valor_negativo_e_recusada()
+    {
+        var repo = _base.Lancamentos();
+        var original = repo.Criar(Dados(900.00m), Usuario(), Hoje);
+
+        var ajustadas = Padrao(original, 2);
+        ajustadas[0] = ajustadas[0] with { ValorPrevisto = Dinheiro.De(-100.00m) };
+
+        var e = Assert.Throws<RegraDeNegocioException>(
+            () => repo.Parcelar(original.Id, ajustadas, Usuario(), Hoje));
+        Assert.Contains("negativo", e.Message);
+    }
+
+    [Fact]
+    public void Parcela_sem_descricao_e_recusada_dizendo_qual()
+    {
+        var repo = _base.Lancamentos();
+        var original = repo.Criar(Dados(900.00m), Usuario(), Hoje);
+
+        var ajustadas = Padrao(original, 3);
+        ajustadas[2] = ajustadas[2] with { Descricao = "   " };
+
+        var e = Assert.Throws<RegraDeNegocioException>(
+            () => repo.Parcelar(original.Id, ajustadas, Usuario(), Hoje));
+        Assert.Contains("parcela 3", e.Message);
+    }
+
+    [Fact]
+    public void Uma_parcela_so_e_recusada_tambem_na_lista_ajustada()
+    {
+        var repo = _base.Lancamentos();
+        var original = repo.Criar(Dados(900.00m), Usuario(), Hoje);
+
+        var uma = new List<ParcelaAjustada>
+        {
+            new()
+            {
+                ValorPrevisto = Dinheiro.De(900.00m),
+                DataVencimento = new DateOnly(2026, 1, 31),
+                Descricao = "UNICA"
+            }
+        };
+
+        Assert.Throws<RegraDeNegocioException>(
+            () => repo.Parcelar(original.Id, uma, Usuario(), Hoje));
+    }
+
+    [Fact]
+    public void Quem_nao_pode_mexer_no_lancamento_tambem_nao_grava_parcelas_ajustadas()
+    {
+        var repo = _base.Lancamentos();
+        var original = repo.Criar(Dados(900.00m), Usuario(id: 1), Hoje);
+        var ajustadas = Padrao(original, 3);
+
+        Assert.Throws<RegraDeNegocioException>(() => repo.Parcelar(
+            original.Id, ajustadas, Usuario(id: 6, nivel: NivelAcesso.Operacao), Hoje));
+    }
+
+    [Fact]
+    public void Divisao_padrao_e_a_mesma_conta_dos_dois_caminhos()
+    {
+        // A tela preenche a tabela com DivisaoPadrao e manda a lista; sem ajuste nenhum, o
+        // resultado tem de ser idêntico ao de mandar só o número de vezes.
+        var repo = _base.Lancamentos();
+
+        var a = repo.Criar(Dados(20000.00m, "PARIDADE A"), Usuario(), Hoje);
+        var b = repo.Criar(Dados(20000.00m, "PARIDADE B"), Usuario(), Hoje);
+
+        var porNumero = repo.Parcelar(a.Id, 12, Usuario(), Hoje);
+        var porLista = repo.Parcelar(b.Id, Padrao(b, 12), Usuario(), Hoje);
+
+        Assert.Equal(
+            porNumero.Parcelas.Select(p => p.ValorPrevisto),
+            porLista.Parcelas.Select(p => p.ValorPrevisto));
+        Assert.Equal(
+            porNumero.Parcelas.Select(p => p.DataVencimento),
+            porLista.Parcelas.Select(p => p.DataVencimento));
+        Assert.True(porLista.Fechou);
+    }
+
     // ================= PAGAMENTO EM LOTE =================
 
     [Fact]

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
-import { Despesa, TotalPorSubdespesa } from '../../nucleo/modelos';
+import { Conta, Despesa, TotalPorSubdespesa } from '../../nucleo/modelos';
 import { formatarMoeda, hojeIso, somarMeses } from '../../nucleo/moeda';
 
 @Component({
@@ -27,6 +27,22 @@ export class RelatorioDespesa {
   /** true = "quanto gastei"; false = "quanto devo". Muda a coluna de data no servidor. */
   readonly pagos = signal(true);
 
+  // ---- Mais filtros ----
+  //
+  // Por enquanto só conta, a pedido de quem opera: "quanto saiu desta conta, nesta despesa".
+  // O painel já nasce como lista para o próximo filtro ser uma linha, não uma reforma.
+  readonly maisFiltrosAberto = signal(false);
+  readonly contas = signal<Conta[]>([]);
+  readonly conta = signal('');
+
+  /**
+   * Quantos filtros do painel estão valendo.
+   *
+   * O painel fica fechado, e filtro ativo escondido é armadilha: a pessoa consulta, vê um
+   * total menor do que esperava e não descobre por quê. O número aparece no próprio botão.
+   */
+  readonly maisFiltrosAtivos = computed(() => [this.conta()].filter((v) => v !== '').length);
+
   readonly linhas = signal<TotalPorSubdespesa[]>([]);
   readonly carregando = signal(false);
   readonly erro = signal<string | null>(null);
@@ -44,14 +60,21 @@ export class RelatorioDespesa {
   readonly quantidade = computed(() =>
     this.linhas().reduce((s, l) => s + l.quantidade, 0));
 
-  /** Como os filtros de agora aparecem no endereço. */
+  /**
+   * Como os filtros de agora aparecem no endereço.
+   *
+   * A conta entra só quando vale alguma coisa: um `conta=` vazio no endereço sujaria a barra
+   * e a impressão sem dizer nada.
+   */
   private parametros(): Record<string, string> {
-    return {
+    const p: Record<string, string> = {
       despesa: this.despesa(),
       inicio: this.inicio(),
       fim: this.fim(),
       pagos: String(this.pagos()),
     };
+    if (this.conta()) p['conta'] = this.conta();
+    return p;
   }
 
   /**
@@ -79,6 +102,7 @@ export class RelatorioDespesa {
     this.inicio.set(somarMeses(hojeIso(), -6));
     this.fim.set(hojeIso());
     this.pagos.set(true);
+    this.conta.set('');
     this.linhas.set([]);
     this.consultou.set(false);
     this.erro.set(null);
@@ -92,11 +116,22 @@ export class RelatorioDespesa {
       error: () => {},
     });
 
+    this.api.contas().subscribe({
+      next: (c) => this.contas.set(c.filter((x) => x.descricao.trim() !== '')),
+      error: () => {},
+    });
+
     // Volta ao recorte que estava no endereço — é o que faz "voltar" do detalhado funcionar.
     const p = this.rota.snapshot.queryParamMap;
     if (p.get('inicio')) this.inicio.set(p.get('inicio')!);
     if (p.get('fim')) this.fim.set(p.get('fim')!);
     if (p.get('pagos')) this.pagos.set(p.get('pagos') !== 'false');
+    if (p.get('conta')) {
+      this.conta.set(p.get('conta')!);
+      // Voltando com a conta valendo, o painel abre: senão o filtro estaria em vigor e
+      // escondido, e o total pareceria errado.
+      this.maisFiltrosAberto.set(true);
+    }
     if (p.get('despesa')) {
       this.despesa.set(p.get('despesa')!);
       this.consultar();
@@ -110,7 +145,9 @@ export class RelatorioDespesa {
     this.carregando.set(true);
     this.erro.set(null);
 
-    this.api.consolidadoPorDespesa(this.despesa(), this.inicio(), this.fim(), this.pagos())
+    this.api
+      .consolidadoPorDespesa(
+        this.despesa(), this.inicio(), this.fim(), this.pagos(), this.conta() || undefined)
       .subscribe({
         next: (linhas) => {
           this.linhas.set(linhas);
@@ -153,6 +190,10 @@ export class RelatorioDespesa {
         inicio: this.inicio(),
         fim: this.fim(),
         pagos: this.pagos(),
+        // A conta vai junto porque o detalhado tem de somar o MESMO total que a linha
+        // clicada. Sem ela, o detalhe traria lançamentos de outras contas e o rodapé não
+        // fecharia com o número de onde a pessoa veio.
+        ...(this.conta() ? { conta: this.conta() } : {}),
       },
     });
   }

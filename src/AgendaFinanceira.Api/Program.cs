@@ -264,12 +264,13 @@ app.MapGet("/lancamentos/vencimentos", (RepositorioLancamentos repo, DateOnly? a
 // Atenção à regra central: 'pagos' filtra por DATA_PAGAMENTO e 'naopagos' por DATA_VENCIMENTO.
 app.MapGet("/relatorios/por-despesa", (
     RepositorioLancamentos repo, string despesa,
-    DateOnly inicio, DateOnly fim, bool? pagos) =>
+    DateOnly inicio, DateOnly fim, bool? pagos, string? conta) =>
 {
     if (string.IsNullOrWhiteSpace(despesa))
         return Results.BadRequest(new { erro = "Informe a despesa a consolidar." });
 
-    var linhas = repo.ConsolidarPorDespesa(despesa, new Periodo(inicio, fim), pagos ?? true);
+    var linhas = repo.ConsolidarPorDespesa(
+        despesa, new Periodo(inicio, fim), pagos ?? true, conta);
     return Results.Ok(linhas.Select(TotalPorSubdespesaDto.De).ToList());
 })
 .RequireAuthorization()
@@ -283,7 +284,9 @@ app.MapGet("/relatorios/por-despesa", (
     "responde \"quanto gastei\", olhando quando o dinheiro saiu.\n" +
     "- `pagos=false` filtra por `DATA_VENCIMENTO` e traz só o que está em aberto — " +
     "responde \"quanto devo\", olhando quando vence.\n\n" +
-    "Os dois modos sobre o mesmo período dão recortes diferentes, e isso é intencional.");
+    "Os dois modos sobre o mesmo período dão recortes diferentes, e isso é intencional.\n\n" +
+    "`conta` é opcional e recorta o consolidado a uma conta só — responde \"quanto saiu " +
+    "desta conta, nesta despesa\". Sem ela, o resultado é o de sempre.");
 
 app.Run();
 

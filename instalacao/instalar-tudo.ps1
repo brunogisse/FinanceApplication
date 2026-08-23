@@ -31,6 +31,35 @@ Titulo 'Agenda Financeira - instalacao'
 # O caminho do banco esta no config.ini que fica ao lado do executavel do sistema
 # antigo, na linha "Database=". Procurar por ele evita perguntar algo que a
 # pessoa que instala provavelmente nao sabe responder.
+#
+# Primeiro: um .FDB entregue junto com o pacote.
+#
+# Numa maquina que NUNCA teve o sistema antigo — o notebook, por exemplo — nao existe
+# config.ini nenhum para consultar, e a varredura terminaria no seletor de arquivos.
+# Levando o banco dentro do pacote, a instalacao continua sendo dois cliques.
+if (-not $BancoDeOrigem) {
+    $doPacote = @(Get-ChildItem (Join-Path $PSScriptRoot '..') -Filter '*.FDB' -File -ErrorAction SilentlyContinue)
+
+    if ($doPacote.Count -eq 1) {
+        $BancoDeOrigem = $doPacote[0].FullName
+        Write-Host ("Banco que veio no pacote: {0} ({1:N1} MB)" -f
+                    $doPacote[0].Name, ($doPacote[0].Length / 1MB)) -ForegroundColor Green
+    }
+    elseif ($doPacote.Count -gt 1) {
+        Write-Host 'O pacote traz mais de um .FDB. Escolha:' -ForegroundColor Yellow
+        for ($i = 0; $i -lt $doPacote.Count; $i++) {
+            Write-Host ("   [{0}] {1}  ({2:N1} MB, {3:dd/MM/yyyy HH:mm})" -f
+                        ($i + 1), $doPacote[$i].Name, ($doPacote[$i].Length / 1MB), $doPacote[$i].LastWriteTime)
+        }
+        $e = Read-Host 'Numero'
+        $n = 0
+        if (-not [int]::TryParse($e, [ref]$n) -or $n -lt 1 -or $n -gt $doPacote.Count) {
+            throw 'Escolha invalida. Rode de novo.'
+        }
+        $BancoDeOrigem = $doPacote[$n - 1].FullName
+    }
+}
+
 if (-not $BancoDeOrigem) {
     Write-Host 'Procurando o banco do sistema antigo...' -ForegroundColor Cyan
 
@@ -41,10 +70,17 @@ if (-not $BancoDeOrigem) {
         $env:USERPROFILE
     ) | Where-Object { Test-Path $_ }
 
+    Write-Host '  (pode levar um minuto na primeira vez)' -ForegroundColor DarkGray
+
     $encontrados = @()
     foreach ($raiz in $ondeProcurar) {
         # -Depth limita a varredura: sem isso, um C:\ inteiro leva minutos.
-        $inis = @(Get-ChildItem $raiz -Filter 'config.ini' -Recurse -Depth 4 -File -ErrorAction SilentlyContinue)
+        #
+        # SEIS, e nao quatro. Medido em 23/08/2026 nesta maquina: com 4, a varredura de C:\
+        # devolve 8 config.ini em 21s e NAO acha o legado, que fica em
+        # C:\PROGRAMAS\<pasta>\AGENDA FINANCEIRA ITAPUA\Win32\Debug — nivel 5. Com 6, acha os
+        # tres em 40s. Vinte segundos a mais valem nao cair no seletor de arquivos.
+        $inis = @(Get-ChildItem $raiz -Filter 'config.ini' -Recurse -Depth 6 -File -ErrorAction SilentlyContinue)
         foreach ($ini in $inis) {
             $linha = Select-String -Path $ini.FullName -Pattern '^\s*Database\s*=\s*(.+)$' -ErrorAction SilentlyContinue |
                      Select-Object -First 1
@@ -63,10 +99,15 @@ if (-not $BancoDeOrigem) {
         Write-Host "  encontrado: $BancoDeOrigem" -ForegroundColor Green
     }
     elseif ($encontrados.Count -gt 1) {
-        Write-Host '  achei mais de um. Escolha:' -ForegroundColor Yellow
+        # A DATA e o que separa a base viva de um backup antigo. Nesta maquina a varredura
+        # trouxe junto uma pasta "Agenda Financeira - backup 04 10 2022": pelo tamanho as
+        # duas parecem iguais, e escolher a errada instalaria sobre dados de anos atras.
+        Write-Host '  achei mais de um. Escolha — repare na DATA:' -ForegroundColor Yellow
         for ($i = 0; $i -lt $encontrados.Count; $i++) {
-            $t = [Math]::Round((Get-Item $encontrados[$i]).Length / 1MB, 1)
-            Write-Host ("   [{0}] {1}  ({2} MB)" -f ($i + 1), $encontrados[$i], $t)
+            $arquivo = Get-Item $encontrados[$i]
+            Write-Host ("   [{0}] {1}" -f ($i + 1), $encontrados[$i])
+            Write-Host ("       {0:N1} MB, modificado em {1:dd/MM/yyyy HH:mm}" -f
+                        ($arquivo.Length / 1MB), $arquivo.LastWriteTime) -ForegroundColor DarkGray
         }
         $escolha = Read-Host 'Numero'
         $indice = 0

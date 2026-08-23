@@ -122,6 +122,18 @@ export interface EntradaLancamento {
   observacao?: string | null;
 }
 
+/**
+ * Uma parcela como a operadora decidiu que ela fica, antes de gravar.
+ *
+ * O valor viaja em reais porque é o que a API recebe, mas quem edita trabalha em centavos
+ * inteiros até o envio — ver `parcelasEditaveis` na tela de lançamentos.
+ */
+export interface ParcelaAjustada {
+  valorPrevisto: Valor;
+  dataVencimento: string;
+  descricao: string;
+}
+
 export interface ResultadoParcelamento {
   parcelas: Lancamento[];
   idOriginalExcluido: number;

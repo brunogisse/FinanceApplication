@@ -55,6 +55,13 @@ export class RelatorioSubdespesa implements OnDestroy {
   readonly inicio = signal('');
   readonly fim = signal('');
   readonly pagos = signal(true);
+  /**
+   * Conta, quando o consolidado veio filtrado por uma.
+   *
+   * Sem ela, este detalhado traria lançamentos de todas as contas e o rodapé não fecharia
+   * com o total da linha em que a pessoa clicou — que é exatamente o que ela veio conferir.
+   */
+  readonly conta = signal('');
 
   readonly geradoEm = formatarData(hojeIso());
   readonly quantidade = computed(() => this.lancamentos().length);
@@ -80,6 +87,7 @@ export class RelatorioSubdespesa implements OnDestroy {
     this.inicio.set(p.get('inicio') ?? '');
     this.fim.set(p.get('fim') ?? '');
     this.pagos.set(p.get('pagos') !== 'false');
+    this.conta.set(p.get('conta') ?? '');
     if (p.get('voltarPara')) this.voltarPara.set(p.get('voltarPara')!);
 
     if (!this.subdespesa()) {
@@ -95,6 +103,7 @@ export class RelatorioSubdespesa implements OnDestroy {
       fim: this.fim(),
       despesa: this.despesa() || undefined,
       subdespesa: this.subdespesa(),
+      conta: this.conta() || undefined,
       porData: this.pagos() ? 'pagamento' : 'vencimento',
       pagamento: this.pagos() ? 'pagos' : 'naopagos',
     };

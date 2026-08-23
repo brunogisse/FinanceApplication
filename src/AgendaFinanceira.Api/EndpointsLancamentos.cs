@@ -51,7 +51,24 @@ public sealed record LancamentoEntradaDto
 }
 
 public sealed record SituacaoDto(string Situacao);
-public sealed record ParcelarDto(int Parcelas);
+/// <summary>Uma parcela como a tela a entrega, já ajustada por quem opera.</summary>
+public sealed record ParcelaAjustadaDto(decimal ValorPrevisto, DateOnly DataVencimento, string Descricao)
+{
+    public ParcelaAjustada ParaDominio() => new()
+    {
+        ValorPrevisto = Dinheiro.De(ValorPrevisto),
+        DataVencimento = DataVencimento,
+        Descricao = Descricao
+    };
+}
+
+/// <summary>
+/// Ou o número de vezes, e o servidor divide, ou a lista pronta vinda da tela.
+///
+/// <paramref name="Valores"/> é opcional para que a forma antiga continue valendo: quem só quer
+/// dividir em N manda `{ "parcelas": 5 }` e nada muda.
+/// </summary>
+public sealed record ParcelarDto(int Parcelas, IReadOnlyList<ParcelaAjustadaDto>? Valores = null);
 public sealed record PagarEmLoteDto(IReadOnlyList<int> Ids);
 
 public static class EndpointsLancamentos
@@ -123,7 +140,10 @@ public static class EndpointsLancamentos
         grupo.MapPost("/{id:int}/parcelar", (RepositorioLancamentos repo, ClaimsPrincipal quem,
                                              int id, ParcelarDto dto) =>
         {
-            var r = repo.Parcelar(id, dto.Parcelas, Autenticado(quem));
+            var r = dto.Valores is { Count: > 0 }
+                ? repo.Parcelar(id, dto.Valores.Select(v => v.ParaDominio()).ToList(), Autenticado(quem))
+                : repo.Parcelar(id, dto.Parcelas, Autenticado(quem));
+
             return Results.Ok(new
             {
                 parcelas = r.Parcelas.Select(LancamentoDto.De).ToList(),
@@ -145,7 +165,14 @@ public static class EndpointsLancamentos
             "nas primeiras parcelas, e o campo `fechou` confirma.\n" +
             "2. **É uma transação só.** No legado cada gravação confirma sozinha, então uma " +
             "falha no meio deixa parcelas gravadas e o original ainda presente.\n\n" +
-            "A autoria do lançamento original é preservada nas parcelas.");
+            "A autoria do lançamento original é preservada nas parcelas.\n\n" +
+            "**Parcelas com valores diferentes:** mande `valores` com a lista pronta — valor, " +
+            "vencimento e descrição de cada uma — e o servidor grava exatamente aquilo. É o que " +
+            "a tela faz depois que a operadora ajusta, e existe porque parcela igual não é a " +
+            "regra: financiamento com juros, entrada maior, acerto de centavo no fim.\n\n" +
+            "Nesse caso **a soma não precisa fechar o valor original** — juros fazem passar do " +
+            "previsto legitimamente. O campo `fechou` continua dizendo se bateu. Sem `valores`, " +
+            "vale `parcelas` e o servidor divide, como sempre.");
 
         grupo.MapPost("/pagar-em-lote", (RepositorioLancamentos repo, ClaimsPrincipal quem,
                                          PagarEmLoteDto dto) =>
