@@ -32,6 +32,27 @@ $ErrorActionPreference = 'Stop'
 $NOME_SERVICO   = 'AgendaFinanceiraApi'
 $ROTULO_SERVICO = 'Agenda Financeira - API'
 
+
+<#
+.SYNOPSIS
+  Grava um script SQL em UTF-8 SEM BOM.
+
+.DESCRIPTION
+  `Set-Content -Encoding utf8` no PowerShell 5.1 grava COM BOM, e o isql recusa a primeira
+  instrucao do arquivo com "Dynamic SQL Error / SQL error code = -104". Medido em
+  22/08/2026: o mesmo SELECT roda sem BOM e falha com BOM.
+
+  O erro apareceria justamente no ALTER TABLE que cria a coluna de convivencia.
+#>
+function GravarSql {
+    param([Parameter(Mandatory)][string]$Caminho,
+          [Parameter(ValueFromPipeline)][string]$Conteudo)
+    process {
+        [System.IO.File]::WriteAllText(
+            $Caminho, $Conteudo, (New-Object System.Text.UTF8Encoding $false))
+    }
+}
+
 $publicado  = Join-Path $PSScriptRoot 'publicado'
 $executavel = Join-Path $publicado 'AgendaFinanceira.Api.exe'
 $copia      = Join-Path $PastaDeTrabalho 'AGENDA_TESTE.FDB'
@@ -51,15 +72,29 @@ if (-not (Test-Path $BancoDeOrigem)) {
 }
 
 # O Firebird pode estar em mais de um lugar; nao supor o caminho.
+#
+# O @( ) EM VOLTA DO PIPELINE e obrigatorio: com um unico resultado, Where-Object devolve
+# a string em vez de um vetor de um item, e ai $candidatos[0] indexa a STRING e entrega o
+# primeiro caractere - "C". O caminho virava "C\gbak.exe" e o comando nao existia.
+# O .Count tambem nao denuncia: uma string tem Count = 1.
 $candidatos = @(
-    'C:\Program Files\Firebird\Firebird_2_5\bin',
-    'C:\Program Files (x86)\Firebird\Firebird_2_5\bin'
-) | Where-Object { Test-Path (Join-Path $_ 'gbak.exe') }
+    @(
+        'C:\Program Files\Firebird\Firebird_2_5\bin',
+        'C:\Program Files (x86)\Firebird\Firebird_2_5\bin'
+    ) | Where-Object { Test-Path (Join-Path $_ 'gbak.exe') }
+)
 
 if ($candidatos.Count -eq 0) {
     throw 'Firebird 2.5 nao encontrado. O sistema antigo usa esta mesma instalacao; se ele roda neste notebook, ela existe - confira o caminho e ajuste o script.'
 }
 $fb = $candidatos[0]
+
+# Conferir o EFEITO, e nao so que a variavel tem algo: se $fb estiver torto, o erro so
+# apareceria la na frente, como "modulo nao encontrado" - que nao parece um problema de
+# caminho e manda procurar no lugar errado.
+if (-not (Test-Path (Join-Path $fb 'gbak.exe'))) {
+    throw "O caminho do Firebird ficou invalido: '$fb'. Esperava a pasta bin com gbak.exe dentro."
+}
 Write-Host "Firebird encontrado em: $fb" -ForegroundColor DarkGray
 
 $origem = Get-Item $BancoDeOrigem
@@ -86,7 +121,7 @@ if (Test-Path $copia) {
 SET LIST ON;
 SELECT COUNT(*) AS LANCAMENTOS FROM REGISTRO_DE_GASTOS;
 SELECT COUNT(*) AS USUARIOS FROM LOGIN;
-'@ | Set-Content -Path $sql -Encoding utf8
+'@ | GravarSql $sql
 
     $saida = Join-Path $env:TEMP 'agenda-contagem.txt'
     & "$fb\isql.exe" -b -user SYSDBA -password masterkey -i $sql -o $saida "localhost:$copia" 2>&1 | Out-Host
@@ -126,7 +161,7 @@ $sqlColuna = Join-Path $env:TEMP 'agenda-coluna.sql'
 @'
 ALTER TABLE LOGIN ADD SENHA_HASH VARCHAR(200);
 COMMIT;
-'@ | Set-Content -Path $sqlColuna -Encoding utf8
+'@ | GravarSql $sqlColuna
 
 $saidaColuna = Join-Path $env:TEMP 'agenda-coluna.txt'
 # -b (bail): sem ele o isql segue executando depois de um erro. Nao e -v ON_ERROR_STOP,
@@ -140,7 +175,7 @@ $sqlConfere = Join-Path $env:TEMP 'agenda-confere.sql'
 SET LIST ON;
 SELECT COUNT(*) AS TEM_A_COLUNA FROM RDB$RELATION_FIELDS
  WHERE TRIM(RDB$RELATION_NAME) = 'LOGIN' AND TRIM(RDB$FIELD_NAME) = 'SENHA_HASH';
-'@ | Set-Content -Path $sqlConfere -Encoding utf8
+'@ | GravarSql $sqlConfere
 
 $saidaConfere = Join-Path $env:TEMP 'agenda-confere.txt'
 & "$fb\isql.exe" -b -user SYSDBA -password masterkey -i $sqlConfere -o $saidaConfere "localhost:$copia" 2>&1 | Out-Null
@@ -235,6 +270,31 @@ for ($i = 1; $i -le 30; $i++) {
         $respondeu = $true
         break
     } catch { }
+}
+
+# /saude nao encosta no banco: ele so informa o nome do arquivo configurado. Um servico
+# pode ficar Running, o /saude responder 200, e toda consulta falhar. Foi o que aconteceu
+# na instalacao de ensaio, e o script declarou sucesso. Agora a conferencia passa pelo
+# banco: um usuario que nao existe tem de voltar 401, nao 500.
+if ($respondeu) {
+    Write-Host 'Conferindo se a API alcanca o banco...' -ForegroundColor Cyan
+    try {
+        # Nome curto: LOGIN.NOME e VARCHAR(20) e um parametro maior estoura no Firebird.
+        $corpo = @{ usuario = 'sonda-nao-existe'; senha = 'x' } | ConvertTo-Json
+        Invoke-RestMethod -Uri "http://localhost:$Porta/sessao" -Method Post `
+            -ContentType 'application/json' -Body $corpo -TimeoutSec 10 | Out-Null
+        Write-Host '  Resposta inesperada: um usuario inexistente foi aceito.' -ForegroundColor Red
+        $respondeu = $false
+    } catch {
+        $codigo = $_.Exception.Response.StatusCode.value__
+        if ($codigo -eq 401) {
+            Write-Host '  O banco respondeu (recusou um usuario inexistente, como deve).' -ForegroundColor Green
+        } else {
+            Write-Host "  A API subiu mas NAO alcanca o banco (HTTP $codigo)." -ForegroundColor Red
+            Write-Host '  Veja o Visualizador de Eventos > Logs do Windows > Aplicativo.' -ForegroundColor Yellow
+            $respondeu = $false
+        }
+    }
 }
 
 if (-not $respondeu) {

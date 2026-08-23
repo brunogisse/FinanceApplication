@@ -55,7 +55,9 @@
 
       <div class="campo">
         <label for="usuario">Usuário</label>
-        <input id="usuario" #campoUsuario name="usuario" autocomplete="username"
+        <!-- 20 é o tamanho de LOGIN.NOME. O servidor recusa nomes maiores de todo jeito,
+             mas deixar digitar 30 para depois dizer "inválido" é fazer a pessoa errar. -->
+        <input id="usuario" #campoUsuario name="usuario" autocomplete="username" maxlength="20"
                [ngModel]="usuario()" (ngModelChange)="usuario.set($event)"
                [disabled]="entrando()" />
       </div>

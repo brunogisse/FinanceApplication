@@ -279,6 +279,34 @@ public class CadastroUsuariosTeste : IClassFixture<BaseDescartavel>
         Assert.Contains("não encontrado", e.Message);
     }
 
+
+    [Fact]
+    public void Nome_maior_que_a_coluna_e_recusado_sem_estourar()
+    {
+        // LOGIN.NOME e VARCHAR(20). Comparar um parametro maior faz o Firebird estourar com
+        // "string right truncation", e a API devolvia HTTP 500 em vez de recusar o login.
+        // Encontrado na instalacao de ensaio: 20 caracteres davam 401, 21 davam 500.
+        var repo = _base.Usuarios();
+
+        var r = repo.Autenticar(new string('A', RegrasUsuario.TamanhoMaximoNome + 1), "qualquer");
+
+        Assert.False(r.Autenticado);
+        // Mesma mensagem das outras recusas: nao revela quais usuarios existem.
+        Assert.Equal("Usuário ou senha inválidos.", r.Motivo);
+    }
+
+    [Fact]
+    public void Nome_no_tamanho_exato_da_coluna_ainda_e_consultado()
+    {
+        // A trava e para o que nao cabe; 20 caracteres cabem e precisam chegar ao banco.
+        var repo = _base.Usuarios();
+        var nome = new string('B', RegrasUsuario.TamanhoMaximoNome);
+
+        var r = repo.Autenticar(nome, "qualquer");
+
+        Assert.False(r.Autenticado);
+        Assert.Equal("Usuário ou senha inválidos.", r.Motivo);
+    }
     // ---------------- Apoio ----------------
 
     private int SubdespesaQualquer()

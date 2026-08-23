@@ -302,6 +302,11 @@ da casca de propósito — são páginas de impressão, e uma folha não tem men
 no mês, previsto no mês —, dois gráficos e um calendário do mês que abre os lançamentos do dia
 escolhido. Tudo vem de `GET /painel?mes=aaaa-mm`.
 
+O calendário mora num **painel verde preso à altura da janela** (`height: calc(100vh - 104px)`,
+`position: sticky`), e a lista do dia rola dentro dele. A altura é fixa de propósito: com a
+lista livre, o dia 20/01/2025 — 52 lançamentos, 3.008px — esticava o painel para 2.281px e
+jogava metade dele para fora da tela.
+
 > **Não há entrada, sobra nem saldo, e não é esquecimento:** não existe receita em lugar nenhum
 > do banco. Este sistema é contas a pagar. Um card de "saldo" teria de inventar número.
 
@@ -389,6 +394,12 @@ julgada no olho:
   extremo claro dá **2,23:1**. No menu ele leva só um ícone de 34px; onde precisa de texto —
   o painel do login — há um gradiente próprio, `#15803d → #166534`, medido em **5,02:1** e
   **7,13:1**.
+- **Uma exceção, decidida pelo Bruno em 23/08/2026:** o painel do calendário, à direita do
+  painel inicial, usa o `#5ec26a → #3d9950` da Petrotorque com texto branco, para ficar igual
+  ao painel lateral de lá. Os números do calendário saem a 70% e os nomes dos dias a 60%, por
+  volta de 1,9:1. **Não é esquecimento, e não precisa ser "corrigido"** — só reabra o assunto
+  se ele pedir. `#15803d` é o verde mais claro em que branco passa dos 4,5:1; a família
+  inteira está medida no comentário de `painel.css`, sobre `.lateral`.
 - **Séries dos gráficos:** azul `#2a78d6` para pago, laranja `#eb6834` para previsto. Passaram
   no validador de paleta com ΔE 24,7 na simulação de daltonismo. **A cor segue a grandeza, não
   o rank:** pago é azul em qualquer gráfico.

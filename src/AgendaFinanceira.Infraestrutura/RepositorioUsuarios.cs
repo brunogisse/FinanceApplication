@@ -68,6 +68,19 @@ public sealed class RepositorioUsuarios
         if (string.IsNullOrEmpty(senha))
             return ResultadoAutenticacao.Recusado("Informe a senha.");
 
+        /*
+         * Nome maior que a coluna é recusado aqui, antes de chegar ao banco.
+         *
+         * `LOGIN.NOME` é VARCHAR(20), e comparar um parâmetro maior faz o Firebird estourar
+         * com "string right truncation" — que vira **HTTP 500** em vez de recusa. Medido na
+         * instalação de ensaio em 22/08/2026: 20 caracteres devolvem 401, 21 devolvem 500.
+         *
+         * Nenhum usuário pode ter nome maior que isso, então não há o que procurar. A
+         * mensagem é a mesma das outras recusas, para não revelar quais usuários existem.
+         */
+        if (nome.Trim().Length > RegrasUsuario.TamanhoMaximoNome)
+            return ResultadoAutenticacao.Recusado("Usuário ou senha inválidos.");
+
         using var con = _conexao.Abrir();
 
         // Diferente do legado, que traz a tabela LOGIN inteira — com todas as senhas — para a

@@ -80,6 +80,37 @@ vários deles devolvem vazio em vez de dizer que faltou permissão.
 
 ---
 
+
+## O que o ensaio precisa provar
+
+Emprestado do Fechamento Petrotorque, onde a frase é esta: **ensaio sem critério é passeio.**
+Enquanto qualquer item abaixo estiver aberto, a instalação não passou — mesmo que a tela do
+aplicativo pareça normal.
+
+- [ ] `conferir-estado.ps1` mostra **"o banco respondeu"** em verde
+- [ ] O aplicativo abre pelo menu Iniciar e o login entra
+- [ ] O painel traz os números da cópia, não uma tela vazia
+- [ ] Lançar, alterar e excluir funcionam, e o valor aparece na grade
+- [ ] Um relatório sai impresso ou em PDF
+- [ ] Exportar para planilha abre a caixa de "Salvar como" e gera arquivo com conteúdo
+- [ ] **Depois de reiniciar o Windows, tudo volta sozinho**
+- [ ] O usuário de nível 1 **não** vê o item Usuários no menu
+
+Os dois últimos são os que costumam ser pulados, e são os que protegem contra os piores dias:
+a manhã em que a máquina reinicia e o sistema não volta, e o dia em que alguém enxerga uma
+tela que não devia.
+
+> **O reinício é o item que nunca foi testado.** O serviço está registrado com `start= auto`,
+> mas isso é promessa de configuração, não prova. Só reiniciando se descobre se o Firebird
+> sobe antes da API — e, se não subir, o `sc.exe failure` reinicia o serviço sozinho depois
+> de um minuto. Provar, não supor.
+
+**Anote o que deu errado e quanto tempo levou cada fase.** No dia da instalação de verdade o
+tempo é caro, e saber que a publicação leva um minuto e a cópia do banco leva três ajuda a
+escolher a janela de trabalho.
+
+**Se algum passo deste roteiro estiver confuso, corrija o roteiro** — não a memória de quem
+instalou.
 ## Usuários
 
 São os mesmos do sistema antigo, com as mesmas senhas: a cópia carrega a tabela `LOGIN`

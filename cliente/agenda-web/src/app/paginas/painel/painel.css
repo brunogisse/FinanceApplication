@@ -304,24 +304,63 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
 
 /* ---------- Painel direito ---------- */
 
+/*
+ * Fundo verde com cartões brancos por cima, como o painel lateral do Fechamento
+ * Petrotorque.
+ *
+ * O tom NÃO é o de lá. Aquele painel usa o verde da marca (`#5ec26a → #3d9950`), e o
+ * `--marca` daqui não carrega texto branco: 2,23:1 no extremo claro. Este calendário é
+ * quase todo feito de branco translúcido — legendas, nomes dos dias, números sem
+ * vencimento —, e sobre aquele verde nada disso passa de 3,5:1.
+ *
+ * O gradiente e os tons são os de lá, valor por valor, a pedido do Bruno (23/08/2026).
+ *
+ * Fica registrado o que isso custa, porque contraria a regra escrita no CLAUDE.md ("o
+ * `--marca` não carrega texto branco"): branco puro sobre `#5ec26a` dá **2,23:1**, e sobre
+ * `#3d9950`, 3,58:1. O mínimo para texto é 4,5:1. Os tons translúcidos do calendário —
+ * nomes dos dias a 60%, números a 70% — ficam perto de 1,9:1.
+ *
+ * Medido em toda a família de verdes, para o caso de alguém querer reabrir isto:
+ *
+ *   #5ec26a  2,23    #4caf50  2,78    #22a355  3,26    #1d9350  3,93
+ *   #238b4d  4,31    #15803d  5,02    #166534  7,13
+ *
+ * `#15803d` — o `--cor-primaria`, o mesmo do painel do login — é o verde mais claro em que
+ * branco passa. Trocar o gradiente por `#15803d → #166534` e as opacidades por 92% é a
+ * única mudança necessária para a tela ficar legível.
+ */
 .lateral {
   border-radius: var(--raio-grande);
-  padding: 14px;
+  padding: 16px 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: linear-gradient(165deg, #5ec26a 0%, #3d9950 100%);
+  color: #fff;
+  box-shadow: var(--sombra);
+  /*
+   * Altura definida, e não "o que o conteúdo pedir".
+   *
+   * Um dia com 34 lançamentos fazia a lista crescer para 1.968px e o painel para 2.281px,
+   * escorrendo tela abaixo. Com a altura fixa, a lista recebe exatamente a sobra e rola
+   * dentro dela. 104px é o que fica acima e abaixo: 81 do cabeçalho até o topo da grade,
+   * medido na janela real, mais os 22 de respiro embaixo.
+   */
   position: sticky;
   top: 16px;
+  align-self: start;
+  height: calc(100vh - 104px);
 }
 .lateral-topo { display: flex; flex-direction: column; }
-.lateral-topo strong { font-size: 14px; }
-.lateral-topo small { color: var(--cor-texto-fraco); font-size: 12px; }
+.lateral-topo strong { font-size: 17px; font-weight: 600; }
+.lateral-topo small { color: rgba(255, 255, 255, .7); font-size: 11.5px; }
 
 .calendario { width: 100%; border-collapse: collapse; }
 .calendario th {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--cor-texto-fraco);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  color: rgba(255, 255, 255, .6);
   padding-bottom: 4px;
   text-transform: uppercase;
 }
@@ -335,37 +374,69 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
   border-radius: 8px;
   font: inherit;
   font-size: 12.5px;
-  color: var(--cor-texto);
+  /* Um só tom para o dia comum e para o desabilitado, como lá: quem separa um do outro é
+     a pastilha de fundo, não a força do texto. */
+  color: rgba(255, 255, 255, .7);
   cursor: default;
 }
-.dia:disabled { color: #b6b9c0; }
+.dia:disabled { color: rgba(255, 255, 255, .7); font-weight: 400; }
 
-/* Dia com vencimento a pagar recebe fundo; hoje recebe contorno. As duas marcas são
-   diferentes de propósito: uma é dado, a outra é onde você está. */
-.dia.tem-lancamento { cursor: pointer; background: #eef1f6; font-weight: 600; }
-.dia.tem-a-pagar { background: var(--cor-primaria-clara); color: var(--cor-primaria-escura); }
-.dia.tem-lancamento:hover { background: #dde3ec; }
-.dia.hoje { outline: 2px solid var(--cor-primaria); outline-offset: -2px; }
-.dia.escolhido {
-  background: var(--cor-primaria);
+/* Pastilha translúcida = tem lançamento. É a `.celula.com-lancamento` de lá, mesmo valor. */
+.dia.tem-lancamento {
+  cursor: pointer;
+  background: rgba(255, 255, 255, .22);
   color: #fff;
+  font-weight: 600;
+}
+/* Ainda há o que pagar: pastilha branca sólida. Não existe no painel de lá — aquele
+   sistema só marca "o dia tem lançamento" —, e aqui é a marca mais forte porque é a
+   única que pede ação. */
+.dia.tem-a-pagar { background: #fff; color: #14532d; font-weight: 700; }
+.dia.tem-lancamento:hover { background: rgba(255, 255, 255, .34); }
+.dia.tem-a-pagar:hover { background: var(--cor-primaria-clara); }
+.dia.hoje { outline: 2px solid #fff; outline-offset: -2px; color: #fff; }
+.dia.escolhido {
+  background: #0b3d22;
+  color: #fff;
+  outline: 2px solid #fff;
+  outline-offset: -2px;
 }
 
 .lista-dia {
-  border-top: 1px solid var(--cor-borda);
+  border-top: 1px solid rgba(255, 255, 255, .22);
   padding-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 320px;
+  /* Recebe toda a sobra do painel, em vez dos 320px fixos de antes. Como a altura do
+     painel é definida, `flex-grow` sozinho basta — o mínimo aqui é só um piso para
+     janelas muito baixas, onde a sobra seria de poucas dezenas de pixels. */
+  flex: 1 1 auto;
+  min-height: 140px;
   overflow: auto;
 }
+/*
+ * Barra de rolagem própria. A padrão do Windows é cinza-clara e sobre o verde quase
+ * some — e ela precisa aparecer: o dia mais cheio de janeiro/2025 tem 52 lançamentos,
+ * 3.008px de conteúdo dentro de 931px de lista. Sem barra visível, quem opera não tem
+ * como saber que há mais coisa embaixo.
+ */
+.lista-dia { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .6) rgba(0, 0, 0, .12); }
+.lista-dia::-webkit-scrollbar { width: 9px; }
+.lista-dia::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .6);
+  border-radius: 5px;
+}
+.lista-dia::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .8); }
+.lista-dia::-webkit-scrollbar-track { background: rgba(0, 0, 0, .12); border-radius: 5px; }
+
 .lista-topo { display: flex; justify-content: space-between; align-items: center; }
+.lista-topo strong { color: #fff; }
 
 .link {
   border: none;
   background: none;
-  color: var(--cor-primaria);
+  color: #fff;
   cursor: pointer;
   font: inherit;
   font-size: 12.5px;
@@ -378,25 +449,39 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2px 8px;
   padding: 8px 10px;
-  border-radius: 8px;
-  background: #f7f8fa;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--cor-texto);
   border-left: 3px solid var(--cor-primaria);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .10);
   font-size: 12.5px;
 }
-.item-dia.item-pago { border-left-color: var(--cor-pago); opacity: .75; }
+/*
+ * Pago perde a tarja verde e ganha a cinza. Antes isto era `opacity: .75`, que sobre o
+ * fundo branco só clareava; sobre o verde deixaria o verde atravessar o cartão.
+ */
+.item-dia.item-pago { border-left-color: var(--cor-pago); background: #f3f5f8; }
 .item-descricao { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item-valor { font-variant-numeric: tabular-nums; }
 .item-nota { grid-column: 1 / -1; color: var(--cor-texto-fraco); font-size: 11.5px; }
 
-.resumo-dias { color: var(--cor-texto-fraco); font-size: 13px; line-height: 1.5; }
-.resumo-dias strong { color: var(--cor-texto); font-size: 15px; }
+.resumo-dias { color: rgba(255, 255, 255, .82); font-size: 13px; line-height: 1.5; }
+.resumo-dias strong { color: #fff; font-size: 15px; }
 .resumo-dias small { display: block; margin-top: 4px; }
 
-.vazio { color: var(--cor-texto-fraco); text-align: center; padding: 16px 0; margin: 0; }
+.vazio {
+  color: rgba(255, 255, 255, .82);
+  text-align: center;
+  padding: 16px 0;
+  margin: 0;
+}
 
 @media (max-width: 1080px) {
   .corpo { grid-template-columns: minmax(0, 1fr); }
-  .lateral { position: static; }
+  /* Empilhado, o painel vem depois dos gráficos e a página inteira rola: prendê-lo à
+     altura da janela deixaria o calendário espremido no fim de uma página que já rola. */
+  .lateral { position: static; height: auto; }
+  .lista-dia { max-height: 380px; }
 }
 
 /* A área medida pelo ResizeObserver: é a largura dela que vira o viewBox. */

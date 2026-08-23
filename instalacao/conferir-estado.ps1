@@ -29,10 +29,12 @@ if ($servico) {
 # ------------------------------------------------------------------- API
 Write-Host ''
 Write-Host '[API]' -ForegroundColor Cyan
+$noAr = $false
 try {
     $saude = Invoke-RestMethod -Uri "http://localhost:$PORTA/saude" -TimeoutSec 3
     Write-Host ("  responde em http://localhost:{0}" -f $PORTA) -ForegroundColor Green
     Write-Host ("  banco em uso: {0}" -f $saude.banco)
+    $noAr = $true
 } catch {
     Write-Host ("  NAO responde em http://localhost:{0}" -f $PORTA) -ForegroundColor Red
     Write-Host ("  {0}" -f $_.Exception.Message) -ForegroundColor DarkGray
@@ -42,17 +44,28 @@ try {
 # banco prova mais que /saude.
 Write-Host ''
 Write-Host '[banco, por uma chamada que le de verdade]' -ForegroundColor Cyan
-try {
-    $corpo = @{ usuario = 'nao-existe-de-proposito'; senha = 'x' } | ConvertTo-Json
-    Invoke-RestMethod -Uri "http://localhost:$PORTA/sessao" -Method Post `
-        -ContentType 'application/json' -Body $corpo -TimeoutSec 5 | Out-Null
-    Write-Host '  resposta inesperada: um usuario inexistente foi aceito' -ForegroundColor Red
-} catch {
-    $codigo = $_.Exception.Response.StatusCode.value__
-    if ($codigo -eq 401) {
-        Write-Host '  o banco respondeu (recusou um usuario inexistente, como deve)' -ForegroundColor Green
-    } else {
-        Write-Host ("  falhou com HTTP {0} - a API subiu mas nao alcanca o banco" -f $codigo) -ForegroundColor Red
+
+# Sem a API no ar nao ha o que sondar: insistir so faz esperar o tempo limite de novo,
+# depois de a linha acima ja ter dito que ela nao responde.
+if (-not $noAr) {
+    Write-Host '  pulado: a API nao respondeu acima.' -ForegroundColor DarkGray
+} else {
+    try {
+        # Nome CURTO de proposito: LOGIN.NOME e VARCHAR(20), e um parametro maior faz o
+        # Firebird recusar a comparacao com "string right truncation". A sonda antiga tinha
+        # 22 caracteres e devolvia 500 - parecia que a API nao alcancava o banco, quando o
+        # errado era a sonda.
+        $corpo = @{ usuario = 'sonda-nao-existe'; senha = 'x' } | ConvertTo-Json
+        Invoke-RestMethod -Uri "http://localhost:$PORTA/sessao" -Method Post `
+            -ContentType 'application/json' -Body $corpo -TimeoutSec 5 | Out-Null
+        Write-Host '  resposta inesperada: um usuario inexistente foi aceito' -ForegroundColor Red
+    } catch {
+        $codigo = $_.Exception.Response.StatusCode.value__
+        if ($codigo -eq 401) {
+            Write-Host '  o banco respondeu (recusou um usuario inexistente, como deve)' -ForegroundColor Green
+        } else {
+            Write-Host ("  falhou com HTTP {0} - a API subiu mas nao alcanca o banco" -f $codigo) -ForegroundColor Red
+        }
     }
 }
 
