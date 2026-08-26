@@ -153,6 +153,25 @@ export function somarMesesNoCalendario(iso: string, meses: number): string {
   return `${alvo.getFullYear()}-${m}-${d}`;
 }
 
+/**
+ * Desloca uma data "aaaa-mm-dd" em dias, sem sair do calendário local.
+ *
+ * Existe num lugar só de propósito: o alerta "vence nos próximos 7 dias" do painel e o
+ * atalho que abre a grade com esse mesmo recorte precisam calcular a MESMA data-fim. Se cada
+ * um fizesse a própria conta, um erro de um dia apareceria como "o painel diz 14 e a grade
+ * mostra 15", e ninguém saberia qual dos dois está certo.
+ *
+ * `new Date(iso + 'T00:00:00')` é hora local; sem o horário, o navegador lê como UTC e no
+ * Brasil a data volta um dia.
+ */
+export function somarDias(iso: string, dias: number): string {
+  const data = new Date(`${iso}T00:00:00`);
+  data.setDate(data.getDate() + dias);
+  const m = String(data.getMonth() + 1).padStart(2, '0');
+  const d = String(data.getDate()).padStart(2, '0');
+  return `${data.getFullYear()}-${m}-${d}`;
+}
+
 /** Desloca uma data "aaaa-mm-dd" em meses, sem sair do calendário local. */
 export function somarMeses(iso: string, meses: number): string {
   const [ano, mes, dia] = iso.split('-').map(Number);

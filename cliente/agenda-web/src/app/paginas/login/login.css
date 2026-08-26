@@ -49,7 +49,7 @@
 .marca-icone {
   width: 54px;
   height: 54px;
-  border-radius: 16px;
+  border-radius: 4px;
   background: rgba(255, 255, 255, .16);
   display: grid;
   place-items: center;
@@ -185,7 +185,7 @@
 @media (max-width: 780px) {
   .caixa { grid-template-columns: 1fr; }
   .painel { padding: 24px 26px; gap: 4px; }
-  .marca-icone { width: 42px; height: 42px; border-radius: 13px; margin-bottom: 8px; }
+  .marca-icone { width: 42px; height: 42px; border-radius: 4px; margin-bottom: 8px; }
   .painel h1 { font-size: 19px; }
   .nota { display: none; }
   .servidor { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .28); }

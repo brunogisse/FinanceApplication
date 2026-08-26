@@ -26,6 +26,58 @@ function Titulo($texto) {
 
 Titulo 'Agenda Financeira - instalacao'
 
+# =============================================================================
+#  RODAR DA REDE NAO FUNCIONA. Recusar ANTES de fazer qualquer coisa.
+# =============================================================================
+#
+# O compartilhamento e somente leitura, e a instalacao precisa gravar o
+# appsettings.Production.json dentro de 'publicado'. Rodando de la, ela copiava o banco,
+# criava a coluna, gerava a chave -- e SO ENTAO morria, na primeira escrita.
+#
+# Aconteceu em 23/08/2026. A regra e a mesma do ATUALIZAR-API.cmd: nada de comecar antes de
+# provar que da para terminar.
+# `StartsWith` e nao `-like`: no curinga do PowerShell a barra invertida NAO e escape (o
+# escape e a crase), entao '\\\\*' procura QUATRO barras e nunca casa. Medido em 23/08/2026 —
+# a trava escrita assim passava batido.
+if ($PSScriptRoot.StartsWith('\\')) {
+    Write-Host ''
+    Write-Host 'Esta pasta esta na REDE, e a instalacao nao roda de la.' -ForegroundColor Red
+    Write-Host ''
+    Write-Host "  Rodando de:  $PSScriptRoot" -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host 'Copie a pasta INTEIRA para o disco deste computador - por exemplo' -ForegroundColor Yellow
+    Write-Host 'C:\InstalarAgenda - e rode o INSTALAR.cmd de la.' -ForegroundColor Cyan
+    Write-Host ''
+    Write-Host 'Nada foi alterado.' -ForegroundColor Green
+    Read-Host 'Pressione Enter para fechar'
+    exit 1
+}
+
+# Mesmo num disco local a pasta pode ser somente leitura. Prova escrevendo de verdade,
+# em vez de supor pelo caminho.
+$publicado = Join-Path $PSScriptRoot 'publicado'
+if (Test-Path $publicado) {
+    $sonda = Join-Path $publicado ('sonda-' + [Guid]::NewGuid().ToString('N').Substring(0, 6) + '.tmp')
+    try {
+        [System.IO.File]::WriteAllText($sonda, 'x')
+        Remove-Item $sonda -Force
+    }
+    catch {
+        Write-Host ''
+        Write-Host 'Nao consigo gravar nesta pasta.' -ForegroundColor Red
+        Write-Host ''
+        Write-Host "  Pasta:  $publicado" -ForegroundColor Yellow
+        Write-Host "  Erro:   $($_.Exception.Message)" -ForegroundColor DarkGray
+        Write-Host ''
+        Write-Host 'A instalacao precisa gravar a configuracao ai dentro. Copie a pasta para' -ForegroundColor Yellow
+        Write-Host 'um lugar onde voce possa escrever - C:\InstalarAgenda, por exemplo.' -ForegroundColor Cyan
+        Write-Host ''
+        Write-Host 'Nada foi alterado.' -ForegroundColor Green
+        Read-Host 'Pressione Enter para fechar'
+        exit 1
+    }
+}
+
 # ---------------------------------------------------- onde esta o banco antigo
 #
 # O caminho do banco esta no config.ini que fica ao lado do executavel do sistema

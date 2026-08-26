@@ -6,6 +6,41 @@
  * pago em cinza, aguardando liberação em roxo — e ela lê a grade pela cor antes do texto.
  */
 
+/*
+ * DM Sans, embarcada no projeto — e é embarcada de propósito.
+ *
+ * O `<link>` do Google Fonts funcionaria no `ng serve` e morreria calado no aplicativo: o
+ * empacotado roda de `file://` e não alcança CDN. É o mesmo motivo pelo qual os gráficos são
+ * SVG escrito à mão. Os dois arquivos somam 94 KB.
+ *
+ * Ficam em `src/fontes/`, e não em `public/`: o bundler resolve `url()` relativo ao `src`, e
+ * de `public/` ele nem acha o arquivo — o build falha. Estando no `src`, o Angular emite a
+ * fonte com hash e reescreve a URL sozinho, o que também acerta o caminho relativo de que o
+ * Electron precisa.
+ *
+ * Fonte variável: um arquivo cobre de 400 a 700, então não há um .woff2 por peso.
+ */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./fontes/dm-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+                 U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+                 U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./fontes/dm-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+                 U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+                 U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
   /*
    * Estado da linha na grade.
@@ -28,25 +63,52 @@
   --linha-aguardando-texto: #4c1d95;
   --linha-aguardando-tarja: #7c3aed;
 
-  --linha-selecionada-fundo: #e7f5ec;
-  --linha-selecionada-tarja: #15803d;
+  --linha-selecionada-fundo: #eeebfd;
+  --linha-selecionada-tarja: #4f31d9;
 
   /* Cinza do legado, ainda usado fora da grade — na lista do dia, no painel. */
   --cor-pago: #98a1ae;
 
-  --cor-fundo: #f4f6fa;
+  /*
+   * Fundo em dois níveis, como no modelo: a tela é lavanda pálida e os cartões são brancos.
+   * Antes o fundo era cinza-azulado e os cartões se destacavam por contraste de cor; agora
+   * se destacam por sombra, que é mais discreto e envelhece melhor.
+   */
+  --cor-fundo: #f3f1fb;
   --cor-superficie: #ffffff;
-  --cor-borda: #dfe3ea;
+  --cor-superficie-2: #f8f7fd;
+  --cor-borda: #e3e0f0;
   /* Borda quase invisível: a separação vem do contraste de superfície, não do traço. */
-  --borda-sutil: rgba(23, 43, 77, .07);
-  --cor-texto: #1f2430;
-  --cor-texto-fraco: #6b7280;
-  --cor-primaria: #15803d;
-  --cor-primaria-escura: #166534;
-  --cor-primaria-clara: #eaf6ee;
+  --borda-sutil: rgba(37, 24, 92, .07);
+  --cor-texto: #1b1735;
+  --cor-texto-fraco: #6f6a90;
+
+  /*
+   * Índigo no lugar do verde — decisão do Bruno em 24/08/2026, tomada sobre o modelo MyFin.
+   * Os neutros acima não são cinza puro: levam uma pitada do roxo, para o branco dos cartões
+   * assentar sobre o fundo em vez de brigar com ele.
+   */
+  --cor-primaria: #4f31d9;
+  --cor-primaria-escura: #3b21ad;
+  --cor-primaria-clara: #eeebfd;
+  /* Índigo chapado do menu lateral. Chapado, não gradiente: o modelo não tem degradê ali. */
+  --cor-trilho: #1f0f63;
+  /* Caixa-alta de cabeçalho de tabela: mais escura e mais azul que o texto fraco.
+     Medido: 5,93:1 sobre a superfície 2, contra 5,07:1 do texto fraco sobre branco. */
+  --cor-cabecalho-coluna: #5f5b85;
+
   --cor-erro: #b91c1c;
   --cor-erro-fundo: #fee2e2;
-  --cor-sucesso: #15803d;
+  /* Atraso no painel: rose, e é a única cor de aviso que sobrou do redesign. */
+  --cor-critico: #be123c;
+  --cor-critico-fundo: #ffe4e9;
+  /*
+   * Verde SOBREVIVE aqui, e não é esquecimento: gastar menos que no mês passado é boa
+   * notícia, e neste ponto o verde é significado, não marca. Marca virou índigo; semântica
+   * continua verde.
+   */
+  --cor-sucesso: #157a3a;
+  --cor-sucesso-fundo: #e7f6ec;
   --cor-atencao-fundo: #fef3c7;
 
   /*
@@ -73,29 +135,48 @@
   --card-pago: var(--card-verde);
   --card-previsto: var(--card-azul);
 
-  /* Verde da marca, no menu lateral. */
-  --marca: linear-gradient(165deg, #5ec26a 0%, #3d9950 100%);
+  /* Marca no menu lateral: índigo chapado, no lugar do gradiente verde. */
+  --marca: var(--cor-trilho);
 
   --sombra-realce: 0 10px 24px -6px rgba(0, 0, 0, .28);
 
   /*
-   * Cores de série dos gráficos, as mesmas do Fechamento Petrotorque.
+   * Cores de série dos gráficos.
    *
-   * O roxo é o do cartão de resultado; lá está anotado que ele separa do tom de alerta com
-   * ΔE 27,5 na simulação de daltonismo e 28,2 em visão normal, com contraste acima de 3:1.
+   * **A cor segue a grandeza, não o rank:** pago é o índigo em qualquer gráfico, previsto é
+   * o lilás. Isso não mudou.
    *
-   * **A cor segue a grandeza, não o rank:** pago é o roxo em qualquer gráfico, previsto é o
-   * tom de alerta. O laranja fica em 2,64:1 contra o branco — abaixo do piso —, e por isso
-   * os dois gráficos vêm sempre com os valores por escrito ao lado.
+   * O que mudou, e é uma PERDA registrada: o par anterior era roxo #a45deb contra laranja
+   * #ec835a, que separavam com ΔE 27,5 na simulação de daltonismo. O par novo fica na mesma
+   * escada de matiz e só muda de luminosidade, então quem não distingue matiz passa a
+   * depender só do claro/escuro. Foi decisão do Bruno em 24/08/2026, para o gráfico ficar na
+   * família do resto da tela.
+   *
+   * A defesa contra isso continua onde estava: **os valores vêm sempre escritos ao lado**,
+   * na legenda e na lista. Nenhum número do painel existe só como cor.
    */
-  --serie-pago: #a45deb;
-  --serie-previsto: #ec835a;
-  --serie-pago-lavagem: rgba(164, 93, 235, .10);
-  --serie-previsto-lavagem: rgba(236, 131, 90, .10);
-  --grade-grafico: #e6e8ef;
+  --serie-pago: #4f31d9;
+  --serie-previsto: #a99bf0;
+  --serie-pago-lavagem: rgba(79, 49, 217, .11);
+  --serie-previsto-lavagem: rgba(169, 155, 240, .14);
+  --grade-grafico: #e4e1f4;
 
-  --raio: 10px;
-  --raio-grande: 18px;
+  /*
+   * Cantos quase retos. Decisão do Bruno em 25/08/2026, e ele teve de pedir duas vezes.
+   *
+   * A primeira tentativa foi 14px — eu tinha chegado nesse número medindo a maquete, que é
+   * desenhada a `zoom: .78`, e 18 × 0,78 dá 14. A conta estava certa e a leitura do pedido,
+   * errada: ele não queria "o mesmo da maquete", queria **quase nenhum** arredondamento.
+   *
+   * 5px num cartão de 400px é o suficiente para o canto não cortar como papel guilhotinado,
+   * e pouco o bastante para a tela ler como um sistema de trabalho e não como um aplicativo
+   * de celular.
+   *
+   * O que NÃO muda: pastilhas de estado e avatares seguem em `999px` e `50%`. Ali o redondo
+   * não é decoração — é o que distingue uma etiqueta de um campo.
+   */
+  --raio: 4px;
+  --raio-grande: 5px;
   /* Sombra de duas camadas: uma rente, para descolar do fundo, e uma larga e fraca, que dá
      profundidade sem virar borrão cinza. */
   --sombra: 0 1px 2px rgba(23, 43, 77, .04), 0 4px 16px rgba(23, 43, 77, .06);
@@ -110,7 +191,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-family: 'DM Sans', 'Segoe UI', Tahoma, sans-serif;
   font-size: 14px;
   color: var(--cor-texto);
   background: var(--cor-fundo);

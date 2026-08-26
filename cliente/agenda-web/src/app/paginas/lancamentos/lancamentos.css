@@ -303,7 +303,7 @@
 .contador {
   background: var(--cor-primaria);
   color: #fff;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 0 6px;
   font-size: 12px;
   line-height: 18px;

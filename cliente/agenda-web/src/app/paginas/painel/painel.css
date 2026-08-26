@@ -6,6 +6,15 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /*
+   * Base da tela inteira, 10% abaixo dos 14px do sistema (25/08/2026, a pedido do Bruno).
+   *
+   * Cada `font-size` desta folha foi multiplicado por 0,9, mantendo a proporção entre eles.
+   * Esta linha cobre o que NÃO tem tamanho próprio e herdava os 14px do `body`: o subtítulo,
+   * o nome do mês e os botões de navegação do topo. Sem ela, três textos do print ficariam do
+   * tamanho de antes no meio de tudo que encolheu.
+   */
+  font-size: 12.5px;
 }
 
 .cabecalho {
@@ -15,7 +24,7 @@
   flex-wrap: wrap;
   gap: 10px;
 }
-.cabecalho h1 { margin: 0; font-size: 22px; }
+.cabecalho h1 { margin: 0; font-size: 20px; }
 .subtitulo { margin: 2px 0 0; color: var(--cor-texto-fraco); }
 
 .controle-mes { display: flex; align-items: center; gap: 6px; }
@@ -26,167 +35,233 @@
   font-weight: 600;
 }
 
+/*
+ * Duas faixas empilhadas, e não mais duas colunas com o calendário preso à altura da janela.
+ *
+ * O calendário era `position: sticky` com `height: calc(100vh - 104px)`. Isso resolvia um
+ * problema real — um dia com 52 lançamentos esticava o painel para 2.281px —, mas cobrava
+ * caro: num mês comum sobrava meia tela vazia à direita e o conteúdo ficava espremido na
+ * esquerda. Agora a lista do dia rola dentro de um cartão de altura fixa, o que resolve o
+ * mesmo problema sem tomar a tela.
+ */
 .corpo {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 310px;
-  gap: 14px;
-  align-items: start;
-}
-.principal {
   display: flex;
   flex-direction: column;
   gap: 14px;
   min-width: 0;
-  /* Os cards medem o espaço que a coluna tem, não a janela: o painel direito come 310px, e
-     media query não enxerga isso. Foi essa confusão que estourou a tela no projeto vizinho. */
+  /* Os cartões medem o espaço da COLUNA, não da janela. Foi essa confusão que estourou a
+     tela no projeto vizinho. */
   container-type: inline-size;
   container-name: coluna;
 }
 
-/* ---------- Os quatro cards ---------- */
+/*
+ * QUATRO QUADRANTES (25/08/2026, marcados em vermelho pelo Bruno sobre o modelo).
+ *
+ *   +---------------------+----------------+  +--------------+
+ *   |  1  Pago mês a mês  | 2  Para onde   |  |              |
+ *   |     (a curva)       |    o dinheiro  |  |  4  O mês    |
+ *   +---------------------+----------------+  |     (o       |
+ *   |  3  Vence nos próximos dias          |  |  calendário) |
+ *   |     (atravessa os dois de cima)      |  |              |
+ *   +--------------------------------------+  +--------------+
+ *
+ * Não são duas colunas empilhando por conta própria — foi o que eu tinha feito antes, e
+ * deixava a tabela presa embaixo da curva, com metade da largura que ela precisa. A tabela
+ * tem cinco colunas e é o cartão mais largo da tela: ela ATRAVESSA os dois de cima.
+ *
+ * O calendário é coluna própria e atravessa as duas linhas, então a altura dele sai da soma
+ * do que está à esquerda — sem número escolhido a dedo e sem degrau entre as bordas de baixo.
+ *
+ * As larguras: `1.2fr` para a curva porque doze meses num cartão estreito viram um rabisco, e
+ * `300px` fixos no calendário — largura marcada em vermelho pelo Bruno em 25/08/2026, quando
+ * ele estava em 360 e sobrava do lado direito. Fixo, e não fração, porque o que manda ali é o
+ * tamanho do dia: sete quadrados dividindo a coluna. Descontados o recheio e os vãos, dá
+ * quadrado de 33px, que com o dia a 12,5px continua confortável.
+ *
+ * Em 1.440px de janela isso sai em cerca de 434 / 362 / 300 — e os 60px que o calendário
+ * devolveu foram para a curva e para a rosca, que é onde fazem falta.
+ */
+.colunas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 300px;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.cartao.grafico { grid-column: 1; grid-row: 1; min-width: 0; }
+.cartao-rosca   { grid-column: 2; grid-row: 1; min-width: 0; }
+.proximos       { grid-column: 1 / span 2; grid-row: 2; min-width: 0; }
 
 /*
- * Regra copiada do Fechamento Petrotorque: ou cabem os quatro lado a lado, ou quebram em
- * DOIS E DOIS. Nunca três em cima e um sozinho embaixo, que deixa um vazio do tamanho de um
- * cartão e desequilibra a leitura.
+ * O ENCAIXE: como o calendário atravessa as duas linhas sem mandar na altura delas.
  *
- * Por isso não é auto-fit — ele encaixaria três. E é minmax(0, 1fr), não 1fr: "1fr" é
- * minmax(auto, 1fr), e o "auto" respeita a largura mínima do conteúdo; com o valor em
- * nowrap, R$ 2.279.416,69 não encolheria e estouraria a coluna.
+ * Um item que atravessa linhas de tamanho automático empurra o conteúdo dele para dentro
+ * dessas linhas. Um dia com 39 lançamentos pede 3.008px de lista, e sem este par a curva e a
+ * tabela seriam esticadas junto — foi assim que o painel chegou a 2.281px.
+ *
+ * Conteúdo posicionado em absoluto não conta para o tamanho das faixas. Então o encaixe ocupa
+ * a coluna e recebe a altura das duas linhas da ESQUERDA, e o cartão se prende às quatro
+ * bordas dele por dentro. A lista do dia rola no que sobrar.
  */
-.cards {
+.encaixe-calendario {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  position: relative;
+  min-width: 0;
+  /* Piso, para o caso de a esquerda vir curta: sete linhas de calendário mais o cabeçalho. */
+  min-height: 500px;
+}
+
+/*
+ * Duas colunas: o calendário desce e passa a atravessar a largura toda. Espremido ao lado de
+ * duas colunas já estreitas, nenhum dos três se lê.
+ *
+ * O corte é 960px, e o número foi MEDIDO, não escolhido. Numa janela de 1.440px — a do Bruno
+ * — o menu leva 280 e o recheio 36, então este container fica com 1.124px. A primeira versão
+ * cortava em 1.180 e pegava justamente ali: o calendário caía para baixo, que é o contrário
+ * do pedido. Abaixo de 960 a rosca não cabe mais (o desenho tem 180px e a lista de despesas
+ * precisa de uns 300), e é aí que empilhar passa a valer a pena.
+ */
+@container coluna (max-width: 960px) {
+  .colunas { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .encaixe-calendario { grid-column: 1 / span 2; grid-row: 3; min-height: 560px; }
+}
+
+/*
+ * O CARTÃO atravessa a largura toda quando desce; a TABELA DE DIAS, não.
+ *
+ * Medido em 1.280x720 (25/08/2026): com o calendário empilhado, os sete quadrados dividiam
+ * 947px e davam 124px cada — calendário de parede, e a lista do dia jogada lá para baixo.
+ * O quadrado do dia não ganha nada em crescer: ele carrega um número de dois dígitos.
+ *
+ * Aqui ele para em 420px, que é onde o quadrado fica em 55 — maior que os 33 da tela larga,
+ * porque numa janela pequena o alvo do dedo e do ponteiro é mais apertado. A lista do dia
+ * continua usando a largura inteira, que é o que ela aproveita.
+ */
+@container coluna (max-width: 960px) {
+  .calendario { max-width: 420px; }
+}
+
+/* Uma coluna só: cada cartão na sua linha, na ordem em que estão no HTML. */
+@container coluna (max-width: 740px) {
+  .colunas { grid-template-columns: minmax(0, 1fr); }
+  .cartao.grafico,
+  .cartao-rosca,
+  .proximos,
+  .encaixe-calendario { grid-column: 1; grid-row: auto; }
+}
+
+/*
+ * NOTA SOBRE O TAMANHO DESTA FOLHA
+ *
+ * Esta é a maior folha de estilo de componente do sistema: **11,6 kB**. O `anyComponentStyle`
+ * do `angular.json` subiu de 4/8 kB para 8/14 kB por causa dela, no redesign de 24/08/2026,
+ * quando o painel ganhou faixa de alerta, rosca, tabela de vencimentos e calendário na mesma
+ * tela.
+ *
+ * Antes de subir o limite, o estilo do gráfico de BARRAS — que a rosca substituiu — foi
+ * removido daqui. Rendeu só 0,6 kB: o peso é do conteúdo novo, não de sobra.
+ *
+ * O orçamento existe para pegar folha inchada por descuido, e este CSS viaja no pedaço da
+ * rota, que já é carregado sob demanda — quem abre a grade de lançamentos não baixa isto.
+ *
+ * Se um dia passar de 14 kB, o caminho não é subir o limite de novo: é tirar a tabela de
+ * vencimentos para um componente próprio, que é a parte com vida independente.
+ */
+
+/* ---------- Faixa de alerta ---------- */
+
+/*
+ * Substitui os quatro cards com gradiente do Fechamento Petrotorque.
+ *
+ * Aqueles cartões eram bonitos e diziam pouco: quatro blocos chapados de cor cheia enchem a
+ * primeira dobra da tela e disputam a atenção entre si, sem que nenhum diga qual é o mais
+ * urgente. Aqui sobram os DOIS que pedem ação — o que venceu e o que vence na semana — e
+ * eles viram cartões brancos com uma tarja fina na lateral.
+ *
+ * **A tarja diz o estado; o cartão continua branco.** É a mesma regra da grade de
+ * lançamentos, e o resultado é que o número fica na cor do texto, que é o que se lê.
+ *
+ * Os outros dois números — pago e previsto no mês — desceram para o cartão do gráfico, ao
+ * lado da curva que os explica.
+ */
+.alertas {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-/* Quatro cartões de ~240px mais três espaços de 16px = 1008px. */
-@container coluna (min-width: 1010px) {
-  .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-
-@container coluna (max-width: 520px) {
-  .cards { grid-template-columns: minmax(0, 1fr); }
-}
-
-/*
- * Cartão de indicador, com as medidas do Fechamento Petrotorque: 18px de raio, 116px de
- * altura mínima, ícone de 52px e a sombra de realce.
- */
-.card {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
   gap: 12px;
-  border: none;
-  text-align: left;
-  border-radius: 18px;
-  padding: 16px 24px;
-  /*
-   * 148px, e não os 116px que estão no CSS do Fechamento Petrotorque.
-   *
-   * Não é divergência: é o mesmo cartão. **Aquele projeto não tem `box-sizing` global** — o
-   * comentário em `app.scss` diz isso —, então o `min-height: 116px` de lá é da caixa de
-   * conteúdo e o cartão rende 116 + 32 de padding = 148px. Aqui `border-box` é global, e o
-   * mesmo 116 já incluiria o padding, deixando o cartão 32px mais baixo.
-   *
-   * Medido nos dois lado a lado na mesma página: `computed height` 116px contra
-   * `offsetHeight` 148px. A diferença era exatamente o padding vertical.
-   */
-  min-height: 148px;
-  color: #fff;
-  box-shadow: var(--sombra-realce);
-  overflow: hidden;
-  font: inherit;
-
-  /* O valor acompanha a largura DO CARTÃO, não a da janela — por isso o cartão precisa ser
-     um container. Ver a mesma nota no cartao-indicador de lá. */
-  container-type: inline-size;
 }
 
-.card-texto {
+@container coluna (max-width: 620px) {
+  .alertas { grid-template-columns: minmax(0, 1fr); }
+}
+
+.alerta {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  /* Sem isto o texto se recusa a encolher e estoura a coluna em vez de ceder. */
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px 13px 14px;
+  border-radius: var(--raio-grande);
+  background: var(--cor-superficie);
+  border: 1px solid var(--borda-sutil);
+  border-left: 3px solid var(--tarja);
+  box-shadow: var(--sombra);
+  color: var(--cor-texto);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
   min-width: 0;
 }
+.alerta:hover { border-color: var(--tarja); }
+.alerta:focus-visible { outline: 2px solid var(--tarja); outline-offset: 2px; }
 
-/* Ícone grande e translúcido, como marca d'água do cartão. */
-.card-icone {
+.alerta-sinal {
   flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 5px;
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, .18);
-  color: rgba(255, 255, 255, .95);
+  background: var(--tarja-lavagem);
+  color: var(--tarja);
 }
 
-/*
- * Em cartão estreito o ícone cede espaço ao número: ele é decoração, o valor é a informação.
- *
- * 252px, e não os 300px de lá, pela mesma diferença de estrutura do `.card-valor`: o
- * container aqui é a caixa de conteúdo, 48px menor. 300 − 48 = 252, então os dois viram no
- * mesmo ponto.
- */
-@container (max-width: 252px) {
-  .card-icone { width: 40px; height: 40px; border-radius: 11px; }
-  .card-icone svg { width: 21px; height: 21px; }
+.alerta-texto { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.alerta-valor {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-
-button.card { cursor: pointer; }
-button.card:hover { filter: brightness(1.04); }
-button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
-
-/* Branco levemente rebaixado: o valor é que precisa saltar. */
-.card-titulo {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, .88);
+.alerta-rotulo {
+  font-size: 11.5px;
+  color: var(--cor-texto-fraco);
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
+.alerta-seta { margin-left: auto; color: var(--cor-texto-fraco); flex: none; }
 
-/* Marca os cards que falam de hoje, quando o painel esta noutro mes. */
+/*
+ * O atraso é o único problema de verdade e fica no rose; "vence em 7 dias" é agenda, não
+ * emergência, e usa o índigo do sistema. O âmbar saiu do painel inteiro — ele gritava mais
+ * alto que o resto e brigava com o índigo.
+ */
+.alerta.critico { --tarja: var(--cor-critico); --tarja-lavagem: var(--cor-critico-fundo); }
+.alerta.atencao { --tarja: var(--cor-primaria); --tarja-lavagem: var(--cor-primaria-clara); }
+
+/* Marca os números que falam de hoje, quando o painel está noutro mês. */
 .etiqueta {
-  background: rgba(255, 255, 255, .22);
+  background: var(--cor-superficie-2);
+  border: 1px solid var(--cor-borda);
   border-radius: 999px;
-  padding: 1px 7px;
-  font-size: 10.5px;
+  padding: 0 7px;
+  font-size: 9.5px;
   text-transform: uppercase;
   letter-spacing: .3px;
 }
-/*
- * Com `vw` o valor ficaria enorme justamente quando o cartão é estreito; `cqw` mede o
- * cartão. E `nowrap` mantém R$ 2.279.416,69 numa linha só.
- *
- * O `+ 3.84px` não é ajuste no olho, é a correção de uma diferença de estrutura. No
- * Fechamento Petrotorque o container de consulta é o elemento externo, e `8cqw` mede a
- * largura cheia do cartão. Aqui o container é o próprio `.card`, e `cqw` mede a **caixa de
- * conteúdo**, 48px menor por causa do padding lateral. Como 8% de 48px são 3,84px,
- * `8cqw + 3.84px` dá exatamente 8% da largura do cartão — em qualquer largura, não só numa.
- *
- * Sem isto o valor saía a 22,4px onde o deles sai a 25,9px, e o cartão ficava 33px mais
- * baixo. Medido nos dois lado a lado.
- */
-.card-valor {
-  font-size: clamp(17px, calc(8cqw + 3.84px), 29px);
-  font-weight: 700;
-  letter-spacing: -.8px;
-  line-height: 1.1;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.card-nota { font-size: 11.5px; color: rgba(255, 255, 255, .75); line-height: 1.35; }
-
-/* Os gradientes e os tons vêm de styles.css, onde o contraste do branco foi medido. */
-.card-vencido { background: var(--card-vencido); }
-.card-proximos { background: var(--card-proximos); }
-.card-pago { background: var(--card-pago); }
-.card-previsto { background: var(--card-previsto); }
 
 /* ---------- Gráficos ---------- */
 
@@ -214,16 +289,256 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
   position: relative;
 }
 /* Título e subtítulo com as medidas do Fechamento Petrotorque: 15px/600 e 12,5px a 65%. */
-.grafico h2 { margin: 0; font-size: 15px; font-weight: 600; }
-.explicacao { margin: 2px 0 12px; color: var(--cor-texto-fraco); font-size: 12.5px; }
+/*
+ * Rótulo de cartão em caixa-alta espaçada, como no modelo: ele NOMEIA o cartão sem competir
+ * com o número, que é o que se lê. Antes era um h2 de 15px em peso 600, do mesmo tamanho do
+ * conteúdo — e dois textos do mesmo peso lado a lado não estabelecem hierarquia nenhuma.
+ */
+.cartao-topo { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+.cartao-topo h2,
+.grafico h2 {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--cor-texto-fraco);
+}
+.explicacao { margin: 2px 0 12px; color: var(--cor-texto-fraco); font-size: 11.5px; }
+
+/*
+ * As ações são MAIORES que o rótulo que acompanham, em caixa normal e no índigo cheio. Elas
+ * não são legenda: são o próximo passo, e o tamanho deixa isso claro.
+ */
+.acoes { margin-left: auto; display: flex; align-items: baseline; gap: 20px; }
+.cartao-topo .acao {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cor-primaria);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 4px;
+}
+.cartao-topo > .acao { margin-left: auto; }
+.cartao-topo .acao:hover { color: var(--cor-primaria-escura); text-decoration: underline; }
+.cartao-topo .acao:focus-visible { outline: 2px solid var(--cor-primaria); outline-offset: 3px; }
+
+/* ---------- Rosca ---------- */
+
+.cartao-rosca { padding: 16px 18px; min-width: 0; }
+.rosca-area { display: flex; justify-content: center; padding: 6px 0 2px; }
+.rosca-area circle { cursor: pointer; transition: opacity .12s ease; }
+.rosca-area circle:hover { opacity: .82; }
+
+.rosca-centro { font-family: inherit; }
+.rosca-centro .r1 { font-size: 10px; font-weight: 500; fill: var(--cor-texto-fraco); }
+.rosca-centro .r2 { font-size: 14.5px; font-weight: 700; fill: var(--cor-texto); letter-spacing: -.02em; }
+
+.lista-despesas { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.lista-despesas li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto 34px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-radius: 4px;
+  font-size: 11.5px;
+}
+.lista-despesas li:hover { background: var(--cor-superficie-2); }
+.ponto-cor { width: 10px; height: 10px; border-radius: 50%; }
+/* O nome cede; o valor e o percentual nunca encolhem — são o que se compara entre linhas. */
+.nome-despesa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cor-texto-fraco); }
+.valor-despesa { font-weight: 700; font-variant-numeric: tabular-nums; }
+.pct-despesa { color: var(--cor-texto-fraco); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- Recorte da série ---------- */
+
+.periodos { display: flex; gap: 4px; margin-top: 10px; }
+.periodos button {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 11.5px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  color: var(--cor-texto-fraco);
+  cursor: pointer;
+}
+.periodos button:hover { background: var(--cor-superficie-2); color: var(--cor-texto); }
+.periodos button.ativo {
+  background: var(--cor-primaria-clara);
+  color: var(--cor-primaria-escura);
+  font-weight: 700;
+}
+.periodos button:focus-visible { outline: 2px solid var(--cor-primaria); outline-offset: 2px; }
+
+/* ---------- Número de destaque ---------- */
+
+/*
+ * O número em linha própria, e o contexto embaixo.
+ *
+ * Os três em fila — número, variação, previsto — se liam como uma frase só, e o valor do mês
+ * disputava atenção com o texto ao lado dele. Separados, o olho pega o número primeiro e
+ * desce para o "comparado com o quê" só depois, que é a ordem em que a pergunta é feita.
+ *
+ * `align-items: flex-start` porque a pastilha da variação não deve esticar até a largura da
+ * linha; `width: fit-content` no numerador não é necessário — a coluna já é flex.
+ */
+.destaque {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 8px 0 2px;
+}
+.destaque-abaixo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex-wrap: wrap;
+}
+.destaque-numero {
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+/*
+ * Gastar MENOS que no mês passado é boa notícia, então a pastilha padrão é verde — e este é
+ * o verde que sobrevive ao redesign, porque aqui ele é significado, não marca. Quando o
+ * gasto sobe, a pastilha vira rose.
+ */
+.variacao {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--cor-sucesso-fundo);
+  color: var(--cor-sucesso);
+  font-variant-numeric: tabular-nums;
+}
+.variacao.subiu { background: var(--cor-critico-fundo); color: var(--cor-critico); }
+.destaque-nota { font-size: 11.5px; color: var(--cor-texto-fraco); }
+
+/* ---------- Tabela de próximos vencimentos ---------- */
+
+/*
+ * Quadrante 3, atravessando a curva e a rosca.
+ *
+ * Em coluna, este cartão ficava com metade da largura — e ele tem cinco colunas, entre elas a
+ * descrição do lançamento e a conta, que são as que precisam de espaço. É o cartão mais largo
+ * da tela por necessidade, não por decoração.
+ */
+.proximos {
+  padding: 16px 18px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rolagem {
+  overflow: auto;
+  margin-top: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tabela-proximos {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 11.5px;
+  table-layout: fixed;
+}
+.col-lancamento { width: 33%; }
+.col-conta      { width: 19%; }
+.col-venc       { width: 14%; }
+.col-situacao   { width: 17%; }
+.col-valor      { width: 17%; }
+
+/*
+ * O cabeçalho é uma FAIXA de fundo, não um filete: ele separa o título dos dados por peso
+ * visual. A caixa-alta usa um tom próprio, mais escuro e mais azul que o texto fraco —
+ * medido, 5,93:1 sobre a faixa contra 5,07:1 do texto fraco sobre branco.
+ */
+.tabela-proximos thead th {
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--cor-cabecalho-coluna);
+  background: var(--cor-superficie-2);
+  border-top: 1px solid var(--borda-sutil);
+  border-bottom: 1px solid var(--borda-sutil);
+  white-space: nowrap;
+}
+.tabela-proximos thead th:first-child {
+  border-radius: 4px 0 0 4px;
+  border-left: 1px solid var(--borda-sutil);
+  padding-left: 14px;
+}
+.tabela-proximos thead th:last-child {
+  border-radius: 0 4px 4px 0;
+  border-right: 1px solid var(--borda-sutil);
+  padding-right: 14px;
+}
+
+.tabela-proximos tbody td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--borda-sutil);
+  vertical-align: middle;
+}
+.tabela-proximos tbody td:first-child { padding-left: 14px; }
+.tabela-proximos tbody td:last-child { padding-right: 14px; }
+.tabela-proximos tbody tr:last-child td { border-bottom: none; }
+.tabela-proximos tbody tr:hover td { background: var(--cor-superficie-2); }
+
+/*
+ * O nome do lançamento é peso MÉDIO, não negrito: o que o separa da sublinha é cor e
+ * tamanho, e o negrito fica para o valor, que é o que se compara entre linhas.
+ */
+.linha-descricao { font-weight: 500; line-height: 1.32; }
+.linha-nota { font-size: 10.5px; color: var(--cor-texto-fraco); line-height: 1.32; }
+.tabela-proximos .dinheiro { font-weight: 700; }
+
+/* Pastilha com a inicial da conta: a marca visual do modelo, com dado que já existe — a
+   inicial sai do próprio nome, sem inventar um ícone para cada conta cadastrada. */
+.com-inicial { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.inicial-rotulo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inicial {
+  flex: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: var(--cor-primaria-clara);
+  color: var(--cor-primaria-escura);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.pastilha {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pastilha.vencido { background: var(--cor-critico-fundo); color: var(--cor-critico); }
+.pastilha.hoje { background: var(--cor-primaria-clara); color: var(--cor-primaria-escura); }
+.pastilha.futuro { background: var(--cor-superficie-2); color: var(--cor-texto-fraco); }
 
 
 /* O SVG e desenhado num viewBox de 640 e renderizado em cerca de 390px: tudo encolhe uns
    40%. Os tamanhos aqui ja contam com isso — 17 unidades viram uns 10px na tela. */
-
-/* Uma cor só nas barras: o gráfico é sobre magnitude, não sobre identidade. */
-.barra { fill: var(--serie-pago); }
-.barra:hover { fill: #8e42d6; }
 
 .referencia { stroke: var(--grade-grafico); stroke-width: 1; }
 
@@ -249,7 +564,7 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--cor-texto-fraco);
   margin-bottom: 6px;
 }
@@ -263,35 +578,16 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
 .ponto.previsto { background: var(--serie-previsto); }
 .ponto.pago { background: var(--serie-pago); }
 
-.legenda {
-  list-style: none;
-  margin: 12px 0 0;
-  padding: 0;
-  border-top: 1px solid var(--cor-borda);
-}
-.legenda li {
-  display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto 44px;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 0;
-  font-size: 13px;
-  border-bottom: 1px solid #f0f1f4;
-}
-.legenda li:last-child { border-bottom: none; }
-.marca-cor { width: 9px; height: 9px; border-radius: 2px; background: var(--serie-pago); }
-.legenda-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.legenda-valor { font-variant-numeric: tabular-nums; }
-.legenda-percentual { color: var(--cor-texto-fraco); text-align: right; }
+/* A lista que acompanhava as barras virou `.lista-despesas`, ao lado da rosca. */
 
 .dica {
   position: absolute;
   transform: translate(12px, -50%);
   background: #1f2430;
   color: #fff;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 7px 10px;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.45;
   pointer-events: none;
   z-index: 5;
@@ -302,203 +598,226 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
 }
 .dica strong { margin-bottom: 2px; }
 
-/* ---------- Painel direito ---------- */
+/* ---------- Calendário ---------- */
 
 /*
- * Fundo verde com cartões brancos por cima, como o painel lateral do Fechamento
- * Petrotorque.
+ * Histórico deste cartão, porque ele já mudou de cor duas vezes e a razão importa:
  *
- * O tom NÃO é o de lá. Aquele painel usa o verde da marca (`#5ec26a → #3d9950`), e o
- * `--marca` daqui não carrega texto branco: 2,23:1 no extremo claro. Este calendário é
- * quase todo feito de branco translúcido — legendas, nomes dos dias, números sem
- * vencimento —, e sobre aquele verde nada disso passa de 3,5:1.
+ * Era verde (`#5ec26a → #3d9950`, o da Petrotorque), a pedido do Bruno em 23/08/2026 — e
+ * ficava registrado aqui que custava contraste: branco sobre `#5ec26a` dá 2,23:1, e os tons
+ * translúcidos do calendário ficavam perto de 1,9:1. O redesign de 24/08 trocou por índigo
+ * escuro, o que resolveu o contraste. Em 25/08 ele virou branco, que é o que a proposta
+ * aprovada mostrava desde o começo — eu é que tinha só trocado a cor do bloco.
+ */
+/*
+ * Cartão BRANCO, como todos os outros — e como estava na proposta aprovada.
  *
- * O gradiente e os tons são os de lá, valor por valor, a pedido do Bruno (23/08/2026).
+ * Este painel já foi verde (o da Petrotorque) e depois índigo escuro. Nas duas versões ele
+ * era um bloco de cor no meio de uma tela de cartões brancos, e puxava a atenção para o
+ * calendário, que é o elemento menos urgente da tela: quem abre o painel quer saber o que
+ * venceu, não que dia é hoje.
  *
- * Fica registrado o que isso custa, porque contraria a regra escrita no CLAUDE.md ("o
- * `--marca` não carrega texto branco"): branco puro sobre `#5ec26a` dá **2,23:1**, e sobre
- * `#3d9950`, 3,58:1. O mínimo para texto é 4,5:1. Os tons translúcidos do calendário —
- * nomes dos dias a 60%, números a 70% — ficam perto de 1,9:1.
+ * O contraste também melhora. No verde, os números sem vencimento ficavam em 1,9:1 — texto
+ * translúcido sobre cor saturada. Aqui todos os tons saem do mesmo conjunto do resto do
+ * sistema, onde cada um já foi medido.
  *
- * Medido em toda a família de verdes, para o caso de alguém querer reabrir isto:
- *
- *   #5ec26a  2,23    #4caf50  2,78    #22a355  3,26    #1d9350  3,93
- *   #238b4d  4,31    #15803d  5,02    #166534  7,13
- *
- * `#15803d` — o `--cor-primaria`, o mesmo do painel do login — é o verde mais claro em que
- * branco passa. Trocar o gradiente por `#15803d → #166534` e as opacidades por 92% é a
- * única mudança necessária para a tela ficar legível.
+ * A altura acompanha a faixa de cima, a pedido do Bruno (25/08/2026): o cartão da esquerda
+ * fica baixo quando não há vencimento próximo, e o calendário sozinho na coluna parecia
+ * decepado. `min-height` em vez de `height` para que a lista do dia continue crescendo até o
+ * teto e rolando dentro dele.
  */
 .lateral {
   border-radius: var(--raio-grande);
-  padding: 16px 14px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: linear-gradient(165deg, #5ec26a 0%, #3d9950 100%);
-  color: #fff;
+  background: var(--cor-superficie);
+  border: 1px solid var(--borda-sutil);
+  color: var(--cor-texto);
   box-shadow: var(--sombra);
   /*
-   * Altura definida, e não "o que o conteúdo pedir".
+   * O calendário desce até a linha de baixo da coluna da esquerda.
    *
-   * Um dia com 34 lançamentos fazia a lista crescer para 1.968px e o painel para 2.281px,
-   * escorrendo tela abaixo. Com a altura fixa, a lista recebe exatamente a sobra e rola
-   * dentro dela. 104px é o que fica acima e abaixo: 81 do cabeçalho até o topo da grade,
-   * medido na janela real, mais os 22 de respiro embaixo.
+   * `flex: 1 1 auto` faz este cartão receber toda a sobra da coluna, e como a grade está em
+   * `align-items: stretch`, essa sobra é exatamente a diferença para a coluna mais alta. A
+   * lista do dia, que também cresce, herda o espaço e rola dentro dele.
+   *
+   * Preso às quatro bordas do encaixe.
+   *
+   * Aqui já houve um `max-height: 660px` para conter o dia com 39 lançamentos, cuja lista pede
+   * 3.008px. Teto de altura resolvia aquilo e criava outro problema: também impede o cartão de
+   * CRESCER. Medido em 25/08/2026, sobrava um degrau de 38px — base da esquerda em 979, do
+   * calendário em 941, com o cartão parado nos 660 do teto.
+   *
+   * Com o encaixe, o freio deixou de ser um número escolhido a dedo: a altura vem da coluna da
+   * esquerda, e a lista do dia rola no que sobrar.
    */
-  position: sticky;
-  top: 16px;
-  align-self: start;
-  height: calc(100vh - 104px);
+  position: absolute;
+  inset: 0;
 }
-.lateral-topo { display: flex; flex-direction: column; }
-.lateral-topo strong { font-size: 17px; font-weight: 600; }
-.lateral-topo small { color: rgba(255, 255, 255, .7); font-size: 11.5px; }
 
-.calendario { width: 100%; border-collapse: collapse; }
-.calendario th {
+/*
+ * Mesmo rótulo dos outros cartões: caixa-alta espaçada, cinza, pequeno.
+ *
+ * Enquanto o painel era escuro, o mês vinha em 16px escuro e fazia sentido — era o título de
+ * um bloco próprio. Virado cartão branco, ele passou a ser o único rótulo grande numa tela
+ * de rótulos pequenos, e puxava a atenção para o calendário, que é o elemento menos urgente
+ * do painel.
+ */
+.lateral-topo { display: flex; flex-direction: column; gap: 2px; }
+.lateral-topo strong {
   font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .3px;
-  color: rgba(255, 255, 255, .6);
-  padding-bottom: 4px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--cor-texto-fraco);
+}
+.lateral-topo small { color: var(--cor-texto-fraco); font-size: 11px; }
+
+.calendario { width: 100%; border-collapse: separate; border-spacing: 4px; }
+.calendario th {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: var(--cor-texto-fraco);
+  padding-bottom: 2px;
   text-transform: uppercase;
 }
-.calendario td { padding: 1px; text-align: center; }
+.calendario td { padding: 0; text-align: center; }
 
 .dia {
   width: 100%;
   aspect-ratio: 1;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 5px;
   font: inherit;
   font-size: 12.5px;
-  /* Um só tom para o dia comum e para o desabilitado, como lá: quem separa um do outro é
-     a pastilha de fundo, não a força do texto. */
-  color: rgba(255, 255, 255, .7);
+  font-variant-numeric: tabular-nums;
+  /* Um só tom para o dia comum e para o desabilitado: quem separa um do outro é a pastilha
+     de fundo, não a força do texto. */
+  color: var(--cor-texto-fraco);
   cursor: default;
 }
-.dia:disabled { color: rgba(255, 255, 255, .7); font-weight: 400; }
+.dia:disabled { color: var(--cor-texto-fraco); font-weight: 400; }
 
-/* Pastilha translúcida = tem lançamento. É a `.celula.com-lancamento` de lá, mesmo valor. */
+/* Tem lançamento: pastilha discreta. */
 .dia.tem-lancamento {
   cursor: pointer;
-  background: rgba(255, 255, 255, .22);
-  color: #fff;
+  background: var(--cor-superficie-2);
+  color: var(--cor-texto);
   font-weight: 600;
 }
-/* Ainda há o que pagar: pastilha branca sólida. Não existe no painel de lá — aquele
-   sistema só marca "o dia tem lançamento" —, e aqui é a marca mais forte porque é a
-   única que pede ação. */
-.dia.tem-a-pagar { background: #fff; color: #14532d; font-weight: 700; }
-.dia.tem-lancamento:hover { background: rgba(255, 255, 255, .34); }
-.dia.tem-a-pagar:hover { background: var(--cor-primaria-clara); }
-.dia.hoje { outline: 2px solid #fff; outline-offset: -2px; color: #fff; }
+/* Ainda há o que pagar: pastilha índigo cheia. É a marca mais forte porque é a única que
+   pede ação — branco sobre `--cor-primaria` dá 7,04:1. */
+.dia.tem-a-pagar { background: var(--cor-primaria); color: #fff; font-weight: 700; }
+.dia.tem-lancamento:hover { background: var(--cor-borda); }
+.dia.tem-a-pagar:hover { background: var(--cor-primaria-escura); }
+.dia.hoje { outline: 2px solid var(--cor-primaria-escura); outline-offset: -2px; }
 
 /*
- * Hoje SOBRE a pastilha branca: texto e contorno escuros.
+ * Hoje E tem a pagar: o contorno vira escuro para não sumir contra a própria pastilha.
  *
- * Sem esta regra o número some — 23/08/2026 era hoje e tinha a pagar, e a pastilha branca do
- * `tem-a-pagar` recebia o `color: #fff` do `hoje`: branco no branco, o dia em branco no meio
- * do calendário. O contorno branco também sumia contra a própria pastilha.
- *
- * `#14532d` sobre branco dá 9,11:1. O `:not(.escolhido)` protege o caso em que o dia também
- * está selecionado: lá o fundo é verde-escuro e quem manda é a regra de baixo.
+ * A versão anterior deste defeito foi em 23/08/2026, quando o fundo era claro e o texto
+ * também: o número desaparecia. Agora a pastilha é índigo cheia e o texto é branco, então o
+ * que precisa de ajuste é só o contorno, que era da mesma família da pastilha.
  */
-.dia.hoje.tem-a-pagar:not(.escolhido) {
-  color: #14532d;
-  outline-color: #14532d;
-}
+.dia.hoje.tem-a-pagar:not(.escolhido) { outline-color: #1b1044; }
 
 .dia.escolhido {
-  background: #0b3d22;
+  background: var(--cor-trilho);
   color: #fff;
-  outline: 2px solid #fff;
-  outline-offset: -2px;
+  font-weight: 700;
 }
 
 .lista-dia {
-  border-top: 1px solid rgba(255, 255, 255, .22);
+  border-top: 1px solid var(--cor-borda);
   padding-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* Recebe toda a sobra do painel, em vez dos 320px fixos de antes. Como a altura do
-     painel é definida, `flex-grow` sozinho basta — o mínimo aqui é só um piso para
-     janelas muito baixas, onde a sobra seria de poucas dezenas de pixels. */
+  /* Recebe toda a sobra do cartão. Como a altura tem teto, `flex-grow` sozinho basta. */
   flex: 1 1 auto;
-  min-height: 140px;
+  min-height: 120px;
   overflow: auto;
 }
 /*
- * Barra de rolagem própria. A padrão do Windows é cinza-clara e sobre o verde quase
- * some — e ela precisa aparecer: o dia mais cheio de janeiro/2025 tem 52 lançamentos,
- * 3.008px de conteúdo dentro de 931px de lista. Sem barra visível, quem opera não tem
- * como saber que há mais coisa embaixo.
+ * Barra de rolagem própria: ela precisa aparecer. O dia mais cheio de janeiro/2025 tem 52
+ * lançamentos, e sem barra visível quem opera não sabe que há mais coisa embaixo.
  */
-.lista-dia { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .6) rgba(0, 0, 0, .12); }
+.lista-dia { scrollbar-width: thin; scrollbar-color: var(--cor-borda) transparent; }
 .lista-dia::-webkit-scrollbar { width: 9px; }
-.lista-dia::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, .6);
-  border-radius: 5px;
-}
-.lista-dia::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .8); }
-.lista-dia::-webkit-scrollbar-track { background: rgba(0, 0, 0, .12); border-radius: 5px; }
+.lista-dia::-webkit-scrollbar-thumb { background: #cfd0dd; border-radius: 5px; }
+.lista-dia::-webkit-scrollbar-thumb:hover { background: #b6b7c8; }
+.lista-dia::-webkit-scrollbar-track { background: transparent; }
 
 .lista-topo { display: flex; justify-content: space-between; align-items: center; }
-.lista-topo strong { color: #fff; }
+.lista-topo strong { color: var(--cor-texto); font-size: 11.5px; }
 
 .link {
   border: none;
   background: none;
-  color: #fff;
+  color: var(--cor-primaria);
   cursor: pointer;
   font: inherit;
-  font-size: 12.5px;
-  text-decoration: underline;
+  font-size: 11.5px;
   padding: 0;
 }
+.link:hover { color: var(--cor-primaria-escura); text-decoration: underline; }
 
+/*
+ * O item da lista perdeu o cartão branco com sombra: ele existia para se destacar do fundo
+ * escuro, e sobre branco viraria cartão dentro de cartão. Agora é uma linha com tarja.
+ */
 .item-dia {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2px 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #fff;
+  padding: 7px 10px;
+  border-radius: var(--raio);
+  background: var(--cor-superficie-2);
   color: var(--cor-texto);
   border-left: 3px solid var(--cor-primaria);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .10);
-  font-size: 12.5px;
+  font-size: 11.5px;
 }
-/*
- * Pago perde a tarja verde e ganha a cinza. Antes isto era `opacity: .75`, que sobre o
- * fundo branco só clareava; sobre o verde deixaria o verde atravessar o cartão.
- */
+/* Pago perde a tarja índigo e ganha a cinza — a mesma leitura da grade de lançamentos. */
 .item-dia.item-pago { border-left-color: var(--cor-pago); background: #f3f5f8; }
 .item-descricao { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item-valor { font-variant-numeric: tabular-nums; }
-.item-nota { grid-column: 1 / -1; color: var(--cor-texto-fraco); font-size: 11.5px; }
+.item-nota { grid-column: 1 / -1; color: var(--cor-texto-fraco); font-size: 10.5px; }
 
-.resumo-dias { color: rgba(255, 255, 255, .82); font-size: 13px; line-height: 1.5; }
-.resumo-dias strong { color: #fff; font-size: 15px; }
+.resumo-dias { color: var(--cor-texto-fraco); font-size: 11.5px; line-height: 1.5; }
+.resumo-dias strong { color: var(--cor-texto); font-size: 13.5px; }
 .resumo-dias small { display: block; margin-top: 4px; }
 
+/*
+ * A cor do vazio segue a superfície em que ele cai, e não o contrário.
+ *
+ * Esta regra nasceu dentro do painel escuro e era branca. Quando a rosca e a tabela de
+ * vencimentos passaram a usá-la, a mensagem virou branco sobre branco: o cartão aparecia
+ * vazio de verdade, sem nada explicando por quê — e "nada foi pago neste mês" é justamente
+ * a informação que falta quando o cartão está vazio.
+ *
+ * É o mesmo erro do dia 23 no calendário, e pela mesma causa: uma cor escrita para um fundo
+ * só, reaproveitada noutro.
+ */
 .vazio {
-  color: rgba(255, 255, 255, .82);
+  color: var(--cor-texto-fraco);
   text-align: center;
   padding: 16px 0;
   margin: 0;
 }
 
-@media (max-width: 1080px) {
-  .corpo { grid-template-columns: minmax(0, 1fr); }
-  /* Empilhado, o painel vem depois dos gráficos e a página inteira rola: prendê-lo à
-     altura da janela deixaria o calendário espremido no fim de uma página que já rola. */
-  .lateral { position: static; height: auto; }
-  .lista-dia { max-height: 380px; }
-}
+/*
+ * Resíduo removido em 25/08/2026: aqui havia um `@media (max-width: 1080px)` que devolvia
+ * `.lateral { position: static; height: auto }`. Ele foi escrito para a versão em que o
+ * calendário era `sticky` preso à altura da janela — e agora DESFAZIA o encaixe, soltando o
+ * cartão do quadrante em toda janela abaixo de 1.080px.
+ *
+ * O empilhamento não precisa mais dele: quem trata janela estreita são as duas regras de
+ * `@container` lá em cima, e elas movem o quadrante inteiro, não o cartão de dentro.
+ */
 
 /* A área medida pelo ResizeObserver: é a largura dela que vira o viewBox. */
 .area-desenho { width: 100%; }
@@ -512,6 +831,6 @@ button.card:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
  * aqui são 12px na tela, como no Chart.js do Fechamento Petrotorque.
  */
 .rotulo-eixo, .rotulo-faixa {
-  font-size: 12px;
+  font-size: 11px;
   fill: #8a90a3;
 }

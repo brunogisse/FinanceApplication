@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
 import { Conta, Despesa, FiltroConsulta, Lancamento, Subdespesa } from '../../nucleo/modelos';
 import {
-  formatarData, formatarInteiro, formatarMoeda, hojeIso, lerMoeda, somarMeses,
+  formatarData, formatarInteiro, formatarMoeda, hojeIso, lerMoeda, somarDias, somarMeses,
   somarMesesNoCalendario,
 } from '../../nucleo/moeda';
 import { baixarArquivo } from '../../nucleo/arquivos';
@@ -291,6 +291,17 @@ export class Lancamentos {
         this.inicio.set(somarMeses(hojeIso(), -120));
         this.fim.set(hojeIso());
         this.descricaoDoAtalho.set('vencidos ou vencendo hoje');
+        break;
+
+      /* O mesmo recorte do alerta "vence nos próximos 7 dias" do painel. A data-fim sai de
+         `somarDias`, a mesma função que o painel usa — se cada um fizesse a conta, um erro
+         de um dia viraria "o painel diz 14 e a grade mostra 15". */
+      case 'proximos':
+        this.porData.set('vencimento');
+        this.pagamento.set('naopagos');
+        this.inicio.set(hojeIso());
+        this.fim.set(somarDias(hojeIso(), 7));
+        this.descricaoDoAtalho.set('vencendo nos próximos 7 dias');
         break;
 
       case 'dia': {

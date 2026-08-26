@@ -6,98 +6,214 @@
 
 /* ---------- Menu lateral ---------- */
 
+/*
+ * Trilho índigo escuro, e não mais um menu branco.
+ *
+ * A largura é de 280px, não 236: medido contra o modelo, a 236px o menu ocupava 14% da tela
+ * e virava uma tarja com os rótulos colados no ícone. Aqui fica em torno de 19% numa janela
+ * de 1440px, que é a proporção do modelo.
+ */
 .menu {
-  width: 236px;
+  width: 280px;
   flex-shrink: 0;
-  background: var(--cor-superficie);
-  border-right: 1px solid var(--cor-borda);
+  background: var(--cor-trilho);
+  color: #fff;
   display: flex;
   flex-direction: column;
-  padding: 14px 12px;
-  gap: 18px;
+  padding: 20px 16px;
+  gap: 16px;
+  position: relative;
+  transition: width .28s ease;
 }
+
+.menu.recolhido { width: 84px; padding-inline: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu { transition: none; }
+}
+
+/* ---------- Puxador ---------- */
+
+/*
+ * O botão de recolher fica na borda, meio dentro e meio fora, como no modelo. Ele precisa
+ * de contraste contra o índigo E contra o fundo lavanda, porque fica em cima da divisa —
+ * daí ser um círculo claro com borda própria.
+ */
+.puxador {
+  position: absolute;
+  top: 26px;
+  right: -13px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  color: var(--cor-texto-fraco);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  box-shadow: var(--sombra);
+  z-index: 3;
+}
+.puxador:hover { color: var(--cor-primaria); border-color: var(--cor-primaria); }
+.puxador:focus-visible { outline: 2px solid var(--cor-primaria); outline-offset: 2px; }
+.puxador svg { transition: transform .28s ease; }
+.menu.recolhido .puxador svg { transform: rotate(180deg); }
+
+/* ---------- Marca ---------- */
 
 .marca {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 6px;
+  gap: 12px;
+  padding: 4px 6px 6px;
+  min-width: 0;
 }
 .marca-icone {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--marca);
+  width: 38px;
+  height: 38px;
+  border-radius: 5px;
+  /* Sobre o índigo escuro, a marca é um véu claro — um bloco de cor cheia sumiria nele. */
+  background: rgba(255, 255, 255, .16);
   color: #fff;
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
 .marca-texto { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
-.marca-texto strong { font-size: 14px; }
-.marca-texto small { color: var(--cor-texto-fraco); font-size: 12px; }
+.marca-texto strong { font-size: 15.5px; font-weight: 600; white-space: nowrap; }
+.marca-texto small { color: rgba(255, 255, 255, .72); font-size: 12px; white-space: nowrap; }
+
+/* ---------- Grupos ---------- */
+
+/*
+ * O modelo separa os grupos com um rótulo em caixa-alta e um filete. Sem o filete, "Cadastro"
+ * parece continuar a lista de cima.
+ */
+.grupo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .58);
+  padding: 6px 12px 6px;
+  white-space: nowrap;
+}
+.divisor {
+  height: 1px;
+  background: rgba(255, 255, 255, .14);
+  margin: 12px 12px 2px;
+  flex-shrink: 0;
+}
 
 .itens {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .itens a {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  border-radius: 8px;
-  color: var(--cor-texto);
+  gap: 15px;
+  padding: 12px 16px;
+  border-radius: 5px;
+  color: rgba(255, 255, 255, .86);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 15px;
+  white-space: nowrap;
 }
-.itens a:hover { background: #f2f4f7; }
-.itens a svg { color: var(--cor-texto-fraco); flex-shrink: 0; }
+.itens a:hover { background: rgba(255, 255, 255, .10); color: #fff; }
+.itens a svg { color: inherit; flex-shrink: 0; }
 
-/* A opção corrente é marcada por fundo e peso, não só por cor — quem não distingue o
-   verde continua sabendo onde está. */
+/* A opção corrente é marcada por fundo e peso, não só por cor — quem não distingue matiz
+   continua sabendo onde está. */
 .itens a.ativo {
-  background: var(--cor-primaria-clara);
-  color: var(--cor-primaria-escura);
+  background: rgba(255, 255, 255, .17);
+  color: #fff;
   font-weight: 600;
 }
-.itens a.ativo svg { color: var(--cor-primaria); }
+
+/* ---------- Recolhido ---------- */
+
+/*
+ * Recolhido some o texto e sobra o ícone centralizado. O rótulo do item vira o `title`, para
+ * quem passar o ponteiro descobrir o que é sem precisar expandir.
+ */
+.menu.recolhido .marca-texto,
+.menu.recolhido .quem-texto,
+.menu.recolhido .grupo,
+.menu.recolhido .divisor,
+.menu.recolhido .rotulo,
+.menu.recolhido .trocar-senha,
+.menu.recolhido .recado { display: none; }
+
+.menu.recolhido .itens a { justify-content: center; padding-inline: 0; }
+.menu.recolhido .marca { justify-content: center; padding-inline: 0; }
+.menu.recolhido .quem { justify-content: center; padding-inline: 0; }
+.menu.recolhido .sair { font-size: 12px; padding-inline: 6px; }
+
+/* ---------- Rodapé ---------- */
 
 .rodape-menu {
-  border-top: 1px solid var(--cor-borda);
-  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, .16);
+  padding-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.quem { display: flex; align-items: center; gap: 10px; padding: 0 4px; min-width: 0; }
+.quem { display: flex; align-items: center; gap: 12px; padding: 0 4px; min-width: 0; }
 .quem-inicial {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: var(--cor-primaria-clara);
-  color: var(--cor-primaria-escura);
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
   display: grid;
   place-items: center;
   font-weight: 700;
+  font-size: 14px;
   flex-shrink: 0;
 }
 .quem-texto { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
 .quem-texto strong {
-  font-size: 13px;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.quem-texto small { color: var(--cor-texto-fraco); font-size: 12px; }
+.quem-texto small { color: rgba(255, 255, 255, .7); font-size: 11.5px; }
+
+/*
+ * Os botões do rodapé são de contorno claro sobre o índigo. O `.botao` do estilo global é
+ * branco com borda cinza e sumiria aqui — pior, pareceria um retângulo branco solto.
+ */
+.rodape-menu .botao {
+  background: rgba(255, 255, 255, .10);
+  border-color: rgba(255, 255, 255, .22);
+  color: #fff;
+}
+.rodape-menu .botao:hover:not(:disabled) { background: rgba(255, 255, 255, .18); }
 
 .sair { width: 100%; }
+.trocar-senha { width: 100%; font-size: 13px; }
+
+/* Confirmação da troca de senha. Some sozinha: é recado, não erro para resolver. */
+.recado {
+  margin: 0;
+  padding: 7px 9px;
+  background: rgba(255, 255, 255, .13);
+  color: #fff;
+  border-radius: var(--raio);
+  font-size: 12px;
+  line-height: 1.4;
+}
 
 /* ---------- Área de conteúdo ---------- */
 
@@ -109,27 +225,22 @@
   background: var(--cor-fundo);
 }
 
+/*
+ * Em janela estreita o menu recolhe sozinho e o puxador não aparece: ali não há largura para
+ * escolher. Sem esconder o botão, ele ficaria prometendo uma expansão que a media query
+ * desfaz no quadro seguinte.
+ */
 @media (max-width: 900px) {
-  .menu { width: 68px; padding: 12px 8px; }
-  .marca-texto, .quem-texto, .itens a { font-size: 0; }
-  .itens a { justify-content: center; }
-  .sair { font-size: 12px; }
-}
-
-.trocar-senha { width: 100%; font-size: 13px; }
-
-/* Confirmação da troca de senha. Some sozinha: é recado, não erro para resolver. */
-.recado {
-  margin: 0;
-  padding: 6px 8px;
-  background: var(--cor-primaria-clara);
-  color: var(--cor-primaria-escura);
-  border-radius: var(--raio);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-/* No menu recolhido não cabe texto de botão; o rodapé fica só com o essencial. */
-@media (max-width: 900px) {
-  .trocar-senha, .recado { display: none; }
+  .menu { width: 84px; padding-inline: 12px; }
+  .menu .marca-texto,
+  .menu .quem-texto,
+  .menu .grupo,
+  .menu .divisor,
+  .menu .rotulo,
+  .menu .trocar-senha,
+  .menu .recado { display: none; }
+  .menu .itens a { justify-content: center; padding-inline: 0; }
+  .menu .marca, .menu .quem { justify-content: center; padding-inline: 0; }
+  .menu .sair { font-size: 12px; padding-inline: 6px; }
+  .puxador { display: none; }
 }

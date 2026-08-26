@@ -35,6 +35,34 @@ export class Casca {
   readonly recado = signal<string | null>(null);
 
   /**
+   * Menu recolhido, guardado entre sessões.
+   *
+   * Quem opera passa o dia na grade de lançamentos e quer a largura de volta; quem entra de
+   * vez em quando quer os rótulos. A escolha é de cada máquina, então mora no
+   * `localStorage` — e a leitura vai dentro de `try`, porque em janela anônima o próprio
+   * acesso ao objeto pode lançar.
+   */
+  readonly recolhido = signal<boolean>(Casca.lerRecolhido());
+
+  private static lerRecolhido(): boolean {
+    try {
+      return localStorage.getItem('menu-recolhido') === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  alternarMenu(): void {
+    const novo = !this.recolhido();
+    this.recolhido.set(novo);
+    try {
+      localStorage.setItem('menu-recolhido', novo ? '1' : '0');
+    } catch {
+      /* Sem armazenamento a escolha vale só para esta sessão, o que é aceitável. */
+    }
+  }
+
+  /**
    * Trocar a própria senha.
    *
    * Mora no rodapé do menu, junto do nome, porque é a única ação que **todo** nível pode

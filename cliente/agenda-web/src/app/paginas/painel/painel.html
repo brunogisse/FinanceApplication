@@ -22,151 +22,115 @@
     <div class="erro">{{ erro() }}</div>
   }
 
+  <!-- Coluna única: o `.principal` de antes existia para dividir a tela com o calendário,
+       que agora é um cartão da faixa de baixo como qualquer outro. -->
   <div class="corpo">
-    <div class="principal">
 
-      <!-- Os quatro cards: o que venceu, o que vem, o que saiu, o compromisso do mês.
-           Estrutura e medidas do cartão de indicador do Fechamento Petrotorque: texto à
-           esquerda, ícone translúcido à direita. -->
-      <section class="cards">
-        <!-- Estes dois falam de hoje, não do mês em tela. Quando o mês não é o corrente,
-             a etiqueta diz isso: sem ela, dois cards falariam de junho e dois de agosto
-             lado a lado, sem nada avisando. -->
-        <button class="card card-vencido" (click)="verVencidos()">
-          <span class="card-texto">
-            <span class="card-titulo">
-              A pagar vencido
-              @if (!ehMesCorrente()) { <span class="etiqueta">hoje</span> }
-            </span>
-            <strong class="card-valor">{{ moeda(dados()?.vencido?.total ?? 0) }}</strong>
-            <span class="card-nota">
-              {{ inteiro(dados()?.vencido?.quantidade ?? 0) }} vencidos ou vencendo hoje
-            </span>
-          </span>
-          <span class="card-icone" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <!--
+        Faixa de alerta: o que precisa de ação vem antes de qualquer gráfico.
+
+        Substitui os quatro cards com gradiente. Dois deles — vencido e vence em 7 dias — são
+        os que pedem ação, e viraram estes cartões brancos com tarja na lateral. Os outros
+        dois eram números de leitura, e desceram para o cartão do gráfico, ao lado da curva
+        que os explica.
+
+        O estado mora na TARJA e no ícone, não num bloco chapado: quatro blocos coloridos
+        gritavam mais alto que o resto da tela e brigavam entre si. É a mesma regra da grade
+        de lançamentos — a tarja diz o estado, o fundo diz a seleção.
+
+        Estes dois falam de HOJE, não do mês em tela. Quando o mês não é o corrente a
+        etiqueta diz isso; sem ela, dois números falariam de março e o resto de agosto, lado
+        a lado, sem nada avisando.
+      -->
+      <section class="alertas">
+        <button class="alerta critico" (click)="verVencidos()">
+          <span class="alerta-sinal" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="9" />
               <path d="M12 7v5l3 2" />
             </svg>
           </span>
-        </button>
-
-        <div class="card card-proximos">
-          <span class="card-texto">
-            <span class="card-titulo">
-              Vence em 7 dias
+          <span class="alerta-texto">
+            <strong class="alerta-valor">{{ moeda(dados()?.vencido?.total ?? 0) }}</strong>
+            <!-- Concordância no singular: com um só, "1 vencidos" salta aos olhos. -->
+            <span class="alerta-rotulo">
+              {{ inteiro(dados()?.vencido?.quantidade ?? 0) }}
+              {{ (dados()?.vencido?.quantidade ?? 0) === 1 ? 'vencido ou vencendo hoje' : 'vencidos ou vencendo hoje' }}
               @if (!ehMesCorrente()) { <span class="etiqueta">hoje</span> }
             </span>
-            <strong class="card-valor">{{ moeda(dados()?.venceEmSeteDias?.total ?? 0) }}</strong>
-            <span class="card-nota">
-              {{ inteiro(dados()?.venceEmSeteDias?.quantidade ?? 0) }} lançamento(s) a pagar
-            </span>
           </span>
-          <span class="card-icone" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <span class="alerta-seta" aria-hidden="true">→</span>
+        </button>
+
+        <button class="alerta atencao" (click)="verProximosSete()">
+          <span class="alerta-sinal" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="5" width="18" height="16" rx="2" />
               <path d="M3 10h18M8 3v4M16 3v4" />
             </svg>
           </span>
-        </div>
-
-        <div class="card card-pago">
-          <span class="card-texto">
-            <span class="card-titulo">Pago no mês</span>
-            <strong class="card-valor">{{ moeda(dados()?.pagoNoMes?.total ?? 0) }}</strong>
-            <span class="card-nota">
-              @if (variacaoDoPago(); as v) {
-                {{ v.subiu ? '▲' : '▼' }} {{ v.percentual }}% em relação ao mês anterior
-              } @else {
-                {{ inteiro(dados()?.pagoNoMes?.quantidade ?? 0) }} lançamento(s) quitado(s)
-              }
+          <span class="alerta-texto">
+            <strong class="alerta-valor">{{ moeda(dados()?.venceEmSeteDias?.total ?? 0) }}</strong>
+            <span class="alerta-rotulo">
+              {{ inteiro(dados()?.venceEmSeteDias?.quantidade ?? 0) }}
+              {{ (dados()?.venceEmSeteDias?.quantidade ?? 0) === 1 ? 'vence nos próximos 7 dias' : 'vencem nos próximos 7 dias' }}
+              @if (!ehMesCorrente()) { <span class="etiqueta">hoje</span> }
             </span>
           </span>
-          <span class="card-icone" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9" />
-              <path d="m8 12 3 3 5-6" />
-            </svg>
-          </span>
-        </div>
-
-        <button class="card card-previsto" (click)="verMes()">
-          <span class="card-texto">
-            <span class="card-titulo">Previsto no mês</span>
-            <strong class="card-valor">{{ moeda(dados()?.previstoNoMes?.total ?? 0) }}</strong>
-            <span class="card-nota">
-              {{ inteiro(dados()?.previstoNoMes?.quantidade ?? 0) }} vencimento(s) no mês
-            </span>
-          </span>
-          <span class="card-icone" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19V9M10 19V5M16 19v-6M21 21H3" />
-            </svg>
-          </span>
+          <span class="alerta-seta" aria-hidden="true">→</span>
         </button>
       </section>
 
-      <section class="graficos">
+      <!--
+        Faixa de cima: a curva ocupa a largura, a rosca fica na coluna estreita.
 
-        <!-- Uma cor só: o assunto é magnitude, não identidade. -->
-        <div class="cartao grafico">
-          <h2>Para onde o dinheiro foi</h2>
-          <p class="explicacao">Pago no mês, por despesa</p>
+        A curva é o gráfico que responde "como estamos indo" e precisa de espaço horizontal —
+        doze meses num cartão estreito viram um rabisco. A rosca responde "de onde saiu" e
+        cabe num quadrado, porque o que se lê nela é a fatia, e o número está na lista ao lado.
+      -->
+      <!--
+        DUAS COLUNAS INDEPENDENTES, e não duas faixas horizontais.
 
-          @if (despesas().length === 0) {
-            <p class="vazio">{{ carregando() ? 'Carregando...' : 'Nada foi pago neste mês.' }}</p>
-          } @else {
-            <!-- #areaBarras é medido por ResizeObserver: o viewBox acompanha a largura real,
-                 para uma unidade valer um pixel e o texto não encolher junto com o cartão. -->
-            <div class="area-desenho" #areaBarras>
-              <svg class="desenho"
-                   [attr.viewBox]="'0 0 ' + larguraDoDesenho() + ' ' + barras().altura"
-                   [attr.height]="barras().altura" role="img"
-                   aria-label="Total pago por despesa no mês">
+        Em faixas, a linha de baixo só começa depois da mais alta da linha de cima: a rosca
+        tem oito despesas e é comprida, então a tabela de vencimentos era empurrada para
+        baixo e sobrava um retângulo vazio do lado esquerdo, do tamanho da lista de despesas.
 
-                <!-- Faixas de valor: sem elas não há como ler magnitude sem passar o
-                     ponteiro em cada barra. -->
-                @for (g of barras().grades; track g.x) {
-                  <line [attr.x1]="g.x" [attr.y1]="0" [attr.x2]="g.x" [attr.y2]="barras().baseY"
-                        [attr.stroke]="corDaGrade" stroke-width="1" />
-                  <text class="rotulo-faixa" [attr.x]="g.x" [attr.y]="barras().baseY + 17"
-                        text-anchor="middle">{{ g.rotulo }}</text>
-                }
+        Aqui cada coluna empilha por conta própria e a tabela sobe até encostar no gráfico.
+        Foi por isso que a rosca mudou de lugar no HTML: ela pertence à coluna da direita,
+        junto do calendário.
+      -->
+      <div class="colunas">
 
-                @for (b of barras().marcas; track b.rotulo) {
-                  <text class="rotulo-eixo" [attr.x]="barras().esquerda - 10" [attr.y]="b.y + 4"
-                        text-anchor="end">
-                    {{ b.curto }}
-                    <title>{{ b.rotulo }}</title>
-                  </text>
-                  <path [attr.d]="b.caminho" class="barra"
-                        (mouseenter)="mostrarDica($event, b.rotulo, [b.valor, b.quantidade + ' lançamento(s)', b.percentual + ' do mês'])"
-                        (mouseleave)="esconderDica()" />
-                }
-              </svg>
-            </div>
+        <!-- ---------- Quadrante 1: a curva, no alto à esquerda ---------- -->
+        <div class="cartao grafico" #areaBarras>
+          <div class="cartao-topo">
+            <h2>Pago mês a mês</h2>
+            <button class="acao" (click)="verMes()">Ver na grade</button>
+          </div>
 
-            <!-- A lista abaixo é a versão em tabela do gráfico: quem não lê a barra, lê o número. -->
-            <ul class="legenda">
-              @for (b of barras().marcas; track b.rotulo) {
-                <li>
-                  <span class="marca-cor" aria-hidden="true"></span>
-                  <span class="legenda-nome">{{ b.rotulo }}</span>
-                  <span class="legenda-valor dinheiro">{{ b.valor }}</span>
-                  <span class="legenda-percentual">{{ b.percentual }}</span>
-                </li>
+          <!--
+            Os dois números que saíram dos cards vivem aqui, ao lado da curva que os explica.
+
+            Um número grande com o contexto ao lado se lê melhor do que dois blocos coloridos
+            em cantos opostos da tela — e a variação em relação ao mês anterior, que antes era
+            uma linha de rodapé, vira pastilha: é a informação que responde "está melhor ou
+            pior".
+          -->
+          <div class="destaque">
+            <strong class="destaque-numero">{{ moeda(dados()?.pagoNoMes?.total ?? 0) }}</strong>
+            <div class="destaque-abaixo">
+              @if (variacaoDoPago(); as v) {
+                <span class="variacao" [class.subiu]="v.subiu">
+                  {{ v.subiu ? '▲' : '▼' }} {{ v.percentual }}% vs. mês anterior
+                </span>
               }
-            </ul>
-          }
-        </div>
-
-        <div class="cartao grafico">
-          <h2>Previsto e pago, mês a mês</h2>
-          <p class="explicacao">Doze meses até {{ tituloDoMes() }}</p>
+              <span class="destaque-nota">
+                previsto no mês {{ moeda(dados()?.previstoNoMes?.total ?? 0) }}
+              </span>
+            </div>
+          </div>
 
           <div class="legenda-series">
             <span><i class="ponto previsto" aria-hidden="true"></i> Previsto, por vencimento</span>
@@ -214,6 +178,16 @@
           } @else {
             <p class="vazio">{{ carregando() ? 'Carregando...' : 'Sem histórico no período.' }}</p>
           }
+
+          <!-- Recorte da curva. Não vai ao servidor: o painel já devolve os doze meses e aqui
+               só se escolhe quantos dos últimos aparecem. -->
+          <div class="periodos" role="group" aria-label="Recorte da série">
+            @for (p of periodos; track p.meses) {
+              <button [class.ativo]="mesesNaSerie() === p.meses"
+                      [attr.aria-pressed]="mesesNaSerie() === p.meses"
+                      (click)="escolherPeriodo(p.meses)">{{ p.rotulo }}</button>
+            }
+          </div>
         </div>
 
         @if (dica(); as d) {
@@ -224,12 +198,129 @@
             }
           </div>
         }
-      </section>
+    <!--
+      ---------- Quadrante 2: a rosca, no alto à direita da curva ----------
+
+      Rosca: a fatia de cada despesa no que saiu no mês.
+
+      Substitui as barras horizontais. A barra respondia "quanto"; a rosca responde "que
+      fatia" — e o total já está escrito no centro dela, então "quanto" não se perde.
+    -->
+    <div class="cartao cartao-rosca">
+      <div class="cartao-topo">
+        <h2>Para onde o dinheiro foi</h2>
+        <button class="acao" (click)="verMes()">Detalhar</button>
+      </div>
+
+      @if (rosca(); as r) {
+        <div class="rosca-area">
+          <svg viewBox="0 0 200 200" width="180" height="180" role="img"
+               aria-label="Participação de cada despesa no que foi pago no mês">
+            <g transform="rotate(-90 100 100)" fill="none" stroke-width="26">
+              @for (f of r.fatias; track f.despesa) {
+                <circle cx="100" cy="100" [attr.r]="r.raio" [attr.stroke]="f.cor"
+                        [attr.stroke-dasharray]="f.traco"
+                        [attr.stroke-dashoffset]="f.deslocamento"
+                        (mouseenter)="mostrarDica($event, f.despesa, [moeda(f.valor), f.quantidade + ' lançamento(s)', f.percentual + '% do mês'])"
+                        (mouseleave)="esconderDica()" />
+              }
+            </g>
+            <g class="rosca-centro" text-anchor="middle">
+              <text class="r1" x="100" y="94">Pago no mês</text>
+              <text class="r2" x="100" y="118">{{ moeda(totalDasDespesas()) }}</text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- A lista é a versão em número do gráfico: quem não distingue os tons lê aqui. -->
+        <ul class="lista-despesas">
+          @for (f of r.fatias; track f.despesa) {
+            <li>
+              <i class="ponto-cor" aria-hidden="true" [style.background]="f.cor"></i>
+              <span class="nome-despesa">{{ f.despesa }}</span>
+              <span class="valor-despesa dinheiro">{{ moeda(f.valor) }}</span>
+              <span class="pct-despesa">{{ f.rotuloPercentual }}%</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="vazio">{{ carregando() ? 'Carregando...' : 'Nada foi pago neste mês.' }}</p>
+      }
     </div>
 
-    <!-- ---------- Painel direito: calendário e o dia escolhido ---------- -->
-    <!-- Sem a classe `cartao`: aqui o fundo é o verde, e o `cartao` traria a superfície
-         branca e a borda clara por cima dele. -->
+    <!--
+      ---------- Quadrante 3: o que vence, atravessando os dois de cima ----------
+
+      O que vai vencer, não o que já passou.
+
+      O modelo mostra as transações recentes; num sistema de contas a pagar o que importa é o
+      próximo compromisso. Os dados vêm da mesma consulta da grade — se viessem de caminho
+      próprio, os dois poderiam divergir e ninguém saberia qual está certo.
+    -->
+    <div class="cartao proximos">
+      <div class="cartao-topo">
+        <h2>Vence nos próximos dias</h2>
+        <span class="acoes">
+          <button class="acao" (click)="novoLancamento()">+ Novo lançamento</button>
+          <button class="acao" (click)="verProximosSete()">Ver todos</button>
+        </span>
+      </div>
+
+      @if (carregandoProximos()) {
+        <p class="vazio">Carregando...</p>
+      } @else if (proximosVencimentos().length === 0) {
+        <p class="vazio">Nada a pagar nos próximos sete dias.</p>
+      } @else {
+        <div class="rolagem">
+          <table class="tabela-proximos">
+            <thead>
+              <tr>
+                <th class="col-lancamento">Lançamento</th>
+                <th class="col-conta">Conta</th>
+                <th class="col-venc">Vencimento</th>
+                <th class="col-situacao">Situação</th>
+                <th class="col-valor dinheiro">Previsto</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (l of proximosVencimentos(); track l.id) {
+                <tr>
+                  <td>
+                    <div class="linha-descricao">{{ l.descricao }}</div>
+                    <div class="linha-nota">{{ l.despesa }} · {{ l.subdespesa }}</div>
+                  </td>
+                  <td>
+                    <span class="com-inicial">
+                      <span class="inicial" aria-hidden="true">{{ (l.conta || '?').charAt(0) }}</span>
+                      <span class="inicial-rotulo">{{ l.conta }}</span>
+                    </span>
+                  </td>
+                  <td>{{ data(l.dataVencimento) }}</td>
+                  <td>
+                    @if (situacaoDoVencimento(l.dataVencimento); as s) {
+                      <span class="pastilha" [class]="'pastilha ' + s.classe">{{ s.texto }}</span>
+                    }
+                  </td>
+                  <td class="dinheiro">{{ moeda(l.valorPrevisto) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- ---------- Quadrante 4: o calendário, coluna própria à direita ---------- -->
+    <!--
+      O encaixe existe para o calendário poder ATRAVESSAR as duas linhas sem mandar na altura
+      delas. Ele ocupa a coluna da direita inteira, e o cartão se prende às quatro bordas por
+      dentro. Sem esse par, um dia com 39 lançamentos faria a lista esticar as duas linhas da
+      grade e levar a curva e a tabela junto — foi assim que o painel chegou a 2.281px antes.
+
+      Sem a classe `cartao` mesmo sendo branco: o `.lateral` precisa de `display: flex`, que o
+      `.cartao` não tem.
+    -->
+    <div class="encaixe-calendario">
     <aside class="lateral">
       <div class="lateral-topo">
         <strong>{{ tituloDoMes() }}</strong>
@@ -300,5 +391,7 @@
         }
       </div>
     </aside>
+    </div><!-- fim do encaixe do calendário -->
+      </div><!-- fim de .colunas -->
   </div>
 </div>

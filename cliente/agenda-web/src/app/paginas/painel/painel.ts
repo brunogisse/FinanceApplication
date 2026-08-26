@@ -5,7 +5,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../nucleo/api';
 import { Lancamento, Painel as DadosDoPainel } from '../../nucleo/modelos';
-import { formatarData, formatarInteiro, formatarMoeda, hojeIso } from '../../nucleo/moeda';
+import { formatarData, formatarInteiro, formatarMoeda, hojeIso, somarDias } from '../../nucleo/moeda';
 
 /** Quantas despesas aparecem no gráfico antes de o resto virar "Outras". */
 const DESPESAS_NO_GRAFICO = 8;
@@ -22,26 +22,35 @@ const DESPESAS_NO_GRAFICO = 8;
  * Este valor é só o ponto de partida, usado antes da primeira medição.
  */
 const LARGURA_INICIAL = 640;
-const ALTURA_LINHA = 230;
 
 /*
- * Margens das áreas de plotagem. A da esquerda difere: o gráfico de barras precisa de espaço
- * para o nome da despesa, e o de linhas só para "24 mil".
+ * Altura da curva: 300, e não 230.
  *
- * `base` no gráfico de barras é o espaço dos rótulos do eixo — "0, 5 mil, 10 mil" —, que o
- * gráfico não tinha e o do Petrotorque tem.
+ * O número de destaque passou a ocupar uma linha própria, com a variação e o previsto
+ * embaixo — o que faz o cartão crescer. Crescer sem o gráfico crescer junto só produziria
+ * espaço em branco, então a plotagem recebe a folga: de 184px úteis (230 − 16 de topo − 30
+ * de base) para 254px.
+ *
+ * O alvo é a altura da rosca ao lado, que lista oito despesas e chega a ~500px. Com estes
+ * 300 as duas colunas terminam quase juntas, em vez de uma sobrar meia altura da outra.
  */
-const MARGEM_BARRAS = { esquerda: 150, direita: 16, topo: 6, base: 26 };
+const ALTURA_LINHA = 300;
+
+/*
+ * Escada de índigo da rosca, do maior para o menor.
+ *
+ * Escala SEQUENCIAL, não categórica: a posição na escada diz a ordem de grandeza. Uma paleta
+ * de matizes diferentes sugeriria que cada despesa "é" uma cor, e elas mudam de posição todo
+ * mês — o roxo seria CHACARA em agosto e ESCRITORIO em setembro.
+ *
+ * São oito tons para sete despesas mais o agrupamento "Outras": o último se repete se
+ * aparecerem mais.
+ */
+const ESCADA_DA_ROSCA = [
+  '#2e1a8f', '#4f31d9', '#6d53e8', '#8b75ee',
+  '#a99bf0', '#c4bbf5', '#ddd7fa', '#ebe7fd',
+] as const;
 const MARGEM_LINHA = { esquerda: 60, direita: 14, topo: 16, base: 30 };
-
-/** Cores do eixo, iguais às do Fechamento Petrotorque. */
-const COR_GRADE = '#e6e8ef';
-
-/** Espessura máxima da barra, como o `maxBarThickness` de lá. */
-const ESPESSURA_MAXIMA = 24;
-
-/** Além disto o nome da despesa é cortado com reticências; o inteiro fica na dica. */
-const LETRAS_NO_ROTULO = 16;
 
 /** O mesmo valor que o Fechamento Petrotorque usa no gráfico de acumulado. */
 const TENSAO = 0.2;
@@ -51,17 +60,6 @@ const MESES = [
   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
 ];
 const DIAS_DA_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-
-/** Uma barra do gráfico de despesas, já com a geometria pronta. */
-interface Barra {
-  caminho: string;
-  rotulo: string;
-  curto: string;
-  valor: string;
-  percentual: string;
-  quantidade: number;
-  y: number;
-}
 
 interface Celula {
   dia: number;
@@ -135,6 +133,10 @@ export class Painel {
   readonly lancamentosDoDia = signal<Lancamento[]>([]);
   readonly carregandoDia = signal(false);
 
+  /** O que vence de hoje até daqui a sete dias, do mais urgente para o menos. */
+  readonly proximosVencimentos = signal<Lancamento[]>([]);
+  readonly carregandoProximos = signal(false);
+
   // ---- Dica que segue o ponteiro nos gráficos ----
   readonly dica = signal<{ x: number; y: number; titulo: string; linhas: string[] } | null>(null);
 
@@ -192,6 +194,81 @@ export class Painel {
         this.carregando.set(false);
       },
     });
+
+    this.carregarProximosVencimentos();
+  }
+
+  /**
+   * A lista do que vence de hoje até daqui a sete dias.
+   *
+   * Vem da mesma consulta da grade, não de endpoint próprio: o `GET /painel` devolve os
+   * totais, não os lançamentos. Reusar a consulta significa que esta lista e a grade sempre
+   * concordam — se divergissem, seria por caminhos diferentes chegarem ao mesmo número, que
+   * é o defeito mais caro de achar.
+   *
+   * O recorte é sempre de HOJE, mesmo quando o mês em tela é outro. "O que vence nos
+   * próximos dias" não muda de sentido porque a pessoa foi olhar março.
+   */
+  private carregarProximosVencimentos(): void {
+    const inicio = hojeIso();
+    const fim = somarDias(inicio, 7);
+
+    this.carregandoProximos.set(true);
+    this.api.consultar({ inicio, fim, porData: 'vencimento' }).subscribe({
+      next: (r) => {
+        // Só o que ainda se paga, e do mais urgente para o menos.
+        const abertos = r.lancamentos
+          .filter((l) => !l.pago)
+          .sort((a, b) => (a.dataVencimento ?? '').localeCompare(b.dataVencimento ?? ''));
+        // Doze, e não seis: a coluna da esquerda precisa alcançar a da direita, senão o
+        // calendário fica com uma sobra branca embaixo ou é decepado no meio da tela. Doze
+        // linhas dão cerca de 590px de tabela, que somados à curva empatam com rosca +
+        // calendário. Acima disso a lista deixaria de ser "os próximos" e viraria uma
+        // segunda grade — para isso existe o "Ver todos".
+        this.proximosVencimentos.set(abertos.slice(0, 12));
+        this.carregandoProximos.set(false);
+      },
+      error: () => {
+        // Falhar aqui não derruba o painel: os totais já estão na tela, e esta lista é
+        // detalhe. O cartão mostra o vazio, e o erro do topo continua reservado à carga
+        // principal.
+        this.proximosVencimentos.set([]);
+        this.carregandoProximos.set(false);
+      },
+    });
+  }
+
+  /**
+   * A quantos dias do vencimento, em palavras.
+   *
+   * Comparação por texto ISO, não por `Date`: `new Date('2026-08-24')` é interpretado como
+   * UTC e no Brasil volta um dia. Duas datas em `aaaa-mm-dd` se comparam como string sem
+   * fuso nenhum no caminho.
+   */
+  situacaoDoVencimento(iso: string | null): { texto: string; classe: string } {
+    if (!iso) return { texto: 'Sem vencimento', classe: 'futuro' };
+
+    const hoje = hojeIso();
+    if (iso === hoje) return { texto: 'Vence hoje', classe: 'hoje' };
+
+    const dias = Math.round(
+      (Date.parse(iso + 'T00:00:00') - Date.parse(hoje + 'T00:00:00')) / 86_400_000,
+    );
+
+    if (dias < 0) {
+      const atraso = Math.abs(dias);
+      return { texto: atraso === 1 ? 'Vencido há 1 dia' : `Vencido há ${atraso} dias`, classe: 'vencido' };
+    }
+    return { texto: dias === 1 ? 'Em 1 dia' : `Em ${dias} dias`, classe: 'futuro' };
+  }
+
+  /** Leva à grade já filtrada pelos próximos sete dias. */
+  verProximosSete(): void {
+    this.router.navigate(['/lancamentos'], { queryParams: { atalho: 'proximos' } });
+  }
+
+  novoLancamento(): void {
+    this.router.navigate(['/lancamentos/novo']);
   }
 
   trocarMes(passo: number): void {
@@ -255,88 +332,97 @@ export class Painel {
     this.despesas().reduce((s, d) => s + Math.round(d.total * 100), 0) / 100);
 
   /**
-   * Geometria das barras, agora com eixo.
+   * Geometria da rosca: um arco por despesa, do maior para o menor.
    *
-   * O gráfico equivalente do Fechamento Petrotorque tem faixas de valor e rótulos no eixo —
-   * "0, 5 mil, 10 mil" —, e é o que permite ler magnitude sem passar o ponteiro em cada
-   * barra. Este não tinha: só as barras, sem referência nenhuma.
+   * Substitui as barras horizontais. A barra respondia "quanto", a rosca responde
+   * "que fatia" — e a pergunta desta tela é a segunda, porque o total já está escrito no
+   * centro. As barras também gastavam 150px de margem só com os nomes das despesas, que
+   * agora vivem na lista ao lado, onde cabe o valor E o percentual.
+   *
+   * O arco é um círculo com `stroke-dasharray`: um traço do tamanho da fatia e um vão do
+   * tamanho do resto. O `stroke-dashoffset` acumulado empurra cada fatia para onde a
+   * anterior parou. O grupo nasce girado −90° para a primeira começar às 12 horas.
+   *
+   * A escada de cor vai do índigo escuro ao lilás claro: aqui a cor codifica ORDEM de
+   * grandeza, não identidade, então uma escala sequencial é a leitura certa — quem tem mais
+   * é mais escuro. Os valores continuam escritos na lista, que é o que garante a leitura de
+   * quem não distingue os tons.
    */
-  readonly barras = computed<{
-    altura: number;
-    marcas: Barra[];
-    grades: { x: number; rotulo: string }[];
-    baseY: number;
-    esquerda: number;
-    direita: number;
-  }>(() => {
+  readonly rosca = computed(() => {
     const itens = this.despesas();
-    const esquerda = MARGEM_BARRAS.esquerda;
-    const direita = this.larguraDoDesenho() - MARGEM_BARRAS.direita;
-    const vazio = { altura: 60, marcas: [], grades: [], baseY: 0, esquerda, direita };
-    if (itens.length === 0) return vazio;
-
     const total = this.totalDasDespesas();
-    const largura = Math.max(direita - esquerda, 40);
+    if (itens.length === 0 || total <= 0) return null;
 
-    // Passo e espessura acompanham a altura disponível, com o teto de 24 do Petrotorque.
-    const passo = 34;
-    const espessura = Math.min(ESPESSURA_MAXIMA, passo - 10);
+    const raio = 70;
+    const circunferencia = 2 * Math.PI * raio;
+    let percorrido = 0;
 
-    const maior = Math.max(...itens.map((d) => d.total), 0.01);
-
-    /*
-     * As faixas saem de um **passo redondo**, e não de dividir o topo em N partes iguais.
-     * Dividido em partes iguais, um topo de 10 mil em 8 faixas dava 1.250 por faixa e os
-     * rótulos arredondados viravam "0, 1 mil, 3 mil, 4 mil, 5 mil, 6 mil, 8 mil" — passo
-     * irregular e dois rótulos repetidos. É o que o Chart.js faz por baixo dos panos.
-     */
-    const cabem = Math.max(2, Math.min(8, Math.floor(largura / 58)));
-    const passoDoEixo = arredondarParaCima(maior / cabem);
-    const teto = Math.ceil(maior / passoDoEixo) * passoDoEixo;
-    const quantasFaixas = Math.round(teto / passoDoEixo);
-
-    const marcas = itens.map((d, i) => {
-      const y = MARGEM_BARRAS.topo + i * passo + (passo - espessura) / 2;
-      const comprimento = Math.max((d.total / teto) * largura, 2);
-      return {
-        caminho: barraHorizontal(esquerda, y, comprimento, espessura, 4),
-        rotulo: d.despesa,
-        curto: d.despesa.length > LETRAS_NO_ROTULO
-          ? `${d.despesa.slice(0, LETRAS_NO_ROTULO - 1)}…`
-          : d.despesa,
-        valor: formatarMoeda(d.total),
-        percentual: total > 0 ? `${Math.round((d.total / total) * 100)}%` : '',
+    const fatias = itens.map((d, i) => {
+      const fracao = d.total / total;
+      const traco = fracao * circunferencia;
+      const fatia = {
+        despesa: d.despesa,
+        cor: ESCADA_DA_ROSCA[Math.min(i, ESCADA_DA_ROSCA.length - 1)],
+        traco: `${traco.toFixed(2)} ${circunferencia.toFixed(2)}`,
+        deslocamento: -percorrido,
+        valor: d.total,
         quantidade: d.quantidade,
-        y: y + espessura / 2,
+        // Arredondar aqui, e não no template: o percentual da rosca e o da lista têm de ser
+        // o mesmo número, senão a fatia parece contradizer a linha ao lado dela.
+        percentual: Math.round(fracao * 100),
+        /*
+         * "<1%" em vez de "0%".
+         *
+         * PETROTORQUE saiu com R$ 98,90 em dezembro/2024 e a lista dizia "0%" — que se lê
+         * como "não saiu nada", ao lado de uma linha que diz que saiu. A soma dos
+         * percentuais arredondados também não fecha 100 (deu 99 naquele mês), e isso é
+         * inerente ao arredondamento: forçar a bater exigiria mentir em alguma linha.
+         */
+        rotuloPercentual: fracao > 0 && fracao < 0.005 ? '<1' : String(Math.round(fracao * 100)),
       };
+      percorrido += traco;
+      return fatia;
     });
 
-    const baseY = MARGEM_BARRAS.topo + itens.length * passo;
-
-    const grades = Array.from({ length: quantasFaixas + 1 }, (_, i) => {
-      const valor = i * passoDoEixo;
-      return { x: esquerda + (valor / teto) * largura, rotulo: formatarCurto(valor) };
-    });
-
-    return {
-      altura: baseY + MARGEM_BARRAS.base,
-      marcas, grades, baseY, esquerda, direita,
-    };
+    return { raio, fatias };
   });
 
-  readonly corDaGrade = COR_GRADE;
+  // ---------------- Recorte da série ----------------
 
-  /** Onde os rótulos do eixo do gráfico de barras terminam. */
-  readonly eixoDasBarras = MARGEM_BARRAS.esquerda - 8;
+  /**
+   * Quantos meses a curva mostra. O painel devolve sempre doze; aqui só se decide quantos
+   * dos últimos aparecem, sem ida ao servidor.
+   */
+  readonly mesesNaSerie = signal<number>(12);
+
+  readonly periodos = [
+    { rotulo: '3M', meses: 3 },
+    { rotulo: '6M', meses: 6 },
+    { rotulo: '12M', meses: 12 },
+  ] as const;
+
+  escolherPeriodo(meses: number): void {
+    this.mesesNaSerie.set(meses);
+  }
+
   readonly inicioDoPlot = MARGEM_LINHA.esquerda;
   readonly eixoDaLinha = MARGEM_LINHA.esquerda - 8;
 
   // ---------------- Gráfico dos doze meses ----------------
 
   readonly serie = computed(() => {
-    const meses = this.dados()?.serie ?? [];
+    const todos = this.dados()?.serie ?? [];
+    // Os ÚLTIMOS N: o gráfico termina sempre no mês em tela, e é dele que se olha para trás.
+    const meses = todos.slice(-this.mesesNaSerie());
     if (meses.length === 0) return null;
 
+    /*
+     * A escala é recalculada sobre o recorte, não herdada dos doze meses.
+     *
+     * Se o topo continuasse sendo o do ano inteiro, escolher "3M" achataria a curva contra o
+     * chão e o botão pareceria não ter feito nada — o recorte existe justamente para ampliar
+     * a variação dos meses recentes.
+     */
     const maior = Math.max(...meses.flatMap((m) => [m.previsto, m.pago]), 1);
     const largura = this.larguraDoDesenho() - MARGEM_LINHA.esquerda - MARGEM_LINHA.direita;
     const altura = ALTURA_LINHA - MARGEM_LINHA.topo - MARGEM_LINHA.base;
@@ -350,8 +436,9 @@ export class Painel {
       rotulo: rotuloCurtoDoMes(m.mes),
       // Doze rótulos não cabem lado a lado e se encavalam. De dois em dois cabem — contando
       // do fim, para o último mês, que é o que dá nome ao gráfico, aparecer sempre e o
-      // espaçamento continuar regular.
-      mostrarRotulo: (meses.length - 1 - i) % 2 === 0,
+      // espaçamento continuar regular. Em recortes curtos cabem todos, e pular um deixaria
+      // o gráfico de três meses com dois rótulos, parecendo incompleto.
+      mostrarRotulo: meses.length <= 6 || (meses.length - 1 - i) % 2 === 0,
       x: x(i),
       yPrevisto: y(m.previsto),
       yPago: y(m.pago),
@@ -551,15 +638,6 @@ function fechar(caminho: string, xInicial: number, xFinal: number, base: number)
   return `${caminho} L ${xFinal} ${base} L ${xInicial} ${base} Z`;
 }
 
-/** Barra horizontal com só as pontas do dado arredondadas; a base fica reta no eixo. */
-function barraHorizontal(x: number, y: number, comprimento: number, altura: number, r: number) {
-  const raio = Math.min(r, comprimento / 2, altura / 2);
-  const fim = x + comprimento;
-  return `M ${x} ${y} H ${fim - raio} Q ${fim} ${y} ${fim} ${y + raio} ` +
-         `V ${y + altura - raio} Q ${fim} ${y + altura} ${fim - raio} ${y + altura} ` +
-         `H ${x} Z`;
-}
-
 /** "2026-08" vira "ago/26" — cabe no eixo sem virar diagonal. */
 function rotuloCurtoDoMes(iso: string): string {
   const [ano, mes] = iso.split('-').map(Number);
@@ -573,18 +651,3 @@ function formatarCurto(valor: number): string {
   return String(Math.round(valor));
 }
 
-/**
- * Sobe um valor para o próximo número redondo — 1, 2, 2,5 ou 5 vezes uma potência de dez.
- *
- * Usado no passo do eixo. Sem isto os rótulos cairiam em valores quebrados e a referência
- * que o eixo deveria dar se perderia.
- */
-function arredondarParaCima(valor: number): number {
-  if (valor <= 0) return 1;
-  const ordem = Math.pow(10, Math.floor(Math.log10(valor)));
-  for (const passo of [1, 2, 2.5, 5, 10]) {
-    const candidato = passo * ordem;
-    if (candidato >= valor) return candidato;
-  }
-  return 10 * ordem;
-}
