@@ -37,7 +37,7 @@ Titulo 'Agenda Financeira - instalacao'
 # Aconteceu em 23/08/2026. A regra e a mesma do ATUALIZAR-API.cmd: nada de comecar antes de
 # provar que da para terminar.
 # `StartsWith` e nao `-like`: no curinga do PowerShell a barra invertida NAO e escape (o
-# escape e a crase), entao '\\\\*' procura QUATRO barras e nunca casa. Medido em 23/08/2026 —
+# escape e a crase), entao '\\\\*' procura QUATRO barras e nunca casa. Medido em 23/08/2026 -
 # a trava escrita assim passava batido.
 if ($PSScriptRoot.StartsWith('\\')) {
     Write-Host ''
@@ -86,7 +86,7 @@ if (Test-Path $publicado) {
 #
 # Primeiro: um .FDB entregue junto com o pacote.
 #
-# Numa maquina que NUNCA teve o sistema antigo — o notebook, por exemplo — nao existe
+# Numa maquina que NUNCA teve o sistema antigo - o notebook, por exemplo - nao existe
 # config.ini nenhum para consultar, e a varredura terminaria no seletor de arquivos.
 # Levando o banco dentro do pacote, a instalacao continua sendo dois cliques.
 if (-not $BancoDeOrigem) {
@@ -130,7 +130,7 @@ if (-not $BancoDeOrigem) {
         #
         # SEIS, e nao quatro. Medido em 23/08/2026 nesta maquina: com 4, a varredura de C:\
         # devolve 8 config.ini em 21s e NAO acha o legado, que fica em
-        # C:\PROGRAMAS\<pasta>\AGENDA FINANCEIRA ITAPUA\Win32\Debug — nivel 5. Com 6, acha os
+        # C:\PROGRAMAS\<pasta>\AGENDA FINANCEIRA ITAPUA\Win32\Debug - nivel 5. Com 6, acha os
         # tres em 40s. Vinte segundos a mais valem nao cair no seletor de arquivos.
         $inis = @(Get-ChildItem $raiz -Filter 'config.ini' -Recurse -Depth 6 -File -ErrorAction SilentlyContinue)
         foreach ($ini in $inis) {
@@ -154,7 +154,7 @@ if (-not $BancoDeOrigem) {
         # A DATA e o que separa a base viva de um backup antigo. Nesta maquina a varredura
         # trouxe junto uma pasta "Agenda Financeira - backup 04 10 2022": pelo tamanho as
         # duas parecem iguais, e escolher a errada instalaria sobre dados de anos atras.
-        Write-Host '  achei mais de um. Escolha — repare na DATA:' -ForegroundColor Yellow
+        Write-Host '  achei mais de um. Escolha - repare na DATA:' -ForegroundColor Yellow
         for ($i = 0; $i -lt $encontrados.Count; $i++) {
             $arquivo = Get-Item $encontrados[$i]
             Write-Host ("   [{0}] {1}" -f ($i + 1), $encontrados[$i])

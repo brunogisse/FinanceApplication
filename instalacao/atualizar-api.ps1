@@ -56,7 +56,7 @@ if (-not (Test-Path $projeto)) {
     Write-Host "  Procurei o projeto em:  $projeto" -ForegroundColor Yellow
     Write-Host ''
     Write-Host 'Ele so funciona na pasta "instalacao" que fica DENTRO do repositorio, ao lado' -ForegroundColor Yellow
-    Write-Host 'da pasta "src" — normalmente:' -ForegroundColor Yellow
+    Write-Host 'da pasta "src" - normalmente:' -ForegroundColor Yellow
     Write-Host '    C:\PROGRAMAS\V OFICIAL\instalacao\ATUALIZAR-API.cmd' -ForegroundColor Cyan
     Write-Host ''
     Write-Host 'Nada foi alterado: o servico continua no ar.' -ForegroundColor Green
@@ -119,7 +119,7 @@ Write-Host '  parado.' -ForegroundColor Green
 # -------------------------------------------------------------- republicar
 #
 # A publicacao comeca apagando a pasta. Se ela falhar no meio, o servico fica parado sobre
-# uma pasta incompleta — e subir assim seria pior do que continuar parado. Por isso o aviso
+# uma pasta incompleta - e subir assim seria pior do que continuar parado. Por isso o aviso
 # diz o que fazer em vez de tentar levantar de qualquer jeito.
 Write-Host ''
 try {

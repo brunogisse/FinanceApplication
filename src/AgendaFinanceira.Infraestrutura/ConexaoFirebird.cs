@@ -26,19 +26,74 @@ public sealed class ConexaoFirebird
         Win1252 = Encoding.GetEncoding(1252);
     }
 
+    /// <summary>
+    /// Abre conexões com o banco, local ou num servidor da rede.
+    ///
+    /// O <paramref name="caminhoBanco"/> aceita as duas formas do Firebird:
+    ///
+    ///   C:\bases\FINANCES.FDB              banco no disco desta máquina
+    ///   192.168.1.20:C:\bases\FINANCES.FDB banco no servidor, no caminho DE LÁ
+    ///
+    /// Na segunda forma o servidor vem embutido no caminho e prevalece sobre
+    /// <paramref name="servidor"/>: é assim que o Firebird sempre escreveu isso, e obrigar
+    /// a separar em dois campos faria a mesma cadeia funcionar no isql e não aqui.
+    ///
+    /// **Caminho de compartilhamento (\\maquina\pasta\banco.FDB) não serve.** O Firebird
+    /// recusa por padrão, e forçar corrompe o arquivo: o mecanismo de trava dele não
+    /// atravessa rede, então dois processos escrevem por cima um do outro sem perceber.
+    /// Banco em rede se alcança pelo SERVIDOR, nunca pelo sistema de arquivos.
+    /// </summary>
     public ConexaoFirebird(string caminhoBanco, string servidor = "localhost",
-                           string usuario = "SYSDBA", string senha = "masterkey")
+                           string usuario = "SYSDBA", string senha = "masterkey",
+                           int porta = 3050)
     {
+        if (EhCaminhoDeRede(caminhoBanco))
+            throw new ArgumentException(
+                $"'{caminhoBanco}' é um caminho de compartilhamento de rede, e o Firebird não " +
+                "abre banco assim — forçar corrompe o arquivo. Use servidor e caminho: " +
+                @"'192.168.1.20:C:\bases\FINANCES.FDB', onde o caminho é o do disco DO SERVIDOR.",
+                nameof(caminhoBanco));
+
+        // "maquina:C:\caminho" traz o servidor embutido. Repetir o DataSource nesse caso faria
+        // o provider montar "localhost" na frente de um endereço que já é completo.
+        var (servidorEfetivo, caminhoEfetivo) = SepararServidor(caminhoBanco, servidor);
+
         _cadeia = new FbConnectionStringBuilder
         {
-            DataSource = servidor,
-            Database = caminhoBanco,
+            DataSource = servidorEfetivo,
+            Database = caminhoEfetivo,
+            Port = porta,
             UserID = usuario,
             Password = senha,
             Charset = "ISO8859_1",
             Dialect = 3,
             ServerType = FbServerType.Default
         }.ToString();
+    }
+
+    /// <summary>UNC (\\maquina\pasta) ou caminho iniciado por duas barras.</summary>
+    internal static bool EhCaminhoDeRede(string caminho) =>
+        caminho.StartsWith(@"\\", StringComparison.Ordinal) ||
+        caminho.StartsWith("//", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Separa "servidor:caminho" quando o servidor vem embutido.
+    ///
+    /// A ambiguidade é com a letra do disco: <c>C:\bases\x.FDB</c> também tem dois-pontos.
+    /// O que distingue é o tamanho do que vem antes — uma letra só é disco; mais que isso é
+    /// nome de máquina ou IP.
+    /// </summary>
+    internal static (string Servidor, string Caminho) SepararServidor(string caminhoBanco, string padrao)
+    {
+        var corte = caminhoBanco.IndexOf(':');
+        if (corte > 1)
+        {
+            var antes = caminhoBanco[..corte];
+            var depois = caminhoBanco[(corte + 1)..];
+            if (!string.IsNullOrWhiteSpace(antes) && !string.IsNullOrWhiteSpace(depois))
+                return (antes, depois);
+        }
+        return (padrao, caminhoBanco);
     }
 
     public IDbConnection Abrir()

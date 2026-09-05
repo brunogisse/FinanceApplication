@@ -13,7 +13,7 @@
 #
 # NADA aqui escreve no banco de origem. A copia e feita pelo arquivo, sem
 # conectar na origem: conectar pelo servidor avanca os contadores de transacao
-# no cabeçalho e altera a data do arquivo.
+# no cabecalho e altera a data do arquivo.
 #
 # Uso:
 #   .\2-instalar-no-notebook.ps1 -BancoDeOrigem "C:\caminho\DADOS.FDB"
@@ -22,6 +22,9 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$BancoDeOrigem,
+
+    # Nome da copia de trabalho. Vazio: sai do nome do arquivo de origem.
+    [string]$NomeDaBase = '',
 
     [string]$PastaDeTrabalho = 'C:\AgendaFinanceira',
     [int]$Porta = 5199
@@ -95,7 +98,20 @@ function RodarFerramenta {
 
 $publicado  = Join-Path $PSScriptRoot 'publicado'
 $executavel = Join-Path $publicado 'AgendaFinanceira.Api.exe'
-$copia      = Join-Path $PastaDeTrabalho 'AGENDA_TESTE.FDB'
+
+# A copia de trabalho leva o nome da ORIGEM, e nao mais 'AGENDA_TESTE' fixo.
+#
+# Os nomes de producao ja estao definidos - FINANCES e FINANCESFATURAMENTO, um por
+# setor -, entao a copia instalada com a base FINANCES tem de se chamar FINANCES.FDB.
+# Com nome fixo, duas bases diferentes gerariam o mesmo arquivo e a segunda instalacao
+# pediria para apagar a primeira, como se fosse a mesma coisa.
+#
+# Efeito colateral desejado: numa maquina que ja tem AGENDA_TESTE.FDB, instalar com a
+# base FINANCES cria um arquivo NOVO e nao encosta no antigo.
+if (-not $NomeDaBase) {
+    $NomeDaBase = [System.IO.Path]::GetFileNameWithoutExtension($BancoDeOrigem)
+}
+$copia = Join-Path $PastaDeTrabalho "$NomeDaBase.FDB"
 
 Write-Host ''
 Write-Host '===============================================' -ForegroundColor Cyan

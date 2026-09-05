@@ -36,7 +36,26 @@ var caminhoBanco = builder.Configuration["Banco:Caminho"]
         "Configure 'Banco:Caminho' no appsettings.json apontando para o banco Firebird. " +
         "Na etapa de leitura, aponte para uma cópia, não para produção.");
 
-builder.Services.AddSingleton(new ConexaoFirebird(caminhoBanco));
+/*
+ * Banco na rede.
+ *
+ * O caminho aceita as duas formas do Firebird, e a segunda é a que serve para servidor:
+ *
+ *   "C:/bases/FINANCES.FDB"                 banco no disco desta máquina
+ *   "192.168.1.20:C:/bases/FINANCES.FDB"    banco no servidor, no caminho DE LÁ
+ *
+ * Os campos abaixo existem para quem preferir separar, e para o dia em que a senha do
+ * banco deixar de ser a padrão de instalação — hoje ela é `masterkey`, o que está na lista
+ * de pendências de segurança do CLAUDE.md. Nenhum deles é obrigatório: sem eles, tudo
+ * continua como estava.
+ */
+var servidorBanco = builder.Configuration["Banco:Servidor"] ?? "localhost";
+var portaBanco = int.TryParse(builder.Configuration["Banco:Porta"], out var p) ? p : 3050;
+var usuarioBanco = builder.Configuration["Banco:Usuario"] ?? "SYSDBA";
+var senhaBanco = builder.Configuration["Banco:Senha"] ?? "masterkey";
+
+builder.Services.AddSingleton(
+    new ConexaoFirebird(caminhoBanco, servidorBanco, usuarioBanco, senhaBanco, portaBanco));
 builder.Services.AddSingleton<RepositorioLancamentos>();
 builder.Services.AddSingleton<RepositorioCadastros>();
 builder.Services.AddSingleton<RepositorioPainel>();

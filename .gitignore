@@ -26,3 +26,30 @@ package-lock.json
 cliente/agenda-desktop/instalador/
 # Build do Angular copiado para dentro do desktop, regerado por npm run build:web.
 cliente/agenda-desktop/web/
+
+# =============================================================================
+#  Dados reais nunca entram no repositorio
+# =============================================================================
+#
+# O repositorio e publico. Em 05/09/2026 uma base quente de producao ficou solta
+# na raiz por algumas horas — 15.655 lancamentos, os CNPJs dos fornecedores e as
+# senhas de todo mundo em texto plano. Bastava um `git add .`.
+#
+# Estas regras nao tiram do historico os 9 .FDB que ja estao versionados: arquivo
+# ja rastreado ignora o .gitignore. Elas so impedem que ENTREM novos.
+# Para adicionar um de proposito: `git add -f`.
+
+*.FDB
+*.fdb
+
+# Planilhas de extrato e conciliacao. A importacao foi exercitada com extratos
+# bancarios reais, e eles ficam FORA do repositorio — ver C:\PROGRAMAS\bases-quentes.
+*.xlsx
+*.xls
+
+# Configuracao de instalacao: caminho do banco e a chave que assina as sessoes.
+appsettings.Production.json
+appsettings.Production.json.*
+
+# Credencial de acesso remoto ao notebook (DPAPI, so abre na conta que gravou).
+cred-*.xml
