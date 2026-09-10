@@ -63,11 +63,22 @@ export interface Subdespesa {
 
 export type NivelAcesso = 'Consulta' | 'Operacao' | 'Administracao';
 
+/** Setor — o recorte do que cada pessoa enxerga. Tabela SETOR, criada na unificação. */
+export interface Setor {
+  id: number;
+  descricao: string;
+}
+
 /** Usuário do sistema — tabela LOGIN do legado. A senha nunca vem do servidor. */
 export interface Usuario {
   id: number;
   nome: string;
   nivel: NivelAcesso;
+  /**
+   * O setor desta pessoa. **Nulo é cadastro feito pela tela do sistema antigo**, que não conhece
+   * a coluna — e quem está sem setor não consegue entrar até alguém informar qual é.
+   */
+  setor: number | null;
   /** Quem ainda não entrou pela API e portanto depende da senha em texto plano do legado. */
   aindaSemHash: boolean;
 }
@@ -78,6 +89,8 @@ export interface Sessao {
   id: number;
   nome: string;
   nivel: NivelAcesso;
+  /** O setor de quem entrou. Todo número da tela é recortado por ele, no servidor. */
+  setor: number;
   podeLancar: boolean;
   podeImportarPlanilha: boolean;
   podeCadastrarUsuarios: boolean;

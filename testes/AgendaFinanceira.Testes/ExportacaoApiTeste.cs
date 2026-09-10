@@ -47,7 +47,7 @@ public class ExportacaoApiTeste : IClassFixture<ExportacaoApiTeste.Api>
     {
         var nome = "EXP" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         using (var con = _api.Banco.Conexao.Abrir())
-            con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL) VALUES (@n, 'exp123', 1)",
+            con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL, SETOR_ID) VALUES (@n, 'exp123', 1, 1)",
                         new { n = nome });
 
         var anonimo = _api.CreateClient();

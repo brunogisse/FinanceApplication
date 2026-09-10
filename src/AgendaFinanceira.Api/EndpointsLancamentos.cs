@@ -80,14 +80,18 @@ public static class EndpointsLancamentos
     {
         var grupo = app.MapGroup("/lancamentos").WithTags("Lançamentos").RequireAuthorization();
 
-        grupo.MapGet("/{id:int}", (RepositorioLancamentos repo, int id) =>
+        grupo.MapGet("/{id:int}", (RepositorioLancamentos repo, ClaimsPrincipal quem, int id) =>
         {
-            var l = repo.PorId(id);
+            var l = repo.PorId(id, quem.SetorDaSessao());
             return l is null
                 ? Results.NotFound(new { erro = "Lançamento não encontrado." })
                 : Results.Ok(LancamentoDto.De(l));
         })
-        .WithSummary("Busca um lançamento pelo identificador");
+        .WithSummary("Busca um lançamento pelo identificador")
+        .WithDescription(
+            "Só encontra lançamento do **setor de quem está autenticado**. Um identificador do " +
+            "outro setor responde 404, igual a um que não existe — os números das duas bases se " +
+            "sobrepõem, então saber o número não pode ser o bastante para alcançar o registro.");
 
         grupo.MapPost("/", (RepositorioLancamentos repo, ClaimsPrincipal quem,
                             LancamentoEntradaDto dto) =>

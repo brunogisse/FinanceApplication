@@ -41,6 +41,9 @@ public sealed class ServicoToken
                 new Claim(ClaimTypes.Name, usuario.Nome),
                 new Claim(ClaimTypes.Role, usuario.Nivel.ToString()),
                 new Claim("nivel", ((int)usuario.Nivel).ToString()),
+                // O setor viaja no token, assinado, e não é escolhido pelo cliente. Uma tela
+                // que pedisse "me mostre o setor 1" seria só um parâmetro a mais para mexer.
+                new Claim("setor", usuario.Setor.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             ],
             expires: expira,
@@ -141,7 +144,20 @@ public static class ConfiguracaoAutenticacao
             Id = quem.IdDoUsuario(),
             Nome = quem.Identity?.Name ?? "",
             Nivel = (NivelAcesso)nivel,
+            Setor = quem.SetorDaSessao(),
             AindaSemHash = false
         };
     }
+
+    /// <summary>
+    /// O setor gravado no token.
+    ///
+    /// Token sem a informação — emitido antes desta versão — devolve o setor inválido, e a
+    /// primeira consulta recusa com a mensagem pedindo para entrar de novo. É melhor do que
+    /// escolher um setor por padrão, que mostraria a alguém a lista da outra pessoa.
+    /// </summary>
+    public static Setor SetorDaSessao(this ClaimsPrincipal quem) =>
+        int.TryParse(quem.FindFirst("setor")?.Value, out var s) && s > 0
+            ? Setor.De(s)
+            : default;
 }

@@ -32,8 +32,13 @@ public class LancamentosEscritaTeste : IClassFixture<BaseDescartavel>
         _formaId = chaves.FORMA;
     }
 
-    private Usuario Usuario(int id = 1, NivelAcesso nivel = NivelAcesso.Administracao) =>
-        new() { Id = id, Nome = "TESTE", Nivel = nivel, AindaSemHash = false };
+    private Usuario Usuario(int id = 1, NivelAcesso nivel = NivelAcesso.Administracao,
+                            Setor? setor = null) =>
+        new()
+        {
+            Id = id, Nome = "TESTE", Nivel = nivel,
+            Setor = setor ?? Setor.Financeiro, AindaSemHash = false
+        };
 
     private DadosLancamento Dados(string? descricao = null) => new()
     {
@@ -122,7 +127,7 @@ public class LancamentosEscritaTeste : IClassFixture<BaseDescartavel>
             Dados("MANUTENÇÃO TRATOR") with { Observacao = "Instalação da bomba d'água" },
             Usuario(), Hoje);
 
-        var lido = _base.Lancamentos().PorId(criado.Id)!;
+        var lido = _base.Lancamentos().PorId(criado.Id, Setor.Financeiro)!;
         Assert.Equal("MANUTENÇÃO TRATOR", lido.Descricao);
         Assert.Equal("Instalação da bomba d'água", lido.Observacao);
     }
@@ -137,7 +142,7 @@ public class LancamentosEscritaTeste : IClassFixture<BaseDescartavel>
             Dados("LOTE 12 – QUADRA K") with { Observacao = "Parcela “única” — sem juros…" },
             Usuario(), Hoje);
 
-        var lido = _base.Lancamentos().PorId(criado.Id)!;
+        var lido = _base.Lancamentos().PorId(criado.Id, Setor.Financeiro)!;
 
         Assert.Equal("LOTE 12 - QUADRA K", lido.Descricao);
         Assert.Equal("Parcela \"única\" - sem juros...", lido.Observacao);
@@ -271,7 +276,7 @@ public class LancamentosEscritaTeste : IClassFixture<BaseDescartavel>
             () => repo.Alterar(criado.Id, Dados("INVASOR"), outro, Hoje));
 
         Assert.Contains("permissão", e.Message);
-        Assert.NotEqual("INVASOR", repo.PorId(criado.Id)!.Descricao);
+        Assert.NotEqual("INVASOR", repo.PorId(criado.Id, Setor.Financeiro)!.Descricao);
     }
 
     [Fact]
@@ -283,7 +288,7 @@ public class LancamentosEscritaTeste : IClassFixture<BaseDescartavel>
         Assert.Throws<RegraDeNegocioException>(
             () => repo.Excluir(criado.Id, Usuario(id: 6, nivel: NivelAcesso.Operacao)));
 
-        Assert.NotNull(repo.PorId(criado.Id));
+        Assert.NotNull(repo.PorId(criado.Id, Setor.Financeiro));
     }
 
     [Fact]
@@ -296,7 +301,7 @@ public class LancamentosEscritaTeste : IClassFixture<BaseDescartavel>
         Assert.Equal("ADMIN MEXEU", alterado.Descricao);
 
         repo.Excluir(criado.Id, Usuario(id: 1));
-        Assert.Null(repo.PorId(criado.Id));
+        Assert.Null(repo.PorId(criado.Id, Setor.Financeiro));
     }
 
     // ---- Exclusão ----
@@ -310,7 +315,7 @@ public class LancamentosEscritaTeste : IClassFixture<BaseDescartavel>
 
         repo.Excluir(criado.Id, autor);
 
-        Assert.Null(repo.PorId(criado.Id));
+        Assert.Null(repo.PorId(criado.Id, Setor.Financeiro));
     }
 
     // ---- Situação de liberação ----
@@ -337,9 +342,9 @@ public class LancamentosEscritaTeste : IClassFixture<BaseDescartavel>
         var repo = _base.Lancamentos();
         var periodo = new Periodo(Hoje, Hoje.AddDays(60));
 
-        var antes = repo.Consultar(new ConsultaLancamentos { Periodo = periodo });
+        var antes = repo.Consultar(new ConsultaLancamentos { Periodo = periodo }, Setor.Financeiro);
         repo.Criar(Dados() with { ValorPrevisto = Dinheiro.De(500.00m) }, Usuario(), Hoje);
-        var depois = repo.Consultar(new ConsultaLancamentos { Periodo = periodo });
+        var depois = repo.Consultar(new ConsultaLancamentos { Periodo = periodo }, Setor.Financeiro);
 
         Assert.Equal(antes.Quantidade + 1, depois.Quantidade);
         Assert.Equal(antes.TotalPrevisto + Dinheiro.De(500.00m), depois.TotalPrevisto);

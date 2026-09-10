@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { Api } from '../../nucleo/api';
 import { Confirmacao } from '../../nucleo/confirmacao';
-import { NivelAcesso, Usuario } from '../../nucleo/modelos';
+import { NivelAcesso, Setor, Usuario } from '../../nucleo/modelos';
 import { formatarInteiro } from '../../nucleo/moeda';
 
 /** Os três níveis da coluna LOGIN.NIVEL, com o nome que a pessoa entende. */
@@ -40,6 +40,7 @@ export class Usuarios {
   readonly euSou = this.api.usuarioId;
 
   readonly lista = signal<Usuario[]>([]);
+  readonly setores = signal<Setor[]>([]);
   readonly carregando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly aviso = signal<string | null>(null);
@@ -49,6 +50,7 @@ export class Usuarios {
 
   readonly nome = signal('');
   readonly nivel = signal(2);
+  readonly setor = signal(0);
   readonly senha = signal('');
 
   readonly criando = computed(() => this.editandoId() === 0);
@@ -56,8 +58,15 @@ export class Usuarios {
   /** Quantos ainda dependem da senha em texto plano do legado. */
   readonly semHash = computed(() => this.lista().filter((u) => u.aindaSemHash).length);
 
+  /** Quem está sem setor não consegue entrar — é o recado mais urgente desta tela. */
+  readonly semSetor = computed(() => this.lista().filter((u) => u.setor === null).length);
+
   constructor() {
     this.recarregar();
+    this.api.setores().subscribe({
+      next: (s) => this.setores.set(s),
+      error: (e: Error) => this.erro.set(e.message),
+    });
   }
 
   recarregar(): void {
@@ -66,6 +75,11 @@ export class Usuarios {
       next: (u) => { this.lista.set(u); this.carregando.set(false); },
       error: (e: Error) => { this.erro.set(e.message); this.carregando.set(false); },
     });
+  }
+
+  nomeDoSetor(setor: number | null): string {
+    if (setor === null) return 'sem setor';
+    return this.setores().find((s) => s.id === setor)?.descricao ?? `setor ${setor}`;
   }
 
   nomeDoNivel(nivel: NivelAcesso): string {
@@ -101,6 +115,8 @@ export class Usuarios {
     this.editandoId.set(0);
     this.nome.set('');
     this.nivel.set(2);
+    // Nasce no setor de quem está cadastrando, que é o caso comum. Trocar é um clique.
+    this.setor.set(this.api.setorId());
     this.senha.set('');
     this.limparRecados();
   }
@@ -109,6 +125,7 @@ export class Usuarios {
     this.editandoId.set(u.id);
     this.nome.set(u.nome);
     this.nivel.set(this.numeroDoNivel(u.nivel));
+    this.setor.set(u.setor ?? this.api.setorId());
     this.senha.set('');
     this.limparRecados();
   }
@@ -128,8 +145,8 @@ export class Usuarios {
     // Criar leva senha; alterar não — a senha tem caminho próprio, senão corrigir um nome
     // reescreveria a senha por descuido.
     const operacao = id === 0
-      ? this.api.criarUsuario(this.nome(), Number(this.nivel()), this.senha())
-      : this.api.alterarUsuario(id, this.nome(), Number(this.nivel()));
+      ? this.api.criarUsuario(this.nome(), Number(this.nivel()), this.senha(), Number(this.setor()))
+      : this.api.alterarUsuario(id, this.nome(), Number(this.nivel()), Number(this.setor()));
 
     operacao.subscribe({
       next: (u) => {

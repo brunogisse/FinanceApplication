@@ -27,54 +27,64 @@ public sealed class RepositorioPainel
        COALESCE(SUM(CAST(REG.VALOR_PREVISTO AS NUMERIC(15,2))), 0) AS PREVISTO,
        COALESCE(SUM(CAST(REG.VALOR_PAGO     AS NUMERIC(15,2))), 0) AS PAGO";
 
-    public Painel Montar(DateOnly mes, DateOnly hoje)
+    public Painel Montar(DateOnly mes, DateOnly hoje, Setor setor)
     {
         var primeiroDia = new DateOnly(mes.Year, mes.Month, 1);
         var ultimoDia = primeiroDia.AddMonths(1).AddDays(-1);
+
+        // Uma vez só, no alto: um setor não informado é recusado aqui e não vira painel zerado,
+        // que passaria por "mês sem movimento".
+        var noSetor = FiltroDeSetor.Numero(setor);
+        var recorte = FiltroDeSetor.ECondicao("REG");
 
         using var con = _conexao.Abrir();
 
         // ---- Vencido: mesma condição do aviso do legado, inclusive o dia de hoje ----
         var vencido = con.QuerySingle($@"
 SELECT {Colunas} FROM REGISTRO_DE_GASTOS REG
-WHERE REG.PAGO = 0 AND REG.DATA_VENCIMENTO <= @hoje",
-            new { hoje = Data(hoje) });
+WHERE REG.PAGO = 0 AND REG.DATA_VENCIMENTO <= @hoje{recorte}",
+            new { hoje = Data(hoje), setor = noSetor });
 
         // ---- Os sete dias seguintes, sem sobrepor o vencido ----
         var proximos = con.QuerySingle($@"
 SELECT {Colunas} FROM REGISTRO_DE_GASTOS REG
-WHERE REG.PAGO = 0 AND REG.DATA_VENCIMENTO > @hoje AND REG.DATA_VENCIMENTO <= @limite",
-            new { hoje = Data(hoje), limite = Data(hoje.AddDays(7)) });
+WHERE REG.PAGO = 0 AND REG.DATA_VENCIMENTO > @hoje AND REG.DATA_VENCIMENTO <= @limite{recorte}",
+            new { hoje = Data(hoje), limite = Data(hoje.AddDays(7)), setor = noSetor });
 
         // ---- Pago no mês, pela data do pagamento ----
         var pagoNoMes = con.QuerySingle($@"
 SELECT {Colunas} FROM REGISTRO_DE_GASTOS REG
-WHERE REG.PAGO = 1 AND REG.DATA_PAGAMENTO BETWEEN @inicio AND @fim",
-            new { inicio = Data(primeiroDia), fim = Data(ultimoDia) });
+WHERE REG.PAGO = 1 AND REG.DATA_PAGAMENTO BETWEEN @inicio AND @fim{recorte}",
+            new { inicio = Data(primeiroDia), fim = Data(ultimoDia), setor = noSetor });
 
         var mesAnterior = primeiroDia.AddMonths(-1);
         var pagoAnterior = con.QuerySingle($@"
 SELECT {Colunas} FROM REGISTRO_DE_GASTOS REG
-WHERE REG.PAGO = 1 AND REG.DATA_PAGAMENTO BETWEEN @inicio AND @fim",
-            new { inicio = Data(mesAnterior), fim = Data(mesAnterior.AddMonths(1).AddDays(-1)) });
+WHERE REG.PAGO = 1 AND REG.DATA_PAGAMENTO BETWEEN @inicio AND @fim{recorte}",
+            new
+            {
+                inicio = Data(mesAnterior),
+                fim = Data(mesAnterior.AddMonths(1).AddDays(-1)),
+                setor = noSetor
+            });
 
         // ---- Compromisso do mês: tudo que vence nele, pago ou não ----
         var previstoNoMes = con.QuerySingle($@"
 SELECT {Colunas} FROM REGISTRO_DE_GASTOS REG
-WHERE REG.DATA_VENCIMENTO BETWEEN @inicio AND @fim",
-            new { inicio = Data(primeiroDia), fim = Data(ultimoDia) });
+WHERE REG.DATA_VENCIMENTO BETWEEN @inicio AND @fim{recorte}",
+            new { inicio = Data(primeiroDia), fim = Data(ultimoDia), setor = noSetor });
 
         // ---- Para onde o dinheiro foi no mês ----
-        var porDespesa = con.Query(@"
+        var porDespesa = con.Query($@"
 SELECT C.DESCRICAO AS DESPESA,
        COUNT(*) AS QUANTIDADE,
        COALESCE(SUM(CAST(REG.VALOR_PAGO AS NUMERIC(15,2))), 0) AS TOTAL
 FROM REGISTRO_DE_GASTOS REG
      JOIN CATEGORIA C ON C.CATEGORIA_ID = REG.CATEGORIA_ID
-WHERE REG.PAGO = 1 AND REG.DATA_PAGAMENTO BETWEEN @inicio AND @fim
+WHERE REG.PAGO = 1 AND REG.DATA_PAGAMENTO BETWEEN @inicio AND @fim{recorte}
 GROUP BY C.DESCRICAO
 ORDER BY 3 DESC",
-            new { inicio = Data(primeiroDia), fim = Data(ultimoDia) })
+            new { inicio = Data(primeiroDia), fim = Data(ultimoDia), setor = noSetor })
             .Select(l => new TotalPorDespesa
             {
                 Despesa = ConexaoFirebird.TextoDoLegado(l.DESPESA) ?? "",
@@ -84,19 +94,19 @@ ORDER BY 3 DESC",
 
         // ---- Doze meses terminando no mês escolhido ----
         var inicioSerie = primeiroDia.AddMonths(-11);
-        var serie = MontarSerie(con, inicioSerie, ultimoDia);
+        var serie = MontarSerie(con, inicioSerie, ultimoDia, noSetor);
 
         // ---- Dias com vencimento, para o calendário ----
-        var dias = con.Query(@"
+        var dias = con.Query($@"
 SELECT REG.DATA_VENCIMENTO AS DIA,
        COUNT(*) AS QUANTIDADE,
        COALESCE(SUM(CAST(REG.VALOR_PREVISTO AS NUMERIC(15,2))), 0) AS TOTAL,
        SUM(CASE WHEN REG.PAGO = 0 THEN 1 ELSE 0 END) AS APAGAR
 FROM REGISTRO_DE_GASTOS REG
-WHERE REG.DATA_VENCIMENTO BETWEEN @inicio AND @fim
+WHERE REG.DATA_VENCIMENTO BETWEEN @inicio AND @fim{recorte}
 GROUP BY REG.DATA_VENCIMENTO
 ORDER BY 1",
-            new { inicio = Data(primeiroDia), fim = Data(ultimoDia) })
+            new { inicio = Data(primeiroDia), fim = Data(ultimoDia), setor = noSetor })
             .Select(l => new DiaDoMes
             {
                 Data = DateOnly.FromDateTime((DateTime)l.DIA),
@@ -127,19 +137,20 @@ ORDER BY 1",
     /// num único GROUP BY daria um número que não é nem um nem outro.
     /// </summary>
     private static IReadOnlyList<MesDaSerie> MontarSerie(
-        System.Data.IDbConnection con, DateOnly inicio, DateOnly fim)
+        System.Data.IDbConnection con, DateOnly inicio, DateOnly fim, int noSetor)
     {
-        const string sql = @"
+        var sql = @"
 SELECT EXTRACT(YEAR FROM {0}) AS ANO, EXTRACT(MONTH FROM {0}) AS MES,
        COALESCE(SUM(CAST({1} AS NUMERIC(15,2))), 0) AS TOTAL
 FROM REGISTRO_DE_GASTOS REG
-WHERE {0} BETWEEN @inicio AND @fim {2}
+WHERE {0} BETWEEN @inicio AND @fim {2}" + FiltroDeSetor.ECondicao("REG") + @"
 GROUP BY 1, 2";
 
         var parametros = new
         {
             inicio = inicio.ToDateTime(TimeOnly.MinValue),
-            fim = fim.ToDateTime(TimeOnly.MinValue)
+            fim = fim.ToDateTime(TimeOnly.MinValue),
+            setor = noSetor
         };
 
         var previsto = Indexar(con.Query(

@@ -199,6 +199,57 @@ if ((Numero $conferida 'TEM') -ne '1') { Parar 'A coluna SENHA_HASH nao esta na 
 Write-Host 'Coluna confirmada.' -ForegroundColor Green
 
 # =============================================================================
+#  Separacao por setor
+# =============================================================================
+#
+# A API NAO SOBE sem a coluna SETOR_ID: ela recusa mostrar tudo para todo mundo.
+# Ver docs/unificacao-das-bases.md.
+#
+# Aqui a base recebe UM setor, o 1, porque este script prepara UMA base. A base
+# com os dois setores dentro sai de instalacao\unificacao\UNIFICAR.cmd, que ja
+# entrega tudo pronto e nem passa por aqui.
+#
+# Junto vai a trigger que deduz o setor pelo autor. Sem ela, tudo que o Delphi
+# gravar durante a convivencia nasce sem setor e nao aparece para ninguem na
+# API - inclusive para quem acabou de digitar.
+
+Titulo 'Separacao por setor'
+
+$temSetor = Consultar $destino @'
+SET LIST ON;
+SELECT COUNT(*) AS TEM FROM RDB$RELATION_FIELDS
+ WHERE TRIM(RDB$RELATION_NAME) = 'REGISTRO_DE_GASTOS' AND TRIM(RDB$FIELD_NAME) = 'SETOR_ID';
+'@
+
+if ((Numero $temSetor 'TEM') -eq '0') {
+    $scriptSetor = Join-Path $PSScriptRoot 'unificacao\setor-unico.sql'
+    if (-not (Test-Path $scriptSetor)) { Parar "Nao achei $scriptSetor" }
+
+    Write-Host 'Marcando esta base como setor unico (FINANCEIRO)...' -ForegroundColor Cyan
+    Consultar $destino (Get-Content $scriptSetor -Raw) | Out-Null
+} else {
+    Write-Host 'A base ja tem separacao por setor.' -ForegroundColor DarkGray
+}
+
+# Conferir o EFEITO, e nao o codigo de saida: coluna presente, nenhum registro
+# sem setor e a trigger no lugar.
+$setorOk = Consultar $destino @'
+SET LIST ON;
+SELECT COUNT(*) AS COLUNA FROM RDB$RELATION_FIELDS
+ WHERE TRIM(RDB$RELATION_NAME) = 'REGISTRO_DE_GASTOS' AND TRIM(RDB$FIELD_NAME) = 'SETOR_ID';
+SELECT COUNT(*) AS SEM_SETOR FROM REGISTRO_DE_GASTOS WHERE SETOR_ID IS NULL;
+SELECT COUNT(*) AS USUARIO_SEM_SETOR FROM LOGIN WHERE SETOR_ID IS NULL;
+SELECT COUNT(*) AS TRIGGER_SETOR FROM RDB$TRIGGERS
+ WHERE TRIM(RDB$TRIGGER_NAME) = 'REGISTRO_DE_GASTOS_BI_SETOR';
+'@
+
+if ((Numero $setorOk 'COLUNA') -ne '1') { Parar 'A coluna SETOR_ID nao esta na base. A API nao vai subir.' }
+if ((Numero $setorOk 'SEM_SETOR') -ne '0') { Parar 'Ficaram lancamentos sem setor. Eles nao apareceriam para ninguem.' }
+if ((Numero $setorOk 'USUARIO_SEM_SETOR') -ne '0') { Parar 'Ficaram usuarios sem setor. Eles nao conseguiriam entrar.' }
+if ((Numero $setorOk 'TRIGGER_SETOR') -ne '1') { Parar 'A trigger REGISTRO_DE_GASTOS_BI_SETOR nao foi criada.' }
+Write-Host 'Setor confirmado em todos os registros, e a trigger esta no lugar.' -ForegroundColor Green
+
+# =============================================================================
 #  Conferir que a copia bate com a origem
 # =============================================================================
 #

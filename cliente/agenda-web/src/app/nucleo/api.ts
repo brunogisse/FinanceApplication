@@ -5,7 +5,7 @@ import { catchError, switchMap, tap } from 'rxjs/operators';
 import {
   Conta, Despesa, EntradaLancamento, FiltroConsulta, FormaPagamento, Lancamento,
   Painel, ParcelaAjustada, PreviaImportacao, ResultadoConsulta, ResultadoImportacao,
-  ResultadoPagamentoEmLote, ResultadoParcelamento, Sessao, Subdespesa, TotalPorSubdespesa,
+  ResultadoPagamentoEmLote, ResultadoParcelamento, Sessao, Setor, Subdespesa, TotalPorSubdespesa,
   Usuario,
 } from './modelos';
 
@@ -26,6 +26,8 @@ export class Api {
   readonly usuario = computed(() => this._sessao()?.nome ?? '');
   /** Identificador de quem está logado. A tela de usuários precisa dele para se proteger. */
   readonly usuarioId = computed(() => this._sessao()?.id ?? 0);
+  /** O setor de quem está logado. Zero quando não há sessão. */
+  readonly setorId = computed(() => this._sessao()?.setor ?? 0);
   readonly podeCadastrarUsuarios = computed(() => this._sessao()?.podeCadastrarUsuarios ?? false);
   readonly podeLancar = computed(() => this._sessao()?.podeLancar ?? false);
   readonly podeImportar = computed(() => this._sessao()?.podeImportarPlanilha ?? false);
@@ -81,17 +83,29 @@ export class Api {
       .pipe(catchError(traduzirErro));
   }
 
-  /** O nível viaja como número, que é o que a coluna LOGIN.NIVEL guarda. */
-  criarUsuario(nome: string, nivel: number, senha: string): Observable<Usuario> {
+  /** Os setores cadastrados. Vem da tabela, não de uma lista escrita aqui dentro. */
+  setores(): Observable<Setor[]> {
     return this.http
-      .post<Usuario>(`${this.endereco()}/usuarios`, { nome, nivel, senha })
+      .get<Setor[]>(`${this.endereco()}/setores`)
       .pipe(catchError(traduzirErro));
   }
 
-  /** Só nome e nível: a senha tem endpoint próprio, para não ser reescrita por descuido. */
-  alterarUsuario(id: number, nome: string, nivel: number): Observable<Usuario> {
+  /**
+   * O nível viaja como número, que é o que a coluna LOGIN.NIVEL guarda. O setor também.
+   *
+   * **Nível e setor são coisas diferentes:** o nível diz o que a pessoa pode fazer, o setor diz
+   * sobre quais registros.
+   */
+  criarUsuario(nome: string, nivel: number, senha: string, setor: number): Observable<Usuario> {
     return this.http
-      .put<Usuario>(`${this.endereco()}/usuarios/${id}`, { nome, nivel })
+      .post<Usuario>(`${this.endereco()}/usuarios`, { nome, nivel, senha, setor })
+      .pipe(catchError(traduzirErro));
+  }
+
+  /** Só nome, nível e setor: a senha tem endpoint próprio, para não ser reescrita por descuido. */
+  alterarUsuario(id: number, nome: string, nivel: number, setor: number): Observable<Usuario> {
+    return this.http
+      .put<Usuario>(`${this.endereco()}/usuarios/${id}`, { nome, nivel, setor })
       .pipe(catchError(traduzirErro));
   }
 

@@ -54,7 +54,7 @@ public class AutorizacaoApiTeste : IClassFixture<AutorizacaoApiTeste.Api>, IDisp
     {
         var nome = "API" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         using var con = _api.Banco.Conexao.Abrir();
-        con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL) VALUES (@n, @s, @v)",
+        con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL, SETOR_ID) VALUES (@n, @s, @v, 1)",
                     new { n = nome, s = senha, v = nivel });
         return nome;
     }

@@ -7,12 +7,13 @@ public static class EndpointsPainel
 {
     public static void MapearPainel(this WebApplication app)
     {
-        app.MapGet("/painel", (RepositorioPainel repo, string? mes) =>
+        app.MapGet("/painel", (RepositorioPainel repo, System.Security.Claims.ClaimsPrincipal quem,
+                               string? mes) =>
         {
             var hoje = DateOnly.FromDateTime(DateTime.Today);
             var referencia = LerMes(mes) ?? new DateOnly(hoje.Year, hoje.Month, 1);
 
-            var p = repo.Montar(referencia, hoje);
+            var p = repo.Montar(referencia, hoje, quem.SetorDaSessao());
 
             return Results.Ok(new
             {
@@ -48,6 +49,8 @@ public static class EndpointsPainel
         .WithSummary("Os números da tela inicial")
         .WithDescription(
             "Informe `mes` como `aaaa-mm`; sem ele, o mês corrente.\n\n" +
+            "Todos os números são do **setor de quem está autenticado**, que vem do token e não " +
+            "de parâmetro. Ver docs/unificacao-das-bases.md.\n\n" +
             "**Este sistema é contas a pagar.** Não há receita em lugar nenhum do banco, " +
             "então o painel não tem entrada, sobra nem saldo — teria de inventar número. O que " +
             "ele mostra é compromisso:\n\n" +

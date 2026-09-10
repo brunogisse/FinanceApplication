@@ -8,8 +8,8 @@ public sealed record DescricaoDto(string Descricao);
 public sealed record SubdespesaDto(string Descricao, int DespesaId);
 public sealed record CredenciaisDto(string Usuario, string Senha);
 public sealed record TrocaSenhaDto(int UsuarioId, string SenhaNova);
-public sealed record UsuarioNovoDto(string Nome, int Nivel, string Senha);
-public sealed record UsuarioAlteradoDto(string Nome, int Nivel);
+public sealed record UsuarioNovoDto(string Nome, int Nivel, string Senha, int Setor);
+public sealed record UsuarioAlteradoDto(string Nome, int Nivel, int Setor);
 
 public static class EndpointsCadastros
 {
@@ -33,6 +33,7 @@ public static class EndpointsCadastros
                 u.Id,
                 u.Nome,
                 Nivel = u.Nivel.ToString(),
+                Setor = u.Setor.Id,
                 u.PodeLancar,
                 u.PodeImportarPlanilha,
                 u.PodeCadastrarUsuarios,
@@ -70,25 +71,50 @@ public static class EndpointsCadastros
             "Grava nas duas colunas: o hash para a API e o texto plano para o Delphi continuar " +
             "funcionando. Por isso o limite de 20 caracteres, que é o tamanho da coluna do legado.");
 
+        app.MapGet("/setores", (RepositorioUsuarios repo) =>
+            Results.Ok(repo.ListarSetores().Select(s => new { id = s.Id, descricao = s.Descricao })))
+        .RequireAuthorization()
+        .WithTags("Sessão")
+        .WithSummary("Lista os setores")
+        .WithDescription(
+            "Vem da tabela `SETOR`, criada na unificação das bases. Serve para a tela de " +
+            "usuários oferecer a escolha sem ter a lista escrita dentro dela — no dia em que " +
+            "entrar um terceiro setor, ele aparece sozinho.");
+
         app.MapGet("/usuarios", (RepositorioUsuarios repo) =>
             Results.Ok(repo.Listar().Select(u => new
             {
-                u.Id, u.Nome, Nivel = u.Nivel.ToString(), u.AindaSemHash
+                u.Id,
+                u.Nome,
+                Nivel = u.Nivel.ToString(),
+                Setor = u.Setor.EhValido ? u.Setor.Id : (int?)null,
+                u.AindaSemHash
             })))
         .RequireAuthorization(Politicas.PodeAdministrar)
         .WithTags("Sessão")
         .WithSummary("Lista os usuários (nível 3)")
-        .WithDescription("`aindaSemHash` mostra quem ainda não entrou pela API e portanto " +
-                         "continua dependendo da senha em texto plano do legado.");
+        .WithDescription(
+            "`aindaSemHash` mostra quem ainda não entrou pela API e portanto continua " +
+            "dependendo da senha em texto plano do legado.\n\n" +
+            "**Esta é a única lista que não é recortada por setor**, e de propósito: a tabela " +
+            "`LOGIN` é compartilhada pelos dois — foi ela que permitiu unificar as bases sem " +
+            "duplicar ninguém.\n\n" +
+            "`setor` nulo é cadastro criado pela tela do Delphi, que não conhece a coluna. " +
+            "**Essa pessoa não consegue entrar** até alguém informar o setor.");
 
         app.MapPost("/usuarios", (RepositorioUsuarios repo, UsuarioNovoDto dto) =>
         {
             var u = repo.Criar(
-                new DadosUsuario { Nome = dto.Nome, Nivel = RegrasUsuario.ExigirNivel(dto.Nivel) },
+                new DadosUsuario
+                {
+                    Nome = dto.Nome,
+                    Nivel = RegrasUsuario.ExigirNivel(dto.Nivel),
+                    Setor = Setor.De(dto.Setor)
+                },
                 dto.Senha);
 
             return Results.Created($"/usuarios/{u.Id}",
-                new { u.Id, u.Nome, Nivel = u.Nivel.ToString(), u.AindaSemHash });
+                new { u.Id, u.Nome, Nivel = u.Nivel.ToString(), Setor = u.Setor.Id, u.AindaSemHash });
         })
         .RequireAuthorization(Politicas.PodeAdministrar)
         .WithTags("Sessão")
@@ -111,10 +137,16 @@ public static class EndpointsCadastros
         {
             var u = repo.Alterar(
                 id,
-                new DadosUsuario { Nome = dto.Nome, Nivel = RegrasUsuario.ExigirNivel(dto.Nivel) },
+                new DadosUsuario
+                {
+                    Nome = dto.Nome,
+                    Nivel = RegrasUsuario.ExigirNivel(dto.Nivel),
+                    Setor = Setor.De(dto.Setor)
+                },
                 quem.Autenticado());
 
-            return Results.Ok(new { u.Id, u.Nome, Nivel = u.Nivel.ToString(), u.AindaSemHash });
+            return Results.Ok(
+                new { u.Id, u.Nome, Nivel = u.Nivel.ToString(), Setor = u.Setor.Id, u.AindaSemHash });
         })
         .RequireAuthorization(Politicas.PodeAdministrar)
         .WithTags("Sessão")
@@ -145,22 +177,30 @@ public static class EndpointsCadastros
 
         var contas = app.MapGroup("/contas").WithTags("Cadastros").RequireAuthorization();
 
-        contas.MapGet("/", (RepositorioCadastros repo) => Results.Ok(repo.ListarContas()))
-              .WithSummary("Lista as contas");
+        contas.MapGet("/", (RepositorioCadastros repo, ClaimsPrincipal quem) =>
+                  Results.Ok(repo.ListarContas(quem.SetorDaSessao())))
+              .WithSummary("Lista as contas")
+              .WithDescription(
+                  "Só as do **setor de quem está autenticado**. Cada operadora tem a lista dela: " +
+                  "casar \"CHACARA 2\" de um setor com a do outro seria assumir que são a mesma " +
+                  "propriedade, e a unificação das bases não assumiu nada.");
 
-        contas.MapPost("/", (RepositorioCadastros repo, DescricaoDto dto) =>
+        contas.MapPost("/", (RepositorioCadastros repo, ClaimsPrincipal quem, DescricaoDto dto) =>
         {
-            var c = repo.CriarConta(dto.Descricao);
+            var c = repo.CriarConta(dto.Descricao, quem.SetorDaSessao());
             return Results.Created($"/contas/{c.Id}", c);
-        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma conta");
+        }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma conta")
+          .WithDescription("Nasce no setor de quem cadastra. O nome só precisa ser inédito " +
+                           "dentro do setor — o outro lado pode ter uma conta com o mesmo nome.");
 
-        contas.MapPut("/{id:int}", (RepositorioCadastros repo, int id, DescricaoDto dto) =>
-            Results.Ok(repo.AlterarConta(id, dto.Descricao)))
+        contas.MapPut("/{id:int}", (RepositorioCadastros repo, ClaimsPrincipal quem,
+                                    int id, DescricaoDto dto) =>
+            Results.Ok(repo.AlterarConta(id, dto.Descricao, quem.SetorDaSessao())))
               .RequireAuthorization(Politicas.PodeOperar).WithSummary("Altera uma conta");
 
-        contas.MapDelete("/{id:int}", (RepositorioCadastros repo, int id) =>
+        contas.MapDelete("/{id:int}", (RepositorioCadastros repo, ClaimsPrincipal quem, int id) =>
         {
-            repo.ExcluirConta(id);
+            repo.ExcluirConta(id, quem.SetorDaSessao());
             return Results.NoContent();
         }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Exclui uma conta")
           .WithDescription("Recusa com explicação em português se houver lançamentos usando a conta.");
@@ -169,22 +209,25 @@ public static class EndpointsCadastros
 
         var formas = app.MapGroup("/formas-pagamento").WithTags("Cadastros").RequireAuthorization();
 
-        formas.MapGet("/", (RepositorioCadastros repo) => Results.Ok(repo.ListarFormasPagamento()))
-              .WithSummary("Lista as formas de pagamento");
+        formas.MapGet("/", (RepositorioCadastros repo, ClaimsPrincipal quem) =>
+                  Results.Ok(repo.ListarFormasPagamento(quem.SetorDaSessao())))
+              .WithSummary("Lista as formas de pagamento")
+              .WithDescription("Só as do setor de quem está autenticado.");
 
-        formas.MapPost("/", (RepositorioCadastros repo, DescricaoDto dto) =>
+        formas.MapPost("/", (RepositorioCadastros repo, ClaimsPrincipal quem, DescricaoDto dto) =>
         {
-            var f = repo.CriarFormaPagamento(dto.Descricao);
+            var f = repo.CriarFormaPagamento(dto.Descricao, quem.SetorDaSessao());
             return Results.Created($"/formas-pagamento/{f.Id}", f);
         }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma forma de pagamento");
 
-        formas.MapPut("/{id:int}", (RepositorioCadastros repo, int id, DescricaoDto dto) =>
-            Results.Ok(repo.AlterarFormaPagamento(id, dto.Descricao)))
+        formas.MapPut("/{id:int}", (RepositorioCadastros repo, ClaimsPrincipal quem,
+                                    int id, DescricaoDto dto) =>
+            Results.Ok(repo.AlterarFormaPagamento(id, dto.Descricao, quem.SetorDaSessao())))
               .RequireAuthorization(Politicas.PodeOperar).WithSummary("Altera uma forma de pagamento");
 
-        formas.MapDelete("/{id:int}", (RepositorioCadastros repo, int id) =>
+        formas.MapDelete("/{id:int}", (RepositorioCadastros repo, ClaimsPrincipal quem, int id) =>
         {
-            repo.ExcluirFormaPagamento(id);
+            repo.ExcluirFormaPagamento(id, quem.SetorDaSessao());
             return Results.NoContent();
         }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Exclui uma forma de pagamento");
 
@@ -192,48 +235,53 @@ public static class EndpointsCadastros
 
         var despesas = app.MapGroup("/despesas").WithTags("Cadastros").RequireAuthorization();
 
-        despesas.MapGet("/", (RepositorioCadastros repo) => Results.Ok(repo.ListarDespesas()))
+        despesas.MapGet("/", (RepositorioCadastros repo, ClaimsPrincipal quem) =>
+                    Results.Ok(repo.ListarDespesas(quem.SetorDaSessao())))
                 .WithSummary("Lista as despesas")
-                .WithDescription("Despesa é o que a tabela chama de CATEGORIA. Funciona como centro de custo.");
+                .WithDescription("Despesa é o que a tabela chama de CATEGORIA. Funciona como " +
+                                 "centro de custo. Só as do setor de quem está autenticado.");
 
-        despesas.MapPost("/", (RepositorioCadastros repo, DescricaoDto dto) =>
+        despesas.MapPost("/", (RepositorioCadastros repo, ClaimsPrincipal quem, DescricaoDto dto) =>
         {
-            var d = repo.CriarDespesa(dto.Descricao);
+            var d = repo.CriarDespesa(dto.Descricao, quem.SetorDaSessao());
             return Results.Created($"/despesas/{d.Id}", d);
         }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma despesa");
 
-        despesas.MapPut("/{id:int}", (RepositorioCadastros repo, int id, DescricaoDto dto) =>
-            Results.Ok(repo.AlterarDespesa(id, dto.Descricao)))
+        despesas.MapPut("/{id:int}", (RepositorioCadastros repo, ClaimsPrincipal quem,
+                                      int id, DescricaoDto dto) =>
+            Results.Ok(repo.AlterarDespesa(id, dto.Descricao, quem.SetorDaSessao())))
                 .RequireAuthorization(Politicas.PodeOperar).WithSummary("Altera uma despesa");
 
-        despesas.MapDelete("/{id:int}", (RepositorioCadastros repo, int id) =>
+        despesas.MapDelete("/{id:int}", (RepositorioCadastros repo, ClaimsPrincipal quem, int id) =>
         {
-            repo.ExcluirDespesa(id);
+            repo.ExcluirDespesa(id, quem.SetorDaSessao());
             return Results.NoContent();
         }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Exclui uma despesa");
 
         var subs = app.MapGroup("/subdespesas").WithTags("Cadastros").RequireAuthorization();
 
-        subs.MapGet("/", (RepositorioCadastros repo, int? despesaId) =>
-            Results.Ok(repo.ListarSubdespesas(despesaId)))
+        subs.MapGet("/", (RepositorioCadastros repo, ClaimsPrincipal quem, int? despesaId) =>
+            Results.Ok(repo.ListarSubdespesas(quem.SetorDaSessao(), despesaId)))
             .WithSummary("Lista as subdespesas")
-            .WithDescription("Informe `despesaId` para trazer apenas as de uma despesa.");
+            .WithDescription("Informe `despesaId` para trazer apenas as de uma despesa. " +
+                             "Só as do setor de quem está autenticado.");
 
-        subs.MapPost("/", (RepositorioCadastros repo, SubdespesaDto dto) =>
+        subs.MapPost("/", (RepositorioCadastros repo, ClaimsPrincipal quem, SubdespesaDto dto) =>
         {
-            var s = repo.CriarSubdespesa(dto.Descricao, dto.DespesaId);
+            var s = repo.CriarSubdespesa(dto.Descricao, dto.DespesaId, quem.SetorDaSessao());
             return Results.Created($"/subdespesas/{s.Id}", s);
         }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Cria uma subdespesa")
           .WithDescription("A subdespesa sempre nasce ligada a uma despesa. Nomes iguais em " +
                            "despesas diferentes são permitidos — o legado tem MANUTENÇÃO em mais de uma.");
 
-        subs.MapPut("/{id:int}", (RepositorioCadastros repo, int id, SubdespesaDto dto) =>
-            Results.Ok(repo.AlterarSubdespesa(id, dto.Descricao, dto.DespesaId)))
+        subs.MapPut("/{id:int}", (RepositorioCadastros repo, ClaimsPrincipal quem,
+                                  int id, SubdespesaDto dto) =>
+            Results.Ok(repo.AlterarSubdespesa(id, dto.Descricao, dto.DespesaId, quem.SetorDaSessao())))
             .RequireAuthorization(Politicas.PodeOperar).WithSummary("Altera uma subdespesa");
 
-        subs.MapDelete("/{id:int}", (RepositorioCadastros repo, int id) =>
+        subs.MapDelete("/{id:int}", (RepositorioCadastros repo, ClaimsPrincipal quem, int id) =>
         {
-            repo.ExcluirSubdespesa(id);
+            repo.ExcluirSubdespesa(id, quem.SetorDaSessao());
             return Results.NoContent();
         }).RequireAuthorization(Politicas.PodeOperar).WithSummary("Exclui uma subdespesa");
     }

@@ -43,7 +43,7 @@ public class ImportacaoApiTeste : IClassFixture<ImportacaoApiTeste.Api>
     {
         var nome = "IMP" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         using (var con = _api.Banco.Conexao.Abrir())
-            con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL) VALUES (@n, 'imp123', @v)",
+            con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL, SETOR_ID) VALUES (@n, 'imp123', @v, 1)",
                         new { n = nome, v = nivel });
 
         var anonimo = _api.CreateClient();

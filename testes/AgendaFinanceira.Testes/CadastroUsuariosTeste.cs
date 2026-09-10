@@ -27,11 +27,13 @@ public class CadastroUsuariosTeste : IClassFixture<BaseDescartavel>
         Id = id,
         Nome = "ADMIN",
         Nivel = NivelAcesso.Administracao,
+        Setor = Setor.Financeiro,
         AindaSemHash = false
     };
 
-    private static DadosUsuario Dados(string nome, NivelAcesso nivel = NivelAcesso.Operacao) =>
-        new() { Nome = nome, Nivel = nivel };
+    private static DadosUsuario Dados(string nome, NivelAcesso nivel = NivelAcesso.Operacao,
+                                      Setor? setor = null) =>
+        new() { Nome = nome, Nivel = nivel, Setor = setor ?? Setor.Financeiro };
 
     // ---------------- Criação ----------------
 

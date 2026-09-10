@@ -264,6 +264,103 @@ Repita **C.1 e C.2** em cada máquina: instalador e endereço. Mais nada.
 
 ---
 
+## 7b. Fase F — Backup diário
+
+> **A implantação não está concluída sem esta fase e a próxima.** O sistema
+> registra R$ 42 milhões pagos em três anos. Um servidor sem backup conferido é
+> um sistema em produção com uma data de perda ainda não marcada.
+
+**F.1 — Agendar:**
+
+```powershell
+AGENDAR-BACKUP.cmd
+```
+
+Pergunta a pasta, a hora e o destino na nuvem, registra a tarefa **e roda uma
+vez na hora** para provar que funciona antes de você sair de perto.
+
+**O que ele faz de diferente de um backup comum:**
+
+- **`gbak`, não cópia de arquivo.** Sai consistente **com todo mundo
+  trabalhando** — ninguém precisa sair do sistema. Copiar um `.FDB` com o banco
+  aberto entrega páginas de uma transação que ainda não terminou. Era o defeito
+  do legado.
+- **Cada backup é conferido restaurando.** Ele restaura o `.fbk` num arquivo
+  temporário, conta os lançamentos e compara com a origem. Um `.fbk` corrompido
+  aparece **no dia**, não no dia em que for preciso. Custa um segundo.
+- **Roda como SISTEMA**, não como o usuário logado — tarefa presa a um usuário
+  para de rodar quando a senha dele muda.
+- **Roda assim que a máquina ligar**, se perder a hora marcada. É exatamente o
+  que faltou no backup do Fechamento Petrotorque, que passou **um mês inteiro**
+  falhando todo dia sem ninguém ver.
+
+**F.2 — Escolha o horário com cuidado.** Meio-dia costuma ser melhor que a noite
+num computador de escritório. A tarefa recupera o dia perdido, mas o backup que
+existe vale mais que o que rodaria.
+
+**F.3 — Confira o log depois de uma semana:** `backup.log`, na pasta escolhida.
+A linha que importa é a que começa com `Conferido:`.
+
+---
+
+## 7c. Fase G — Cartão de recuperação
+
+**Sem esta fase, o backup da fase F não serve para o caso que ele existe para
+cobrir.**
+
+Os backups sobem cifrados. As senhas que os abrem ficam em
+`ferramentas\rclone.conf` — **dentro do servidor**. Se o servidor queimar, elas
+queimam junto, e os arquivos na nuvem viram dados que ninguém abre. Nem o Google.
+
+**Ter a conta do Gmail não basta. Ter os arquivos não basta.**
+
+```powershell
+CARTAO-DE-RECUPERACAO.cmd
+```
+
+Gera um cartão com as duas senhas de criptografia, o `client_id`, e os dez
+passos para recuperar numa máquina nova, do zero: instalar o Firebird 2.5,
+baixar o rclone, recriar a configuração, autorizar a conta, listar, baixar,
+restaurar, conferir, reinstalar a API e ajustar as estações.
+
+**Grave num pen drive ou noutro computador. Nunca neste servidor** — um cartão
+que queima junto não serve para nada. Se imprimir, apague o arquivo depois.
+
+O e-mail e a senha da conta do Google ficam em branco de propósito, para você
+escrever à mão: o cartão guarda o que só existe aqui, não o que o Google guarda.
+
+> **Provado em 05/09/2026**, não presumido: um backup foi baixado da nuvem,
+> decifrado, restaurado e conferido — 15.655 lançamentos e soma paga
+> `42631955.72959402`, idêntica à origem até o último dígito.
+
+**O que não vai no backup, e não precisa:** a chave que assina as sessões. A
+fase 3 gera outra. O efeito é que todos entram de novo uma vez; as senhas
+continuam as mesmas.
+
+---
+
+## 7d. As duas pastas no Drive
+
+A conta do Google guarda os dois sistemas em pastas irmãs, com a mesma
+criptografia:
+
+| Pasta no Drive | Destino no comando | Sistema |
+|---|---|---|
+| `AgendaFinanceira/` | `nuvem-agenda:` | esta implantação |
+| `FechamentoPetrotorque/` | `nuvem:` | o outro sistema |
+
+**Para a Agenda o destino é sempre `nuvem-agenda:`.**
+
+Pelo navegador você vê as duas pastas e nomes embaralhados dentro — é de
+propósito: se a conta do Google vazar, os dados financeiros não vão junto. Serve
+para conferir que subiu e quanto ocupa, não para ler. Para ler:
+
+```powershell
+ferramentas\rclone.exe lsl nuvem-agenda: --config ferramentas\rclone.conf
+```
+
+---
+
 ## 8. Voltar atrás
 
 | Do quê | Como |
@@ -283,6 +380,8 @@ coisas estavam — não apague nos primeiros dias.
 
 | Sintoma | Causa quase sempre |
 |---|---|
+| O backup parou de gerar e ninguém viu | Máquina desligada na hora, ou o caminho do banco mudou. Veja `backup.log` |
+| `directory not found` ao listar a nuvem | Destino errado: para a Agenda é `nuvem-agenda:`, não `nuvem:` |
 | Estação: "não foi possível alcançar o servidor" | `Urls` ainda em `localhost` (B.4), ou firewall (B.5) |
 | Funciona no servidor, não na estação | O mesmo. Refaça o teste **B.7** antes de olhar a estação |
 | Entra e as telas ficam vazias | Falta `"null"` no CORS (B.4) |

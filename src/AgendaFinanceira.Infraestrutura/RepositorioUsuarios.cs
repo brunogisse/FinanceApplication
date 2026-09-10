@@ -86,7 +86,8 @@ public sealed class RepositorioUsuarios
         // Diferente do legado, que traz a tabela LOGIN inteira — com todas as senhas — para a
         // estação a cada abertura, aqui só o usuário informado sai do banco.
         var linha = con.QuerySingleOrDefault(
-            "SELECT LOGIN_ID, NOME, SENHA, NIVEL, SENHA_HASH FROM LOGIN WHERE UPPER(NOME) = @nome",
+            "SELECT LOGIN_ID, NOME, SENHA, NIVEL, SENHA_HASH, SETOR_ID FROM LOGIN " +
+            "WHERE UPPER(NOME) = @nome",
             new { nome = nome.Trim().ToUpperInvariant() });
 
         if (linha is null)
@@ -97,6 +98,7 @@ public sealed class RepositorioUsuarios
         string senhaPlana = ConexaoFirebird.TextoDoLegado(linha.SENHA) ?? "";
         string? hash = ConexaoFirebird.TextoDoLegado(linha.SENHA_HASH);
         int nivel = linha.NIVEL;
+        var setor = Setor.DeOuNulo((int?)linha.SETOR_ID);
 
         var migrou = false;
 
@@ -116,6 +118,22 @@ public sealed class RepositorioUsuarios
             migrou = true;
         }
 
+        /*
+         * Senha certa e mesmo assim não entra: o cadastro está sem setor.
+         *
+         * Sem setor não há o que mostrar — nem tudo, que vazaria o outro lado, nem nada, que
+         * pareceria uma base vazia. Acontece com quem for criado pela tela do Delphi, que não
+         * conhece a coluna. A recusa é aqui, com o motivo escrito, e não uma sessão que abre e
+         * falha em cada tela.
+         *
+         * A mensagem pode ser específica porque a senha já foi conferida: quem chegou até aqui
+         * é a pessoa, e não alguém tentando descobrir quais usuários existem.
+         */
+        if (setor is null)
+            return ResultadoAutenticacao.Recusado(
+                $"O usuário {nomeGravado.Trim()} está sem setor definido e por isso não pode " +
+                "entrar. Peça a quem administra o sistema para informar o setor no cadastro.");
+
         return new ResultadoAutenticacao
         {
             Autenticado = true,
@@ -125,6 +143,7 @@ public sealed class RepositorioUsuarios
                 Id = id,
                 Nome = nomeGravado,
                 Nivel = (NivelAcesso)nivel,
+                Setor = setor.Value,
                 AindaSemHash = false
             }
         };
@@ -182,18 +201,26 @@ public sealed class RepositorioUsuarios
         ExigirNomeInedito(con, nome, ignorarId: null);
 
         var id = con.ExecuteScalar<int>(@"
-INSERT INTO LOGIN (NOME, SENHA, NIVEL, SENHA_HASH)
-VALUES (@nome, @plana, @nivel, @hash)
+INSERT INTO LOGIN (NOME, SENHA, NIVEL, SENHA_HASH, SETOR_ID)
+VALUES (@nome, @plana, @nivel, @hash, @setor)
 RETURNING LOGIN_ID",
             new
             {
                 nome = ConexaoFirebird.NormalizarParaGravar(nome),
                 plana = senhaLimpa,
                 nivel = (int)dados.Nivel,
-                hash = _senhas.GerarHash(senhaLimpa)
+                hash = _senhas.GerarHash(senhaLimpa),
+                setor = FiltroDeSetor.Numero(dados.Setor)
             });
 
-        return new Usuario { Id = id, Nome = nome, Nivel = dados.Nivel, AindaSemHash = false };
+        return new Usuario
+        {
+            Id = id,
+            Nome = nome,
+            Nivel = dados.Nivel,
+            Setor = dados.Setor,
+            AindaSemHash = false
+        };
     }
 
     /// <summary>
@@ -210,13 +237,26 @@ RETURNING LOGIN_ID",
         ExigirNomeInedito(con, nome, ignorarId: id);
 
         var afetados = con.Execute(
-            "UPDATE LOGIN SET NOME = @nome, NIVEL = @nivel WHERE LOGIN_ID = @id",
-            new { nome = ConexaoFirebird.NormalizarParaGravar(nome), nivel = (int)dados.Nivel, id });
+            "UPDATE LOGIN SET NOME = @nome, NIVEL = @nivel, SETOR_ID = @setor WHERE LOGIN_ID = @id",
+            new
+            {
+                nome = ConexaoFirebird.NormalizarParaGravar(nome),
+                nivel = (int)dados.Nivel,
+                setor = FiltroDeSetor.Numero(dados.Setor),
+                id
+            });
 
         if (afetados == 0)
             throw new RegraDeNegocioException("Usuário não encontrado.");
 
-        return new Usuario { Id = id, Nome = nome, Nivel = dados.Nivel, AindaSemHash = false };
+        return new Usuario
+        {
+            Id = id,
+            Nome = nome,
+            Nivel = dados.Nivel,
+            Setor = dados.Setor,
+            AindaSemHash = false
+        };
     }
 
     /// <summary>
@@ -267,16 +307,83 @@ RETURNING LOGIN_ID",
         if (existe > 0)
             throw new RegraDeNegocioException($"Já existe um usuário chamado {nome}.");
     }
+    /// <summary>
+    /// Lista todos os usuários, de todos os setores.
+    ///
+    /// **É a única listagem que não é recortada por setor, e de propósito.** A tabela LOGIN é
+    /// compartilhada — foi ela que permitiu unificar as bases sem duplicar ninguém —, e é o
+    /// nível 3 que administra a senha de todo mundo, como já era antes.
+    ///
+    /// Quem estiver sem setor sai daqui com <see cref="Setor.EhValido"/> falso, para a tela
+    /// mostrar e alguém corrigir. Essa pessoa não consegue entrar: ver <see cref="Autenticar"/>.
+    /// </summary>
     public IReadOnlyList<Usuario> Listar()
     {
         using var con = _conexao.Abrir();
-        return con.Query("SELECT LOGIN_ID, NOME, NIVEL, SENHA_HASH FROM LOGIN ORDER BY LOGIN_ID")
+        return con.Query("SELECT LOGIN_ID, NOME, NIVEL, SENHA_HASH, SETOR_ID FROM LOGIN " +
+                         "ORDER BY LOGIN_ID")
                   .Select(l => new Usuario
                   {
                       Id = l.LOGIN_ID,
                       Nome = ConexaoFirebird.TextoDoLegado(l.NOME) ?? "",
                       Nivel = (NivelAcesso)l.NIVEL,
+                      Setor = Setor.DeOuNulo((int?)l.SETOR_ID) ?? default,
                       AindaSemHash = string.IsNullOrEmpty(ConexaoFirebird.TextoDoLegado(l.SENHA_HASH))
                   }).ToList();
+    }
+
+    /// <summary>
+    /// Os setores cadastrados, para a tela de usuários oferecer a escolha.
+    ///
+    /// Vem da tabela, e não de uma lista escrita no cliente: no dia em que entrar um terceiro
+    /// setor, ele aparece sozinho.
+    /// </summary>
+    public IReadOnlyList<(int Id, string Descricao)> ListarSetores()
+    {
+        using var con = _conexao.Abrir();
+        // O `dynamic` do Dapper contamina a tupla inteira se a descrição não for convertida
+        // aqui: o tipo sai como (int, dynamic) e não casa com a assinatura.
+        return con.Query("SELECT SETOR_ID, DESCRICAO FROM SETOR ORDER BY SETOR_ID")
+                  .Select(l =>
+                  {
+                      int id = l.SETOR_ID;
+                      string descricao = ConexaoFirebird.TextoDoLegado(l.DESCRICAO)?.Trim() ?? "";
+                      return (id, descricao);
+                  })
+                  .ToList();
+    }
+
+    /// <summary>
+    /// Confirma que a base já passou pela unificação.
+    ///
+    /// Sem a coluna SETOR_ID, toda consulta desta API quebra — e quebraria no meio do uso, com
+    /// erro técnico na tela de quem trabalha. Conferir uma vez, ao subir, transforma isso numa
+    /// recusa com instrução. Mesma ideia de <see cref="ColunaDeHashExiste"/>.
+    /// </summary>
+    public bool ColunaDeSetorExiste()
+    {
+        using var con = _conexao.Abrir();
+        var qtd = con.ExecuteScalar<int>(
+            "SELECT COUNT(*) FROM RDB$RELATION_FIELDS " +
+            "WHERE TRIM(RDB$RELATION_NAME) = 'REGISTRO_DE_GASTOS' " +
+            "  AND TRIM(RDB$FIELD_NAME) = 'SETOR_ID'");
+        return qtd > 0;
+    }
+
+    /// <summary>
+    /// Quantos registros ficaram sem setor — os que o Delphi gravou sem conhecer a coluna.
+    ///
+    /// Eles não aparecem para ninguém na API, e "não aparece" é o tipo de falha que passa
+    /// despercebida. Por isso este número sai no `/saude`, à vista.
+    /// </summary>
+    public IReadOnlyDictionary<string, int> ContarSemSetor()
+    {
+        string[] tabelas =
+            ["REGISTRO_DE_GASTOS", "CATEGORIA", "SUBCATEGORIA", "CONTAS", "FORMA_DE_PAGAMENTO", "LOGIN"];
+
+        using var con = _conexao.Abrir();
+        return tabelas.ToDictionary(
+            t => t,
+            t => con.ExecuteScalar<int>($"SELECT COUNT(*) FROM {t} WHERE SETOR_ID IS NULL"));
     }
 }

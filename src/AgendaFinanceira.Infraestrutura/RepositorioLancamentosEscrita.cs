@@ -12,12 +12,20 @@ namespace AgendaFinanceira.Infraestrutura;
 /// </summary>
 public sealed partial class RepositorioLancamentos
 {
-    /// <summary>Um lançamento pelo identificador, ou nulo se não existir.</summary>
-    public Lancamento? PorId(int id)
+    /// <summary>
+    /// Um lançamento pelo identificador, ou nulo se não existir **neste setor**.
+    ///
+    /// O setor entra na busca, e não numa conferência depois: um lançamento do outro setor
+    /// responde "não encontrado", que é o mesmo que quem pergunta veria se ele não existisse.
+    /// Sem isso, saber o número bastaria para alterar ou excluir o lançamento da outra pessoa —
+    /// os identificadores das duas bases se sobrepõem, então o número existe nos dois lados.
+    /// </summary>
+    public Lancamento? PorId(int id, Setor setor)
     {
         using var con = _conexao.Abrir();
         var linha = con.QuerySingleOrDefault<LinhaLancamento>(
-            $"{Selecao} WHERE REG.GASTOS_ID = @id", new { id });
+            $"{Selecao} WHERE REG.GASTOS_ID = @id{FiltroDeSetor.ECondicao("REG")}",
+            new { id, setor = FiltroDeSetor.Numero(setor) });
         return linha is null ? null : Converter(linha);
     }
 
@@ -37,10 +45,10 @@ public sealed partial class RepositorioLancamentos
         using var tx = con.BeginTransaction();
         try
         {
-            var despesaId = DespesaDaSubdespesa(con, tx, validos.SubdespesaId);
-            ExigirExistencia(con, tx, "CONTAS", "CONTA_ID", validos.ContaId, "conta");
+            var despesaId = DespesaDaSubdespesa(con, tx, validos.SubdespesaId, autor.Setor);
+            ExigirExistencia(con, tx, "CONTAS", "CONTA_ID", validos.ContaId, "conta", autor.Setor);
             ExigirExistencia(con, tx, "FORMA_DE_PAGAMENTO", "FORMA_DE_PAGAMENTO_ID",
-                             validos.FormaPagamentoId, "forma de pagamento");
+                             validos.FormaPagamentoId, "forma de pagamento", autor.Setor);
 
             // O identificador não é informado: a trigger o atribui a partir do generator, que
             // é atômico e permite Delphi e API inserindo ao mesmo tempo sem colidir.
@@ -49,17 +57,17 @@ INSERT INTO REGISTRO_DE_GASTOS
     (CATEGORIA_ID, SUBCATEGORIA_ID, CONTA_ID, FORMA_DE_PAGAMENTO_ID, USERID,
      DESCRICAO, VALOR_PREVISTO, VALOR_PAGO, PAGO,
      DATA_VENCIMENTO, DATA_PAGAMENTO, DATA_CADASTRO,
-     NOTA_FISCAL, CHEQUE, CHEQUE_COMPENSADO, SITUACAO_STATUS, OBS)
+     NOTA_FISCAL, CHEQUE, CHEQUE_COMPENSADO, SITUACAO_STATUS, OBS, SETOR_ID)
 VALUES
     (@despesaId, @subdespesaId, @contaId, @formaId, @usuarioId,
      @descricao, @valorPrevisto, @valorPago, @pago,
      @dataVencimento, @dataPagamento, @dataCadastro,
-     @notaFiscal, @cheque, @chequeCompensado, @situacao, @obs)
+     @notaFiscal, @cheque, @chequeCompensado, @situacao, @obs, @setor)
 RETURNING GASTOS_ID",
-                Parametros(validos, despesaId, autor.Id, referencia), tx);
+                Parametros(validos, despesaId, autor.Id, referencia, autor.Setor), tx);
 
             tx.Commit();
-            return PorId(id)!;
+            return PorId(id, autor.Setor)!;
         }
         catch
         {
@@ -82,19 +90,20 @@ RETURNING GASTOS_ID",
         var referencia = hoje ?? DateOnly.FromDateTime(DateTime.Today);
         var validos = dados.Validar(referencia);
 
-        var atual = PorId(id) ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
+        var atual = PorId(id, quem.Setor)
+            ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
         ExigirPermissao(quem, atual);
 
         using var con = _conexao.Abrir();
         using var tx = con.BeginTransaction();
         try
         {
-            var despesaId = DespesaDaSubdespesa(con, tx, validos.SubdespesaId);
-            ExigirExistencia(con, tx, "CONTAS", "CONTA_ID", validos.ContaId, "conta");
+            var despesaId = DespesaDaSubdespesa(con, tx, validos.SubdespesaId, quem.Setor);
+            ExigirExistencia(con, tx, "CONTAS", "CONTA_ID", validos.ContaId, "conta", quem.Setor);
             ExigirExistencia(con, tx, "FORMA_DE_PAGAMENTO", "FORMA_DE_PAGAMENTO_ID",
-                             validos.FormaPagamentoId, "forma de pagamento");
+                             validos.FormaPagamentoId, "forma de pagamento", quem.Setor);
 
-            var p = Parametros(validos, despesaId, atual.UsuarioId, referencia);
+            var p = Parametros(validos, despesaId, atual.UsuarioId, referencia, quem.Setor);
             p.Add("id", id);
 
             con.Execute(@"
@@ -105,10 +114,10 @@ UPDATE REGISTRO_DE_GASTOS SET
     PAGO = @pago, DATA_VENCIMENTO = @dataVencimento, DATA_PAGAMENTO = @dataPagamento,
     NOTA_FISCAL = @notaFiscal, CHEQUE = @cheque, CHEQUE_COMPENSADO = @chequeCompensado,
     SITUACAO_STATUS = @situacao, OBS = @obs
-WHERE GASTOS_ID = @id", p, tx);
+WHERE GASTOS_ID = @id" + FiltroDeSetor.ECondicao(), p, tx);
 
             tx.Commit();
-            return PorId(id)!;
+            return PorId(id, quem.Setor)!;
         }
         catch
         {
@@ -120,14 +129,17 @@ WHERE GASTOS_ID = @id", p, tx);
     /// <summary>Exclui um lançamento, respeitando a mesma regra de autoria.</summary>
     public void Excluir(int id, Usuario quem)
     {
-        var atual = PorId(id) ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
+        var atual = PorId(id, quem.Setor)
+            ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
         ExigirPermissao(quem, atual);
 
         using var con = _conexao.Abrir();
         using var tx = con.BeginTransaction();
         try
         {
-            con.Execute("DELETE FROM REGISTRO_DE_GASTOS WHERE GASTOS_ID = @id", new { id }, tx);
+            con.Execute(
+                "DELETE FROM REGISTRO_DE_GASTOS WHERE GASTOS_ID = @id" + FiltroDeSetor.ECondicao(),
+                new { id, setor = FiltroDeSetor.Numero(quem.Setor) }, tx);
             tx.Commit();
         }
         catch
@@ -140,13 +152,16 @@ WHERE GASTOS_ID = @id", p, tx);
     /// <summary>Marca a situação de liberação, como o botão de status do legado.</summary>
     public Lancamento DefinirSituacao(int id, SituacaoStatus situacao, Usuario quem)
     {
-        var atual = PorId(id) ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
+        var atual = PorId(id, quem.Setor)
+            ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
         ExigirPermissao(quem, atual);
 
         using var con = _conexao.Abrir();
-        con.Execute("UPDATE REGISTRO_DE_GASTOS SET SITUACAO_STATUS = @s WHERE GASTOS_ID = @id",
-                    new { s = TextoDaSituacao(situacao), id });
-        return PorId(id)!;
+        con.Execute(
+            "UPDATE REGISTRO_DE_GASTOS SET SITUACAO_STATUS = @s WHERE GASTOS_ID = @id"
+                + FiltroDeSetor.ECondicao(),
+            new { s = TextoDaSituacao(situacao), id, setor = FiltroDeSetor.Numero(quem.Setor) });
+        return PorId(id, quem.Setor)!;
     }
 
     // ---------------- Apoio ----------------
@@ -160,20 +175,31 @@ WHERE GASTOS_ID = @id", p, tx);
             "Apenas quem o cadastrou pode alterá-lo ou excluí-lo.");
     }
 
-    private static int DespesaDaSubdespesa(IDbConnection con, IDbTransaction tx, int subdespesaId)
+    /// <summary>
+    /// A despesa a que a subdespesa pertence, procurada **dentro do setor**.
+    ///
+    /// Sem o setor aqui, um lançamento poderia nascer preso à subdespesa do outro setor: a
+    /// cadeia inteira — despesa, conta, forma de pagamento — sairia da lista da outra pessoa,
+    /// e o registro apareceria classificado com nome que quem lançou nunca viu.
+    /// </summary>
+    private static int DespesaDaSubdespesa(IDbConnection con, IDbTransaction tx,
+                                           int subdespesaId, Setor setor)
     {
         var despesaId = con.ExecuteScalar<int?>(
-            "SELECT CATEGORIA_ID FROM SUBCATEGORIA WHERE SUBCATEGORIA_ID = @id",
-            new { id = subdespesaId }, tx);
+            "SELECT CATEGORIA_ID FROM SUBCATEGORIA WHERE SUBCATEGORIA_ID = @id"
+                + FiltroDeSetor.ECondicao(),
+            new { id = subdespesaId, setor = FiltroDeSetor.Numero(setor) }, tx);
 
         return despesaId ?? throw new RegraDeNegocioException("A subdespesa informada não existe.");
     }
 
     private static void ExigirExistencia(IDbConnection con, IDbTransaction tx,
-                                         string tabela, string coluna, int id, string rotulo)
+                                         string tabela, string coluna, int id, string rotulo,
+                                         Setor setor)
     {
         var existe = con.ExecuteScalar<int>(
-            $"SELECT COUNT(*) FROM {tabela} WHERE {coluna} = @id", new { id }, tx);
+            $"SELECT COUNT(*) FROM {tabela} WHERE {coluna} = @id" + FiltroDeSetor.ECondicao(),
+            new { id, setor = FiltroDeSetor.Numero(setor) }, tx);
         if (existe == 0)
             throw new RegraDeNegocioException($"A {rotulo} informada não existe.");
     }
@@ -186,9 +212,10 @@ WHERE GASTOS_ID = @id", p, tx);
     };
 
     private static DynamicParameters Parametros(DadosLancamento d, int despesaId,
-                                                int usuarioId, DateOnly hoje)
+                                                int usuarioId, DateOnly hoje, Setor setor)
     {
         var p = new DynamicParameters();
+        FiltroDeSetor.Adicionar(p, setor);
         p.Add("despesaId", despesaId);
         p.Add("subdespesaId", d.SubdespesaId);
         p.Add("contaId", d.ContaId);

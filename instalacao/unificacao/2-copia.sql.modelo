@@ -1,0 +1,130 @@
+/* =============================================================================
+   ETAPA 2 - Copia dos dados do FATURAMENTO
+   =============================================================================
+
+   A copia acontece DENTRO do servidor, por EXECUTE STATEMENT ON EXTERNAL.
+
+   POR QUE NAO PELO CLIENTE .NET
+
+   Medido em 08/09/2026: lendo e gravando pelo FirebirdClient, a linha 6.655
+   (GASTOS_ID 14494) morria com "string right truncation". O campo OBS tem
+   exatamente 200 caracteres com acentos, e o cliente codificava o parametro com
+   mais de um byte por acentuado - 200 caracteres viravam mais de 200 bytes e a
+   coluna recusava.
+
+   Aqui os bytes vao de um banco para o outro sem passar por codificacao nenhuma.
+   E o FLOAT de VALOR_PAGO e VALOR_PREVISTO tambem nao vira texto no meio do
+   caminho, que e o defeito central deste sistema.
+
+   O DESLOCAMENTO de @@DESLOCAMENTO@@ nos IDs nao e enfeite: 15.437 dos 15.664
+   lancamentos colidem com IDs do financeiro. De quebra, qualquer linha com ID
+   acima de @@DESLOCAMENTO@@ se identifica como vinda do faturamento so pelo numero.
+
+   USERID NAO e deslocado: LOGIN e compartilhado, sao as mesmas pessoas.        */
+
+SET TERM ^ ;
+
+/* ------------------------------------------------------------- CATEGORIA */
+EXECUTE BLOCK AS
+  DECLARE VARIABLE V_ID INTEGER;
+  DECLARE VARIABLE V_DESC VARCHAR(100);
+BEGIN
+  FOR EXECUTE STATEMENT 'SELECT CATEGORIA_ID, DESCRICAO FROM CATEGORIA'
+      ON EXTERNAL '@@ORIGEM@@' AS USER 'SYSDBA' PASSWORD 'masterkey' INTO :V_ID, :V_DESC
+  DO INSERT INTO CATEGORIA (CATEGORIA_ID, DESCRICAO, SETOR_ID)
+     VALUES (:V_ID + @@DESLOCAMENTO@@, :V_DESC, 2);
+END^
+
+/* ---------------------------------------------------------- SUBCATEGORIA */
+EXECUTE BLOCK AS
+  DECLARE VARIABLE V_ID INTEGER;
+  DECLARE VARIABLE V_CAT INTEGER;
+  DECLARE VARIABLE V_DESC VARCHAR(100);
+  DECLARE VARIABLE V_MAX FLOAT;
+BEGIN
+  FOR EXECUTE STATEMENT
+      'SELECT SUBCATEGORIA_ID, CATEGORIA_ID, DESCRICAO, VALOR_MAXIMO FROM SUBCATEGORIA'
+      ON EXTERNAL '@@ORIGEM@@' AS USER 'SYSDBA' PASSWORD 'masterkey' INTO :V_ID, :V_CAT, :V_DESC, :V_MAX
+  DO INSERT INTO SUBCATEGORIA (SUBCATEGORIA_ID, CATEGORIA_ID, DESCRICAO, VALOR_MAXIMO, SETOR_ID)
+     VALUES (:V_ID + @@DESLOCAMENTO@@, :V_CAT + @@DESLOCAMENTO@@, :V_DESC, :V_MAX, 2);
+END^
+
+/* ---------------------------------------------------------------- CONTAS */
+EXECUTE BLOCK AS
+  DECLARE VARIABLE V_ID INTEGER;
+  DECLARE VARIABLE V_DESC VARCHAR(50);
+BEGIN
+  FOR EXECUTE STATEMENT 'SELECT CONTA_ID, DESCRICAO FROM CONTAS'
+      ON EXTERNAL '@@ORIGEM@@' AS USER 'SYSDBA' PASSWORD 'masterkey' INTO :V_ID, :V_DESC
+  DO INSERT INTO CONTAS (CONTA_ID, DESCRICAO, SETOR_ID)
+     VALUES (:V_ID + @@DESLOCAMENTO@@, :V_DESC, 2);
+END^
+
+/* ---------------------------------------------------- FORMA_DE_PAGAMENTO */
+EXECUTE BLOCK AS
+  DECLARE VARIABLE V_ID INTEGER;
+  DECLARE VARIABLE V_DESC VARCHAR(50);
+BEGIN
+  FOR EXECUTE STATEMENT 'SELECT FORMA_DE_PAGAMENTO_ID, DESCRICAO FROM FORMA_DE_PAGAMENTO'
+      ON EXTERNAL '@@ORIGEM@@' AS USER 'SYSDBA' PASSWORD 'masterkey' INTO :V_ID, :V_DESC
+  DO INSERT INTO FORMA_DE_PAGAMENTO (FORMA_DE_PAGAMENTO_ID, DESCRICAO, SETOR_ID)
+     VALUES (:V_ID + @@DESLOCAMENTO@@, :V_DESC, 2);
+END^
+
+/* --------------------------------------------------- REGISTRO_DE_GASTOS */
+EXECUTE BLOCK AS
+  DECLARE VARIABLE V_ID INTEGER;
+  DECLARE VARIABLE V_CAT INTEGER;
+  DECLARE VARIABLE V_SUB INTEGER;
+  DECLARE VARIABLE V_CONTA INTEGER;
+  DECLARE VARIABLE V_FORMA INTEGER;
+  DECLARE VARIABLE V_DESC VARCHAR(200);
+  DECLARE VARIABLE V_VPAGO FLOAT;
+  DECLARE VARIABLE V_CHEQUE INTEGER;
+  DECLARE VARIABLE V_COMP CHAR(1);
+  DECLARE VARIABLE V_VENC DATE;
+  DECLARE VARIABLE V_PGTO DATE;
+  DECLARE VARIABLE V_PAGO INTEGER;
+  DECLARE VARIABLE V_OBS VARCHAR(200);
+  DECLARE VARIABLE V_VPREV FLOAT;
+  DECLARE VARIABLE V_NF INTEGER;
+  DECLARE VARIABLE V_CAD DATE;
+  DECLARE VARIABLE V_ENTRADA INTEGER;
+  DECLARE VARIABLE V_SIT VARCHAR(10);
+  DECLARE VARIABLE V_USER INTEGER;
+BEGIN
+  FOR EXECUTE STATEMENT
+      'SELECT GASTOS_ID, CATEGORIA_ID, SUBCATEGORIA_ID, CONTA_ID, FORMA_DE_PAGAMENTO_ID,
+              DESCRICAO, VALOR_PAGO, CHEQUE, CHEQUE_COMPENSADO, DATA_VENCIMENTO,
+              DATA_PAGAMENTO, PAGO, OBS, VALOR_PREVISTO, NOTA_FISCAL, DATA_CADASTRO,
+              ENTRADA_ID, SITUACAO_STATUS, USERID
+         FROM REGISTRO_DE_GASTOS'
+      ON EXTERNAL '@@ORIGEM@@' AS USER 'SYSDBA' PASSWORD 'masterkey'
+      INTO :V_ID, :V_CAT, :V_SUB, :V_CONTA, :V_FORMA, :V_DESC, :V_VPAGO, :V_CHEQUE,
+           :V_COMP, :V_VENC, :V_PGTO, :V_PAGO, :V_OBS, :V_VPREV, :V_NF, :V_CAD,
+           :V_ENTRADA, :V_SIT, :V_USER
+  DO INSERT INTO REGISTRO_DE_GASTOS
+       (GASTOS_ID, CATEGORIA_ID, SUBCATEGORIA_ID, CONTA_ID, FORMA_DE_PAGAMENTO_ID,
+        DESCRICAO, VALOR_PAGO, CHEQUE, CHEQUE_COMPENSADO, DATA_VENCIMENTO,
+        DATA_PAGAMENTO, PAGO, OBS, VALOR_PREVISTO, NOTA_FISCAL, DATA_CADASTRO,
+        ENTRADA_ID, SITUACAO_STATUS, USERID, SETOR_ID)
+     VALUES
+       (:V_ID + @@DESLOCAMENTO@@, :V_CAT + @@DESLOCAMENTO@@, :V_SUB + @@DESLOCAMENTO@@,
+        :V_CONTA + @@DESLOCAMENTO@@, :V_FORMA + @@DESLOCAMENTO@@,
+        :V_DESC, :V_VPAGO, :V_CHEQUE, :V_COMP, :V_VENC,
+        :V_PGTO, :V_PAGO, :V_OBS, :V_VPREV, :V_NF, :V_CAD,
+        :V_ENTRADA, :V_SIT, :V_USER, 2);
+END^
+
+SET TERM ; ^
+COMMIT;
+
+/* Os generators sao ajustados pelo unificar-bases.ps1, DEPOIS desta copia, lendo
+   o MAX real de cada tabela.
+
+   Aqui havia valores fixos (130000, 100100...), calculados a partir do
+   deslocamento. Funcionavam hoje e mentiriam amanha: mudado o deslocamento, ou
+   crescida uma das bases, o generator ficaria abaixo do maior ID e a proxima
+   inclusao violaria a chave primaria - em silencio, ate alguem tentar lancar.
+
+   Ler o MAX nao tem esse problema, e nao depende de ninguem lembrar. */

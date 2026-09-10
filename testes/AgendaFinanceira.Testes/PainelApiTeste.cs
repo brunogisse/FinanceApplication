@@ -49,7 +49,7 @@ public class PainelApiTeste : IClassFixture<PainelApiTeste.Api>
     {
         var nome = "PNL" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         using (var con = _api.Banco.Conexao.Abrir())
-            con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL) VALUES (@n, 'pnl123', 1)",
+            con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL, SETOR_ID) VALUES (@n, 'pnl123', 1, 1)",
                         new { n = nome });
 
         var anonimo = _api.CreateClient();

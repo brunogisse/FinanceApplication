@@ -265,7 +265,14 @@ C:\PROGRAMAS\AgendaFinanceira-paridade\
     BASE_PARIDADE.FDB               referência IMUTÁVEL dos testes de leitura
     MOLDE_ESCRITA.FDB               igual, mais a coluna SENHA_HASH
     DESENVOLVIMENTO.FDB             onde a API roda; pode ser sujada à vontade
+    MOLDE_DOIS_SETORES.FDB          cópia da base unificada, para o teste de vazamento
+    antes-do-setor-2026-09-09\      as três primeiras como estavam antes do SETOR_ID
 ```
+
+As três primeiras receberam `SETOR_ID` em 09/09/2026, tudo marcado como setor 1 — sem isso
+nenhum teste roda, porque a API se recusa a subir. Com um setor só, a paridade continua valendo:
+o resultado é idêntico ao de antes. `MOLDE_DOIS_SETORES.FDB` é a única com os dois setores
+dentro, e as senhas reais foram apagadas dela — o teste cria os usuários que usa.
 
 Detalhes e números de referência em [docs/paridade-referencia.md](docs/paridade-referencia.md).
 
@@ -298,6 +305,21 @@ testes/AgendaFinanceira.Testes/        188 testes, 26 de paridade contra a base 
 cliente/agenda-web/                    Angular 21 zoneless
 cliente/agenda-desktop/                Electron
 ```
+
+**Cada pessoa enxerga só o setor dela, e a regra é do servidor.** As duas bases quentes viraram
+uma só em 08/09/2026, com `SETOR_ID` em seis tabelas — ver
+[docs/unificacao-das-bases.md](docs/unificacao-das-bases.md). O setor viaja no token, todo
+repositório o exige como parâmetro, e `FiltroDeSetor` é o único lugar que escreve a condição.
+Três consequências que pegam quem mexe aqui:
+
+1. **A API não sobe sem a coluna `SETOR_ID`.** Base que não passou pela unificação é recusada ao
+   subir, com a instrução do que rodar. Para uma base de um setor só:
+   `instalacao\unificacao\setor-unico.sql`.
+2. **Quem está sem setor não entra**, e registro sem setor não aparece para ninguém. A trigger
+   `REGISTRO_DE_GASTOS_BI_SETOR` deduz o setor pelo autor no que o Delphi gravar; o que sobrar
+   é contado no `GET /saude`.
+3. **Somar os dois setores conta em dobro** os 9.251 lançamentos que existiam nas duas bases.
+   Não há tela que faça isso, e um "total da empresa" nunca pode ser soma simples.
 
 **A interface tem uma casca:** menu lateral fixo em `layout/casca`, conteúdo à direita. As
 opções que antes eram botões no topo de cada tela moram no menu. Os relatórios ficam **fora**

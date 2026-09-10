@@ -140,6 +140,30 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+/*
+ * Falha fechada: sem a coluna SETOR_ID, a API não sobe.
+ *
+ * Ela nasce na unificação das bases — ver docs/unificacao-das-bases.md — e todo filtro deste
+ * servidor depende dela. Apontar para uma base que não passou por lá deixaria a aplicação subir
+ * e quebrar depois, com erro técnico na tela de quem trabalha, uma consulta por vez. Aqui vira
+ * uma recusa única, ao subir, com a instrução do que fazer.
+ *
+ * A conferência é uma consulta em RDB$RELATION_FIELDS. Se o banco estiver fora do ar, a exceção
+ * também impede a subida — o que é o certo: sem banco não há sistema.
+ */
+using (var escopo = app.Services.CreateScope())
+{
+    var usuarios = escopo.ServiceProvider.GetRequiredService<RepositorioUsuarios>();
+
+    if (!usuarios.ColunaDeSetorExiste())
+        throw new InvalidOperationException(
+            $"A base '{caminhoBanco}' nao passou pela unificacao: falta a coluna SETOR_ID.\n\n" +
+            "Sem ela nao ha como saber o que cada setor enxerga, e esta API se recusa a " +
+            "mostrar tudo para todo mundo.\n\n" +
+            "Para preparar a base, rode instalacao\\unificacao\\UNIFICAR.cmd (duas bases) ou " +
+            "instalacao\\unificacao\\setor-unico.sql (base de um setor so).");
+}
+
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -179,16 +203,34 @@ app.MapearCadastros();
 app.MapearLancamentos();
 app.MapearPainel();
 
-app.MapGet("/saude", () => Results.Ok(new { situacao = "no ar", banco = Path.GetFileName(caminhoBanco) }))
+app.MapGet("/saude", (RepositorioUsuarios usuarios) =>
+{
+    // Registro sem setor não aparece para ninguém, e "não aparece" é falha silenciosa. O
+    // número fica à vista aqui em vez de esperar alguém dar falta de um lançamento.
+    var semSetor = usuarios.ContarSemSetor();
+
+    return Results.Ok(new
+    {
+        situacao = "no ar",
+        banco = Path.GetFileName(caminhoBanco),
+        registrosSemSetor = semSetor.Where(p => p.Value > 0).ToDictionary(p => p.Key, p => p.Value),
+        totalSemSetor = semSetor.Values.Sum()
+    });
+})
    .WithTags("Diagnóstico")
    .WithSummary("Verifica se a API está no ar")
-   .WithDescription("Informa também qual arquivo de banco está em uso — útil para conferir " +
-                    "que a API não está apontando para produção por engano.");
+   .WithDescription(
+       "Informa também qual arquivo de banco está em uso — útil para conferir que a API não " +
+       "está apontando para produção por engano.\n\n" +
+       "`totalSemSetor` conta os registros gravados sem setor, que é o que acontece quando " +
+       "alguém cadastra pela tela do Delphi, que não conhece a coluna. **Eles não aparecem " +
+       "para nenhum usuário da API.** Zero é o esperado; qualquer outro número pede correção.");
 
 // ---- Consulta de lançamentos ----
 // Reproduz os filtros das duas abas do legado. Ver docs/fluxos.md, item 6.
 app.MapGet("/lancamentos", (
     RepositorioLancamentos repo,
+    System.Security.Claims.ClaimsPrincipal quem,
     DateOnly? inicio, DateOnly? fim,
     string? porData,          // vencimento (padrão) | pagamento | cadastro
     string? pagamento,        // todos (padrão) | pagos | naopagos
@@ -201,7 +243,7 @@ app.MapGet("/lancamentos", (
         notaFiscal, cheque, chequeCompensado, situacao,
         valorMinimo, valorMaximo, faixaSobreValorPago);
 
-    return Results.Ok(ResultadoDto.De(repo.Consultar(consulta)));
+    return Results.Ok(ResultadoDto.De(repo.Consultar(consulta, quem.SetorDaSessao())));
 })
 .RequireAuthorization()
 .WithName("ConsultarLancamentos")
@@ -226,6 +268,7 @@ app.MapGet("/lancamentos", (
 // formato. Ver docs/fluxos.md, item 11.
 app.MapGet("/lancamentos/exportar", (
     RepositorioLancamentos repo,
+    System.Security.Claims.ClaimsPrincipal quem,
     DateOnly? inicio, DateOnly? fim,
     string? porData, string? pagamento,
     string? descricao, string? despesa, string? subdespesa, string? conta,
@@ -237,7 +280,7 @@ app.MapGet("/lancamentos/exportar", (
         notaFiscal, cheque, chequeCompensado, situacao,
         valorMinimo, valorMaximo, faixaSobreValorPago);
 
-    var resultado = repo.Consultar(consulta);
+    var resultado = repo.Consultar(consulta, quem.SetorDaSessao());
 
     // Planilha vazia não ajuda ninguém: o legado avisa "Não há dados para exportar!" e não
     // abre o Excel. Aqui a recusa vem com a mesma razão, em vez de um arquivo com só o
@@ -265,10 +308,11 @@ app.MapGet("/lancamentos/exportar", (
 
 // ---- Aviso de vencimentos da tela principal ----
 // "DATA_VENCIMENTO <= hoje AND PAGO = 0"
-app.MapGet("/lancamentos/vencimentos", (RepositorioLancamentos repo, DateOnly? ate) =>
+app.MapGet("/lancamentos/vencimentos", (
+    RepositorioLancamentos repo, System.Security.Claims.ClaimsPrincipal quem, DateOnly? ate) =>
 {
     var referencia = ate ?? DateOnly.FromDateTime(DateTime.Today);
-    return Results.Ok(ResultadoDto.De(repo.Vencimentos(referencia)));
+    return Results.Ok(ResultadoDto.De(repo.Vencimentos(referencia, quem.SetorDaSessao())));
 })
 .RequireAuthorization()
 .WithName("Vencimentos")
@@ -282,14 +326,14 @@ app.MapGet("/lancamentos/vencimentos", (RepositorioLancamentos repo, DateOnly? a
 // ---- Consolidado por despesa ----
 // Atenção à regra central: 'pagos' filtra por DATA_PAGAMENTO e 'naopagos' por DATA_VENCIMENTO.
 app.MapGet("/relatorios/por-despesa", (
-    RepositorioLancamentos repo, string despesa,
+    RepositorioLancamentos repo, System.Security.Claims.ClaimsPrincipal quem, string despesa,
     DateOnly inicio, DateOnly fim, bool? pagos, string? conta) =>
 {
     if (string.IsNullOrWhiteSpace(despesa))
         return Results.BadRequest(new { erro = "Informe a despesa a consolidar." });
 
     var linhas = repo.ConsolidarPorDespesa(
-        despesa, new Periodo(inicio, fim), pagos ?? true, conta);
+        despesa, new Periodo(inicio, fim), pagos ?? true, quem.SetorDaSessao(), conta);
     return Results.Ok(linhas.Select(TotalPorSubdespesaDto.De).ToList());
 })
 .RequireAuthorization()

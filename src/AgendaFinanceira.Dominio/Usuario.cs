@@ -21,6 +21,17 @@ public sealed record Usuario
     public required NivelAcesso Nivel { get; init; }
 
     /// <summary>
+    /// O setor desta pessoa — o que ela enxerga.
+    ///
+    /// **Nível e setor são coisas diferentes:** o nível diz o que ela pode fazer, o setor diz
+    /// sobre quais registros. Um nível 3 do financeiro administra tudo, dentro do financeiro.
+    ///
+    /// É `required` de propósito: sem isso, uma construção esquecida sairia com o valor padrão
+    /// da estrutura e o filtro passaria a valer contra o setor nenhum.
+    /// </summary>
+    public required Setor Setor { get; init; }
+
+    /// <summary>
     /// Verdadeiro enquanto este usuário ainda depende da senha em texto plano do legado.
     /// Vira falso assim que ele entra uma vez pela API e o hash é gravado.
     /// </summary>
@@ -53,6 +64,15 @@ public sealed record DadosUsuario
 {
     public required string Nome { get; init; }
     public required NivelAcesso Nivel { get; init; }
+
+    /// <summary>
+    /// O setor de quem está sendo cadastrado.
+    ///
+    /// A tabela LOGIN é **compartilhada pelos dois setores** — foi ela que permitiu unificar as
+    /// bases sem duplicar ninguém —, então o setor é escolhido no cadastro e não herdado de
+    /// quem cadastra.
+    /// </summary>
+    public required Setor Setor { get; init; }
 }
 
 /// <summary>

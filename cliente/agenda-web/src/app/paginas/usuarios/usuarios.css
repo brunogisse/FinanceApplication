@@ -55,8 +55,12 @@
 .grade tbody tr:hover { background: #f6f8fc; }
 
 .col-id { width: 1%; white-space: nowrap; color: var(--cor-texto-fraco); }
-.col-nivel { width: 30%; }
+.col-nivel { width: 22%; }
+.col-setor { width: 16%; }
 .col-acoes { width: 1%; white-space: nowrap; text-align: right; }
+
+/* Sem setor a pessoa não entra, então a célula precisa doer de olhar. */
+.pendente-setor { color: #b91c1c; font-weight: 600; }
 
 /* A própria linha fica marcada: as travas contra se rebaixar e se excluir só fazem sentido
    se a pessoa reconhecer qual linha é a dela. */
@@ -81,6 +85,16 @@
 
 .linha-edicao, .linha-edicao:hover { background: #fffbe9; }
 .linha-edicao td { padding: 8px; }
+
+/* A célula de ações é `nowrap` para os botõezinhos das linhas normais não quebrarem.
+   Na linha de cadastro ela carrega senha MAIS dois botões, e o `nowrap` os deixava
+   lado a lado: a tabela pedia 998px numa área de 870 e nascia uma barra de rolagem
+   horizontal — medido na janela real em 09/09/2026, com a célula em 170px de largura
+   e 298px de conteúdo. Aqui a senha fica em cima e os botões embaixo, que é o que o
+   `margin-bottom` da senha sempre quis dizer. */
+.linha-edicao .col-acoes { white-space: normal; }
+.linha-edicao .acoes-edicao { display: flex; gap: 6px; justify-content: flex-end; }
+.linha-edicao .senha { min-width: 0; }
 .linha-edicao input, .linha-edicao select {
   width: 100%;
   padding: 6px 8px;

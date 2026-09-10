@@ -88,27 +88,32 @@ public sealed partial class RepositorioLancamentos
                 p.Add("situacao", TextoDaSituacao(original.Situacao));
                 p.Add("obs", RegrasParcelamento.ObservacaoPadrao);
                 p.Add("entradaId", original.EntradaId);
+                // As parcelas nascem no setor de quem parcelou, que é o mesmo do original —
+                // ExigirParcelavel já provou isso ao encontrá-lo.
+                FiltroDeSetor.Adicionar(p, quem.Setor);
 
                 ids.Add(con.ExecuteScalar<int>(@"
 INSERT INTO REGISTRO_DE_GASTOS
     (CATEGORIA_ID, SUBCATEGORIA_ID, CONTA_ID, FORMA_DE_PAGAMENTO_ID, USERID,
      DESCRICAO, VALOR_PREVISTO, VALOR_PAGO, PAGO,
      DATA_VENCIMENTO, DATA_PAGAMENTO, DATA_CADASTRO,
-     NOTA_FISCAL, CHEQUE, CHEQUE_COMPENSADO, SITUACAO_STATUS, OBS, ENTRADA_ID)
+     NOTA_FISCAL, CHEQUE, CHEQUE_COMPENSADO, SITUACAO_STATUS, OBS, ENTRADA_ID, SETOR_ID)
 VALUES
     (@despesaId, @subdespesaId, @contaId, @formaId, @usuarioId,
      @descricao, @valorPrevisto, @valorPago, @pago,
      @dataVencimento, @dataPagamento, @dataCadastro,
-     @notaFiscal, @cheque, @chequeCompensado, @situacao, @obs, @entradaId)
+     @notaFiscal, @cheque, @chequeCompensado, @situacao, @obs, @entradaId, @setor)
 RETURNING GASTOS_ID", p, tx));
             }
 
             // O original só some depois que todas as parcelas entraram, e no mesmo commit.
-            con.Execute("DELETE FROM REGISTRO_DE_GASTOS WHERE GASTOS_ID = @id", new { id }, tx);
+            con.Execute(
+                "DELETE FROM REGISTRO_DE_GASTOS WHERE GASTOS_ID = @id" + FiltroDeSetor.ECondicao(),
+                new { id, setor = FiltroDeSetor.Numero(quem.Setor) }, tx);
 
             tx.Commit();
 
-            var geradas = ids.Select(i => PorId(i)!).ToList();
+            var geradas = ids.Select(i => PorId(i, quem.Setor)!).ToList();
             return new ResultadoParcelamento
             {
                 Parcelas = geradas,
@@ -130,7 +135,8 @@ RETURNING GASTOS_ID", p, tx));
     /// </summary>
     private Lancamento ExigirParcelavel(int id, Usuario quem)
     {
-        var original = PorId(id) ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
+        var original = PorId(id, quem.Setor)
+            ?? throw new RegraDeNegocioException("Lançamento não encontrado.");
         ExigirPermissao(quem, original);
 
         if (original.ValorPrevisto.EhZero)
@@ -173,9 +179,12 @@ RETURNING GASTOS_ID", p, tx));
         {
             foreach (var id in ids.Distinct())
             {
+                // Um identificador de outro setor cai em "não encontrado", junto com os que
+                // realmente não existem — quem manda a lista não descobre o que há do lado de lá.
                 var linha = con.QuerySingleOrDefault(
                     "SELECT GASTOS_ID, PAGO, VALOR_PREVISTO, USERID " +
-                    "FROM REGISTRO_DE_GASTOS WHERE GASTOS_ID = @id", new { id }, tx);
+                    "FROM REGISTRO_DE_GASTOS WHERE GASTOS_ID = @id" + FiltroDeSetor.ECondicao(),
+                    new { id, setor = FiltroDeSetor.Numero(quem.Setor) }, tx);
 
                 if (linha is null) { naoEncontrados.Add(id); continue; }
                 if ((int)linha.PAGO == 1) { jaPagos.Add(id); continue; }
@@ -185,12 +194,13 @@ RETURNING GASTOS_ID", p, tx));
 
                 con.Execute(
                     "UPDATE REGISTRO_DE_GASTOS SET PAGO = 1, DATA_PAGAMENTO = @data, " +
-                    "VALOR_PAGO = @valor WHERE GASTOS_ID = @id",
+                    "VALOR_PAGO = @valor WHERE GASTOS_ID = @id" + FiltroDeSetor.ECondicao(),
                     new
                     {
                         data = referencia.ToDateTime(TimeOnly.MinValue),
                         valor = (double)valor.Valor,
-                        id
+                        id,
+                        setor = FiltroDeSetor.Numero(quem.Setor)
                     }, tx);
 
                 pagos.Add(id);
@@ -236,10 +246,10 @@ RETURNING GASTOS_ID", p, tx));
         using var tx = con.BeginTransaction();
         try
         {
-            var despesaId = DespesaDaSubdespesa(con, tx, subdespesaId);
-            ExigirExistencia(con, tx, "CONTAS", "CONTA_ID", contaId, "conta");
+            var despesaId = DespesaDaSubdespesa(con, tx, subdespesaId, autor.Setor);
+            ExigirExistencia(con, tx, "CONTAS", "CONTA_ID", contaId, "conta", autor.Setor);
             ExigirExistencia(con, tx, "FORMA_DE_PAGAMENTO", "FORMA_DE_PAGAMENTO_ID",
-                             formaPagamentoId, "forma de pagamento");
+                             formaPagamentoId, "forma de pagamento", autor.Setor);
 
             var ids = new List<int>(linhas.Count);
 
@@ -266,24 +276,25 @@ RETURNING GASTOS_ID", p, tx));
                 p.Add("valor", (double)linha.Valor.Valor);
                 p.Add("data", linha.Data.ToDateTime(TimeOnly.MinValue));
                 p.Add("dataCadastro", referencia.ToDateTime(TimeOnly.MinValue));
+                FiltroDeSetor.Adicionar(p, autor.Setor);
 
                 ids.Add(con.ExecuteScalar<int>(@"
 INSERT INTO REGISTRO_DE_GASTOS
     (CATEGORIA_ID, SUBCATEGORIA_ID, CONTA_ID, FORMA_DE_PAGAMENTO_ID, USERID,
      DESCRICAO, VALOR_PREVISTO, VALOR_PAGO, PAGO,
      DATA_VENCIMENTO, DATA_PAGAMENTO, DATA_CADASTRO,
-     NOTA_FISCAL, CHEQUE, CHEQUE_COMPENSADO, ENTRADA_ID)
+     NOTA_FISCAL, CHEQUE, CHEQUE_COMPENSADO, ENTRADA_ID, SETOR_ID)
 VALUES
     (@despesaId, @subdespesaId, @contaId, @formaId, @usuarioId,
      @descricao, @valor, @valor, 1,
      @data, @data, @dataCadastro,
-     0, 0, 'N', 0)
+     0, 0, 'N', 0, @setor)
 RETURNING GASTOS_ID", p, tx));
             }
 
             tx.Commit();
 
-            var criados = ids.Select(i => PorId(i)!).ToList();
+            var criados = ids.Select(i => PorId(i, autor.Setor)!).ToList();
             return new ResultadoImportacao
             {
                 Lancamentos = criados,

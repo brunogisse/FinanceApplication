@@ -30,7 +30,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         Assert.Equal(13972, r.Quantidade);
     }
 
@@ -39,7 +39,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         Assert.Equal(Dinheiro.De(34501459.68m), r.TotalPago);
     }
 
@@ -48,7 +48,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         Assert.Equal(Dinheiro.De(35586456.69m), r.TotalPrevisto);
     }
 
@@ -59,7 +59,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo, Pagamento = filtro });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo, Pagamento = filtro }, Setor.Financeiro);
         Assert.Equal(esperado, r.Quantidade);
     }
 
@@ -81,7 +81,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo, Despesa = despesa });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo, Despesa = despesa }, Setor.Financeiro);
         Assert.Equal(quantidade, r.Quantidade);
         Assert.Equal(Dinheiro.De(totalPago), r.TotalPago);
     }
@@ -91,7 +91,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var todos = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var todos = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         var porDespesa = todos.Lancamentos.GroupBy(l => l.Despesa)
                                           .Select(g => g.Somar(l => l.ValorPago))
                                           .Somar();
@@ -106,7 +106,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         var semVencimento = r.Lancamentos.Count(l => l.DataVencimento is null);
 
         Assert.Equal(11, semVencimento);
@@ -119,7 +119,7 @@ public class ParidadeLeituraTeste
         var repo = Repositorio();
 
         // O legado usa LIKE sensível a caixa e perde 9 registros gravados com 's'.
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo, ChequeCompensado = true });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo, ChequeCompensado = true }, Setor.Financeiro);
         Assert.Equal(2297 + 9, r.Quantidade);
     }
 
@@ -130,7 +130,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo, Situacao = situacao });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo, Situacao = situacao }, Setor.Financeiro);
         Assert.Equal(esperado, r.Quantidade);
     }
 
@@ -139,7 +139,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         var l = r.Lancamentos.Single(x => x.Id == 19035);
 
         // No banco está 147059.765625.
@@ -151,7 +151,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         var comTravessao = r.Lancamentos.Where(l => l.Observacao is not null &&
                                                     l.Observacao.Contains('\u2013')).ToList();
 
@@ -166,7 +166,7 @@ public class ParidadeLeituraTeste
         var repo = Repositorio();
 
         // DESCRICAO passa pelo caminho OCTETS + página 1252. São 158 na base.
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         var comAcento = r.Lancamentos.Count(l => l.Descricao.Any(EhAcentuado));
 
         Assert.Equal(158, comAcento);
@@ -179,7 +179,7 @@ public class ParidadeLeituraTeste
         var repo = Repositorio();
 
         // SUBCATEGORIA.DESCRICAO vem como string pelo charset da conexão — outro caminho.
-        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo });
+        var r = repo.Consultar(new ConsultaLancamentos { Periodo = Tudo }, Setor.Financeiro);
         var subdespesas = r.Lancamentos.Select(l => l.Subdespesa).Distinct().ToList();
 
         Assert.Contains(subdespesas, s => s.Contains("MANUTENÇÃO"));
@@ -195,7 +195,7 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var linhas = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true);
+        var linhas = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, Setor.Financeiro);
 
         Assert.NotEmpty(linhas);
         Assert.All(linhas, l => Assert.Equal("AGRICOLA", l.Despesa.Trim()));
@@ -206,8 +206,8 @@ public class ParidadeLeituraTeste
     {
         var repo = Repositorio();
 
-        var pagos = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true);
-        var naoPagos = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: false);
+        var pagos = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, Setor.Financeiro);
+        var naoPagos = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: false, Setor.Financeiro);
 
         var totalPagos = pagos.Somar(l => l.TotalPago);
         var totalNaoPagos = naoPagos.Somar(l => l.TotalPrevisto);
@@ -230,7 +230,7 @@ public class ParidadeLeituraTeste
                 Despesa = despesa,
                 FiltrarPorData = ColunaDeData.Pagamento,
                 Pagamento = FiltroPagamento.Pagos
-            })
+            }, Setor.Financeiro)
             .Lancamentos
             .GroupBy(l => l.Conta.Trim())
             .OrderByDescending(g => g.Count())
@@ -242,7 +242,7 @@ public class ParidadeLeituraTeste
         var repo = Repositorio();
         var conta = ContaMaisUsadaEm(repo, "AGRICOLA");
 
-        var consolidado = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, conta);
+        var consolidado = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, Setor.Financeiro, conta);
 
         var lancamentos = repo.Consultar(new ConsultaLancamentos
         {
@@ -251,7 +251,7 @@ public class ParidadeLeituraTeste
             Conta = conta,
             FiltrarPorData = ColunaDeData.Pagamento,
             Pagamento = FiltroPagamento.Pagos
-        });
+        }, Setor.Financeiro);
 
         Assert.NotEmpty(consolidado);
         Assert.Equal(lancamentos.Quantidade, consolidado.Sum(l => l.Quantidade));
@@ -264,8 +264,8 @@ public class ParidadeLeituraTeste
         var repo = Repositorio();
         var conta = ContaMaisUsadaEm(repo, "AGRICOLA");
 
-        var inteiro = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true);
-        var daConta = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, conta);
+        var inteiro = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, Setor.Financeiro);
+        var daConta = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, Setor.Financeiro, conta);
 
         // Recorte de verdade: nunca traz mais do que o todo, e a base tem mais de uma conta
         // nesta despesa — então tem de trazer menos.
@@ -283,8 +283,8 @@ public class ParidadeLeituraTeste
         // CONTAS não entra quando não deve — um CONTA_ID órfão sumiria da soma sem ninguém pedir.
         var repo = Repositorio();
 
-        var semParametro = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true);
-        var comVazio = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, conta);
+        var semParametro = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, Setor.Financeiro);
+        var comVazio = repo.ConsolidarPorDespesa("AGRICOLA", Tudo, apenasPagos: true, Setor.Financeiro, conta);
 
         Assert.Equal(semParametro.Sum(l => l.Quantidade), comVazio.Sum(l => l.Quantidade));
         Assert.Equal(semParametro.Somar(l => l.TotalPago), comVazio.Somar(l => l.TotalPago));
@@ -296,7 +296,7 @@ public class ParidadeLeituraTeste
         var repo = Repositorio();
 
         var linhas = repo.ConsolidarPorDespesa(
-            "AGRICOLA", Tudo, apenasPagos: true, "CONTA QUE NAO EXISTE");
+            "AGRICOLA", Tudo, apenasPagos: true, Setor.Financeiro, "CONTA QUE NAO EXISTE");
 
         Assert.Empty(linhas);
     }
@@ -307,7 +307,7 @@ public class ParidadeLeituraTeste
         var repo = Repositorio();
 
         var hoje = new DateOnly(2025, 3, 26); // último dia de cadastro na base
-        var r = repo.Vencimentos(hoje);
+        var r = repo.Vencimentos(hoje, Setor.Financeiro);
 
         Assert.All(r.Lancamentos, l =>
         {

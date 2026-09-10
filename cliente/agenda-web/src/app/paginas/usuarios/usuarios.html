@@ -13,6 +13,14 @@
     <div class="aviso" (click)="aviso.set(null)">{{ aviso() }}</div>
   }
 
+  @if (semSetor() > 0) {
+    <div class="erro">
+      {{ inteiro(semSetor()) }} usuário(s) sem setor. <strong>Essas pessoas não conseguem
+      entrar</strong> — é o que acontece com quem é cadastrado pela tela do sistema antigo, que
+      não conhece o campo. Informe o setor de cada uma para liberar o acesso.
+    </div>
+  }
+
   <section class="cartao lista-area">
     <div class="cabecalho-lista">
       <span>
@@ -35,6 +43,7 @@
           <th class="col-id">ID</th>
           <th>Nome</th>
           <th class="col-nivel">Nível</th>
+          <th class="col-setor">Setor</th>
           <th class="col-acoes">Ações</th>
         </tr>
       </thead>
@@ -55,13 +64,22 @@
                 }
               </select>
             </td>
+            <td class="col-setor">
+              <select [ngModel]="setor()" (ngModelChange)="setor.set($event)">
+                @for (s of setores(); track s.id) {
+                  <option [value]="s.id">{{ s.descricao }}</option>
+                }
+              </select>
+            </td>
             <td class="col-acoes">
               <input class="senha" type="password" [ngModel]="senha()"
                      (ngModelChange)="senha.set($event)" (keydown)="aoTeclar($event)"
                      maxlength="20" placeholder="Senha (4 a 20)" />
-              <button class="botao botao-primario mini-botao" (click)="salvar()"
-                      [disabled]="carregando()">Salvar</button>
-              <button class="botao mini-botao" (click)="cancelar()">Cancelar</button>
+              <div class="acoes-edicao">
+                <button class="botao botao-primario mini-botao" (click)="salvar()"
+                        [disabled]="carregando()">Salvar</button>
+                <button class="botao mini-botao" (click)="cancelar()">Cancelar</button>
+              </div>
             </td>
           </tr>
         }
@@ -89,10 +107,19 @@
                   </small>
                 }
               </td>
+              <td class="col-setor">
+                <select [ngModel]="setor()" (ngModelChange)="setor.set($event)">
+                  @for (s of setores(); track s.id) {
+                    <option [value]="s.id">{{ s.descricao }}</option>
+                  }
+                </select>
+              </td>
               <td class="col-acoes">
-                <button class="botao botao-primario mini-botao" (click)="salvar()"
-                        [disabled]="carregando()">Salvar</button>
-                <button class="botao mini-botao" (click)="cancelar()">Cancelar</button>
+                <div class="acoes-edicao">
+                  <button class="botao botao-primario mini-botao" (click)="salvar()"
+                          [disabled]="carregando()">Salvar</button>
+                  <button class="botao mini-botao" (click)="cancelar()">Cancelar</button>
+                </div>
               </td>
             </tr>
           } @else {
@@ -110,8 +137,11 @@
                 }
               </td>
               <td class="col-nivel">{{ nomeDoNivel(u.nivel) }}</td>
+              <td class="col-setor" [class.pendente-setor]="u.setor === null">
+                {{ nomeDoSetor(u.setor) }}
+              </td>
               <td class="col-acoes">
-                <button class="mini" (click)="editar(u)" title="Alterar nome e nível">✎</button>
+                <button class="mini" (click)="editar(u)" title="Alterar nome, nível e setor">✎</button>
                 <button class="mini" (click)="trocarSenha(u)" title="Trocar a senha">🔑</button>
                 @if (podeExcluir(u)) {
                   <button class="mini perigo" (click)="excluir(u)" title="Excluir">✕</button>
@@ -121,7 +151,7 @@
           }
         } @empty {
           <tr>
-            <td colspan="4" class="vazio">
+            <td colspan="5" class="vazio">
               {{ carregando() ? 'Carregando...' : 'Nenhum usuário.' }}
             </td>
           </tr>
@@ -133,5 +163,12 @@
   <p class="rodape-explicacao">
     A senha vale para os <strong>dois sistemas</strong>: quem for criado aqui entra também no
     programa antigo. Por isso o limite de 20 caracteres, que é o tamanho do campo de lá.
+  </p>
+
+  <p class="rodape-explicacao">
+    <strong>Nível e setor são coisas diferentes.</strong> O nível diz o que a pessoa pode fazer;
+    o setor diz sobre quais registros. Um nível 3 do financeiro administra tudo, dentro do
+    financeiro. Esta lista é a única que mostra os dois setores juntos — o cadastro de acesso é
+    compartilhado.
   </p>
 </div>

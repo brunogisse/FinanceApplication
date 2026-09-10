@@ -18,16 +18,16 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     {
         var repo = _base.Cadastros();
 
-        Assert.Equal(14, repo.ListarContas().Count);
-        Assert.Equal(10, repo.ListarFormasPagamento().Count);
-        Assert.Equal(14, repo.ListarDespesas().Count);
-        Assert.Equal(148, repo.ListarSubdespesas().Count);
+        Assert.Equal(14, repo.ListarContas(Setor.Financeiro).Count);
+        Assert.Equal(10, repo.ListarFormasPagamento(Setor.Financeiro).Count);
+        Assert.Equal(14, repo.ListarDespesas(Setor.Financeiro).Count);
+        Assert.Equal(148, repo.ListarSubdespesas(Setor.Financeiro).Count);
     }
 
     [Fact]
     public void Subdespesa_traz_o_nome_da_despesa_a_que_pertence()
     {
-        var subs = _base.Cadastros().ListarSubdespesas();
+        var subs = _base.Cadastros().ListarSubdespesas(Setor.Financeiro);
         Assert.All(subs, s => Assert.False(string.IsNullOrWhiteSpace(s.Despesa)));
     }
 
@@ -35,8 +35,8 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     public void Filtra_subdespesas_por_despesa()
     {
         var repo = _base.Cadastros();
-        var agricola = repo.ListarDespesas().Single(d => d.Descricao == "AGRICOLA");
-        var subs = repo.ListarSubdespesas(agricola.Id);
+        var agricola = repo.ListarDespesas(Setor.Financeiro).Single(d => d.Descricao == "AGRICOLA");
+        var subs = repo.ListarSubdespesas(Setor.Financeiro, agricola.Id);
 
         Assert.NotEmpty(subs);
         Assert.All(subs, s => Assert.Equal(agricola.Id, s.DespesaId));
@@ -48,26 +48,26 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     public void Cria_conta_e_o_banco_atribui_o_identificador()
     {
         var repo = _base.Cadastros();
-        var antes = repo.ListarContas().Count;
+        var antes = repo.ListarContas(Setor.Financeiro).Count;
 
-        var nova = repo.CriarConta("CONTA DE TESTE " + Guid.NewGuid().ToString("N")[..6]);
+        var nova = repo.CriarConta("CONTA DE TESTE " + Guid.NewGuid().ToString("N")[..6], Setor.Financeiro);
 
         Assert.True(nova.Id > 0, "A trigger do banco deveria ter atribuído o identificador.");
-        Assert.Equal(antes + 1, repo.ListarContas().Count);
+        Assert.Equal(antes + 1, repo.ListarContas(Setor.Financeiro).Count);
     }
 
     [Fact]
     public void Altera_e_exclui_conta()
     {
         var repo = _base.Cadastros();
-        var conta = repo.CriarConta("CONTA TEMPORARIA " + Guid.NewGuid().ToString("N")[..6]);
+        var conta = repo.CriarConta("CONTA TEMPORARIA " + Guid.NewGuid().ToString("N")[..6], Setor.Financeiro);
 
-        var alterada = repo.AlterarConta(conta.Id, "CONTA RENOMEADA " + conta.Id);
+        var alterada = repo.AlterarConta(conta.Id, "CONTA RENOMEADA " + conta.Id, Setor.Financeiro);
         Assert.Equal("CONTA RENOMEADA " + conta.Id, alterada.Descricao);
-        Assert.Contains(repo.ListarContas(), c => c.Id == conta.Id && c.Descricao.StartsWith("CONTA RENOMEADA"));
+        Assert.Contains(repo.ListarContas(Setor.Financeiro), c => c.Id == conta.Id && c.Descricao.StartsWith("CONTA RENOMEADA"));
 
-        repo.ExcluirConta(conta.Id);
-        Assert.DoesNotContain(repo.ListarContas(), c => c.Id == conta.Id);
+        repo.ExcluirConta(conta.Id, Setor.Financeiro);
+        Assert.DoesNotContain(repo.ListarContas(Setor.Financeiro), c => c.Id == conta.Id);
     }
 
     [Fact]
@@ -76,11 +76,11 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
         var repo = _base.Cadastros();
         var sufixo = Guid.NewGuid().ToString("N")[..6];
 
-        var despesa = repo.CriarDespesa("DESPESA TESTE " + sufixo);
-        var sub = repo.CriarSubdespesa("SUBDESPESA TESTE " + sufixo, despesa.Id);
+        var despesa = repo.CriarDespesa("DESPESA TESTE " + sufixo, Setor.Financeiro);
+        var sub = repo.CriarSubdespesa("SUBDESPESA TESTE " + sufixo, despesa.Id, Setor.Financeiro);
 
         Assert.Equal(despesa.Id, sub.DespesaId);
-        Assert.Contains(repo.ListarSubdespesas(despesa.Id), s => s.Id == sub.Id);
+        Assert.Contains(repo.ListarSubdespesas(Setor.Financeiro, despesa.Id), s => s.Id == sub.Id);
     }
 
     // ---- Regras que o banco legado não impõe ----
@@ -93,7 +93,7 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     {
         // O legado não tem constraint nenhuma, e por isso há uma categoria com descrição
         // vazia na base de produção.
-        var e = Assert.Throws<RegraDeNegocioException>(() => _base.Cadastros().CriarConta(descricao!));
+        var e = Assert.Throws<RegraDeNegocioException>(() => _base.Cadastros().CriarConta(descricao!, Setor.Financeiro));
         Assert.Contains("Informe", e.Message);
     }
 
@@ -101,7 +101,7 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     public void Recusa_descricao_maior_que_a_coluna()
     {
         var e = Assert.Throws<RegraDeNegocioException>(
-            () => _base.Cadastros().CriarConta(new string('X', 51)));
+            () => _base.Cadastros().CriarConta(new string('X', 51), Setor.Financeiro));
         Assert.Contains("50 caracteres", e.Message);
     }
 
@@ -110,9 +110,9 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     {
         var repo = _base.Cadastros();
         var nome = "CONTA UNICA " + Guid.NewGuid().ToString("N")[..6];
-        repo.CriarConta(nome);
+        repo.CriarConta(nome, Setor.Financeiro);
 
-        var e = Assert.Throws<RegraDeNegocioException>(() => repo.CriarConta(nome.ToLowerInvariant()));
+        var e = Assert.Throws<RegraDeNegocioException>(() => repo.CriarConta(nome.ToLowerInvariant(), Setor.Financeiro));
         Assert.Contains("Já existe", e.Message);
     }
 
@@ -122,11 +122,11 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
         // Legítimo: o legado tem MANUTENÇÃO em mais de um centro de custo.
         var repo = _base.Cadastros();
         var sufixo = Guid.NewGuid().ToString("N")[..6];
-        var d1 = repo.CriarDespesa("DESPESA A " + sufixo);
-        var d2 = repo.CriarDespesa("DESPESA B " + sufixo);
+        var d1 = repo.CriarDespesa("DESPESA A " + sufixo, Setor.Financeiro);
+        var d2 = repo.CriarDespesa("DESPESA B " + sufixo, Setor.Financeiro);
 
-        repo.CriarSubdespesa("MANUTENCAO", d1.Id);
-        var segunda = repo.CriarSubdespesa("MANUTENCAO", d2.Id);
+        repo.CriarSubdespesa("MANUTENCAO", d1.Id, Setor.Financeiro);
+        var segunda = repo.CriarSubdespesa("MANUTENCAO", d2.Id, Setor.Financeiro);
 
         Assert.Equal(d2.Id, segunda.DespesaId);
     }
@@ -135,11 +135,11 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     public void Recusa_subdespesa_repetida_dentro_da_mesma_despesa()
     {
         var repo = _base.Cadastros();
-        var despesa = repo.CriarDespesa("DESPESA C " + Guid.NewGuid().ToString("N")[..6]);
-        repo.CriarSubdespesa("COMBUSTIVEL", despesa.Id);
+        var despesa = repo.CriarDespesa("DESPESA C " + Guid.NewGuid().ToString("N")[..6], Setor.Financeiro);
+        repo.CriarSubdespesa("COMBUSTIVEL", despesa.Id, Setor.Financeiro);
 
         var e = Assert.Throws<RegraDeNegocioException>(
-            () => repo.CriarSubdespesa("combustivel", despesa.Id));
+            () => repo.CriarSubdespesa("combustivel", despesa.Id, Setor.Financeiro));
         Assert.Contains("Já existe", e.Message);
     }
 
@@ -147,7 +147,7 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     public void Recusa_subdespesa_ligada_a_despesa_inexistente()
     {
         var e = Assert.Throws<RegraDeNegocioException>(
-            () => _base.Cadastros().CriarSubdespesa("QUALQUER", 999999));
+            () => _base.Cadastros().CriarSubdespesa("QUALQUER", 999999, Setor.Financeiro));
         Assert.Contains("não existe", e.Message);
     }
 
@@ -156,9 +156,9 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     {
         var repo = _base.Cadastros();
         // RAUL/LESSIA tem 8.474 lançamentos na base.
-        var emUso = repo.ListarContas().Single(c => c.Descricao == "RAUL/LESSIA");
+        var emUso = repo.ListarContas(Setor.Financeiro).Single(c => c.Descricao == "RAUL/LESSIA");
 
-        var e = Assert.Throws<RegraDeNegocioException>(() => repo.ExcluirConta(emUso.Id));
+        var e = Assert.Throws<RegraDeNegocioException>(() => repo.ExcluirConta(emUso.Id, Setor.Financeiro));
 
         Assert.Contains("Não é possível excluir", e.Message);
         Assert.Contains("lançamentos", e.Message);
@@ -169,7 +169,7 @@ public class CadastrosTeste : IClassFixture<BaseDescartavel>
     public void Recusa_alteracao_de_cadastro_inexistente()
     {
         var e = Assert.Throws<RegraDeNegocioException>(
-            () => _base.Cadastros().AlterarConta(999999, "QUALQUER"));
+            () => _base.Cadastros().AlterarConta(999999, "QUALQUER", Setor.Financeiro));
         Assert.Contains("não encontrada", e.Message);
     }
 }

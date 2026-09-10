@@ -12,6 +12,11 @@ namespace AgendaFinanceira.Infraestrutura;
 /// FLOAT e são convertidos na borda.
 ///
 /// Todo filtro entra por parâmetro. O legado monta SQL por concatenação de string.
+///
+/// **Toda consulta daqui recebe o setor de fora, e nenhuma o adivinha.** O recorte é do
+/// servidor, nunca da tela — ver ADR 0011 e docs/unificacao-das-bases.md. Só a tabela de
+/// lançamentos é filtrada: os cadastros entram por junção de identificador e já são do mesmo
+/// setor, e filtrá-los de novo só criaria a chance de derrubar linha por cadastro órfão.
 /// </summary>
 public sealed partial class RepositorioLancamentos
 {
@@ -46,10 +51,10 @@ FROM REGISTRO_DE_GASTOS REG
      JOIN CONTAS             CT ON CT.CONTA_ID             = REG.CONTA_ID
      JOIN FORMA_DE_PAGAMENTO FP ON FP.FORMA_DE_PAGAMENTO_ID = REG.FORMA_DE_PAGAMENTO_ID";
 
-    /// <summary>Consulta com os filtros das duas abas do legado.</summary>
-    public ResultadoConsulta Consultar(ConsultaLancamentos criterio)
+    /// <summary>Consulta com os filtros das duas abas do legado, dentro de um setor.</summary>
+    public ResultadoConsulta Consultar(ConsultaLancamentos criterio, Setor setor)
     {
-        var (where, parametros) = MontarFiltro(criterio);
+        var (where, parametros) = MontarFiltro(criterio, setor);
         var sql = $"{Selecao} WHERE {where} ORDER BY REG.DATA_VENCIMENTO, REG.GASTOS_ID";
 
         using var con = _conexao.Abrir();
@@ -61,13 +66,18 @@ FROM REGISTRO_DE_GASTOS REG
     /// O que está vencido ou vence hoje e ainda não foi pago — o aviso da tela principal.
     /// Reproduz "DATA_VENCIMENTO &lt;= :hoje AND PAGO = 0".
     /// </summary>
-    public ResultadoConsulta Vencimentos(DateOnly hoje)
+    public ResultadoConsulta Vencimentos(DateOnly hoje, Setor setor)
     {
-        var sql = $"{Selecao} WHERE REG.DATA_VENCIMENTO <= @hoje AND REG.PAGO = 0 " +
-                   "ORDER BY REG.DATA_VENCIMENTO, REG.GASTOS_ID";
+        var sql = $"{Selecao} WHERE REG.DATA_VENCIMENTO <= @hoje AND REG.PAGO = 0" +
+                  FiltroDeSetor.ECondicao("REG") +
+                  " ORDER BY REG.DATA_VENCIMENTO, REG.GASTOS_ID";
 
         using var con = _conexao.Abrir();
-        var linhas = con.Query<LinhaLancamento>(sql, new { hoje = hoje.ToDateTime(TimeOnly.MinValue) })
+        var linhas = con.Query<LinhaLancamento>(sql, new
+                        {
+                            hoje = hoje.ToDateTime(TimeOnly.MinValue),
+                            setor = FiltroDeSetor.Numero(setor)
+                        })
                         .Select(Converter).ToList();
         return ResultadoConsulta.De(linhas);
     }
@@ -82,7 +92,7 @@ FROM REGISTRO_DE_GASTOS REG
     /// "quanto saiu desta conta, nesta despesa". Sem ela, o resultado é o de sempre.
     /// </summary>
     public IReadOnlyList<TotalPorSubdespesa> ConsolidarPorDespesa(
-        string despesa, Periodo periodo, bool apenasPagos, string? conta = null)
+        string despesa, Periodo periodo, bool apenasPagos, Setor setor, string? conta = null)
     {
         var coluna = apenasPagos ? "REG.DATA_PAGAMENTO" : "REG.DATA_VENCIMENTO";
         var condicaoPago = apenasPagos ? "REG.PAGO = 1" : "REG.PAGO = 0";
@@ -107,6 +117,7 @@ FROM REGISTRO_DE_GASTOS REG
 WHERE C.DESCRICAO = @despesa
   AND {coluna} BETWEEN @inicio AND @fim
   AND {condicaoPago}{condicaoConta}
+  AND {FiltroDeSetor.Condicao("REG")}
 GROUP BY S.SUBCATEGORIA_ID, S.DESCRICAO, C.DESCRICAO
 ORDER BY S.DESCRICAO";
 
@@ -116,7 +127,8 @@ ORDER BY S.DESCRICAO";
             despesa,
             conta = conta?.Trim(),
             inicio = periodo.Inicio.ToDateTime(TimeOnly.MinValue),
-            fim = periodo.Fim.ToDateTime(TimeOnly.MinValue)
+            fim = periodo.Fim.ToDateTime(TimeOnly.MinValue),
+            setor = FiltroDeSetor.Numero(setor)
         }).Select(l => new TotalPorSubdespesa
         {
             SubdespesaId = (int)l.SUBDESPESAID,
@@ -128,10 +140,16 @@ ORDER BY S.DESCRICAO";
         }).ToList();
     }
 
-    private static (string Where, DynamicParameters Parametros) MontarFiltro(ConsultaLancamentos c)
+    private static (string Where, DynamicParameters Parametros) MontarFiltro(
+        ConsultaLancamentos c, Setor setor)
     {
         var p = new DynamicParameters();
         var condicoes = new List<string>();
+
+        // O setor entra primeiro, antes de qualquer filtro da tela, e não depende de nenhum
+        // deles. Uma consulta sem período, sem descrição e sem nada continua recortada.
+        condicoes.Add(FiltroDeSetor.Condicao("REG"));
+        FiltroDeSetor.Adicionar(p, setor);
 
         var coluna = c.FiltrarPorData switch
         {

@@ -14,13 +14,20 @@ public class AutenticacaoTeste : IClassFixture<BaseDescartavel>
     private readonly BaseDescartavel _base;
     public AutenticacaoTeste(BaseDescartavel baseDescartavel) => _base = baseDescartavel;
 
-    /// <summary>Cria um usuário como o legado o criaria: senha em texto plano, sem hash.</summary>
-    private (string Nome, string Senha) CriarUsuarioDoLegado(string senha = "abc123", int nivel = 2)
+    /// <summary>
+    /// Cria um usuário como o legado o criaria: senha em texto plano, sem hash.
+    ///
+    /// O setor é preenchido porque o Delphi **não** o preenche e quem fica sem setor não
+    /// entra — é o que <see cref="Usuario_sem_setor_nao_entra_mesmo_com_a_senha_certa"/> prova.
+    /// Aqui o assunto é a migração da senha, então o usuário nasce utilizável.
+    /// </summary>
+    private (string Nome, string Senha) CriarUsuarioDoLegado(
+        string senha = "abc123", int nivel = 2, int? setor = 1)
     {
         var nome = "TESTE" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         using var con = _base.Conexao.Abrir();
-        con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL) VALUES (@n, @s, @v)",
-                    new { n = nome, s = senha, v = nivel });
+        con.Execute("INSERT INTO LOGIN (NOME, SENHA, NIVEL, SETOR_ID) VALUES (@n, @s, @v, @setor)",
+                    new { n = nome, s = senha, v = nivel, setor });
         return (nome, senha);
     }
 
@@ -56,6 +63,20 @@ public class AutenticacaoTeste : IClassFixture<BaseDescartavel>
         Assert.True(r.Autenticado);
         Assert.True(r.MigrouSenha);
         Assert.NotNull(HashGravado(nome));        // migrou sozinho, sem ninguém pedir
+    }
+
+    [Fact]
+    public void Usuario_sem_setor_nao_entra_mesmo_com_a_senha_certa()
+    {
+        // É o que acontece com quem for cadastrado pela tela do Delphi, que não conhece a
+        // coluna. Sem setor não há o que mostrar: nem tudo, que vazaria o outro lado, nem
+        // nada, que pareceria uma base vazia. A recusa é no login, com o motivo escrito.
+        var (nome, senha) = CriarUsuarioDoLegado(setor: null);
+
+        var r = _base.Usuarios().Autenticar(nome, senha);
+
+        Assert.False(r.Autenticado);
+        Assert.Contains("setor", r.Motivo!, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -200,8 +221,16 @@ public class AutenticacaoTeste : IClassFixture<BaseDescartavel>
     [Fact]
     public void So_quem_lancou_pode_modificar_com_o_usuario_um_podendo_tudo()
     {
-        var usuario5 = new Usuario { Id = 5, Nome = "aline", Nivel = NivelAcesso.Operacao, AindaSemHash = false };
-        var usuario1 = new Usuario { Id = 1, Nome = "JULIANA", Nivel = NivelAcesso.Administracao, AindaSemHash = false };
+        var usuario5 = new Usuario
+        {
+            Id = 5, Nome = "aline", Nivel = NivelAcesso.Operacao,
+            Setor = Setor.Faturamento, AindaSemHash = false
+        };
+        var usuario1 = new Usuario
+        {
+            Id = 1, Nome = "JULIANA", Nivel = NivelAcesso.Administracao,
+            Setor = Setor.Financeiro, AindaSemHash = false
+        };
 
         Assert.True(usuario5.PodeModificarLancamentoDe(5));
         Assert.False(usuario5.PodeModificarLancamentoDe(1));   // no legado isto é permitido: a

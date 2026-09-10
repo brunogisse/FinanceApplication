@@ -25,8 +25,13 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
         _subdespesaId = c.SUBCATEGORIA_ID; _contaId = c.CONTA; _formaId = c.FORMA;
     }
 
-    private Usuario Usuario(int id = 1, NivelAcesso nivel = NivelAcesso.Administracao) =>
-        new() { Id = id, Nome = "TESTE", Nivel = nivel, AindaSemHash = false };
+    private Usuario Usuario(int id = 1, NivelAcesso nivel = NivelAcesso.Administracao,
+                            Setor? setor = null) =>
+        new()
+        {
+            Id = id, Nome = "TESTE", Nivel = nivel,
+            Setor = setor ?? Setor.Financeiro, AindaSemHash = false
+        };
 
     private DadosLancamento Dados(decimal valor = 1200.00m, string? descricao = null) => new()
     {
@@ -49,7 +54,7 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
         var r = repo.Parcelar(original.Id, 6, Usuario(), Hoje);
 
         Assert.Equal(6, r.Parcelas.Count);
-        Assert.Null(repo.PorId(original.Id));
+        Assert.Null(repo.PorId(original.Id, Setor.Financeiro));
     }
 
     [Fact]
@@ -142,7 +147,7 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
         Assert.Throws<RegraDeNegocioException>(
             () => repo.Parcelar(original.Id, 3, Usuario(id: 6, nivel: NivelAcesso.Operacao), Hoje));
 
-        Assert.NotNull(repo.PorId(original.Id));   // e o original continua lá
+        Assert.NotNull(repo.PorId(original.Id, Setor.Financeiro));   // e o original continua lá
     }
 
     [Theory]
@@ -158,7 +163,7 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
         Assert.Throws<RegraDeNegocioException>(
             () => repo.Parcelar(original.Id, parcelas, Usuario(), Hoje));
 
-        Assert.NotNull(repo.PorId(original.Id));
+        Assert.NotNull(repo.PorId(original.Id, Setor.Financeiro));
     }
 
     [Fact]
@@ -210,7 +215,7 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
             new[] { Dinheiro.De(500.00m), Dinheiro.De(250.00m), Dinheiro.De(250.00m) },
             r.Parcelas.Select(p => p.ValorPrevisto));
         Assert.True(r.Fechou);
-        Assert.Null(repo.PorId(original.Id));
+        Assert.Null(repo.PorId(original.Id, Setor.Financeiro));
     }
 
     [Fact]
@@ -249,7 +254,7 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
         Assert.Equal(Dinheiro.De(1200.00m), r.SomaDasParcelas);
         Assert.Equal(Dinheiro.De(1000.00m), r.ValorOriginal);
         Assert.False(r.Fechou);
-        Assert.Null(repo.PorId(original.Id));
+        Assert.Null(repo.PorId(original.Id, Setor.Financeiro));
     }
 
     [Fact]
@@ -267,7 +272,7 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
 
         Assert.Contains("parcela 2", e.Message);
         Assert.Equal(antes, Total());
-        Assert.NotNull(repo.PorId(original.Id));
+        Assert.NotNull(repo.PorId(original.Id, Setor.Financeiro));
     }
 
     [Fact]
@@ -367,7 +372,7 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
         Assert.Equal(Dinheiro.De(300.00m), r.TotalPago);
         Assert.All(ids, id =>
         {
-            var l = repo.PorId(id)!;
+            var l = repo.PorId(id, Setor.Financeiro)!;
             Assert.True(l.Pago);
             Assert.Equal(Hoje, l.DataPagamento);
             Assert.Equal(l.ValorPrevisto, l.ValorPago);   // valor pago recebe o previsto
@@ -416,7 +421,7 @@ public class OperacoesEmLoteTeste : IClassFixture<BaseDescartavel>
 
         Assert.Equal([meu], r.Pagos);
         Assert.Equal([alheio], r.SemPermissao);
-        Assert.False(repo.PorId(alheio)!.Pago);
+        Assert.False(repo.PorId(alheio, Setor.Financeiro)!.Pago);
     }
 
     [Fact]
